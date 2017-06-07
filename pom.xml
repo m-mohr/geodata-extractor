@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>de.lutana</groupId>
+	<artifactId>geodata-extractor</artifactId>
+	<version>1.0</version>
+	<packaging>jar</packaging>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+	</properties>
+	<name>Geodata Extractor</name>
+	<description>Machine-based extraction of location information from digital publications</description>
+	<repositories>
+		<repository>
+			<id>Allenai Bintray</id>
+			<url>https://allenai.bintray.com/maven/</url>
+		</repository>
+		<repository>
+			<id>Inofficial OpenCV Maven repository</id>
+			<url>https://dl.bintray.com/ihmcrobotics/maven-vendor/</url>
+		</repository>
+	</repositories>
+	<dependencies>
+		<dependency>
+			<groupId>org.allenai</groupId>
+			<artifactId>pdffigures2_2.11</artifactId>
+			<version>0.0.11</version>
+			<type>pom</type>
+		</dependency>
+		<dependency>
+			<groupId>us.ihmc.thirdparty.org.opencv</groupId>
+			<artifactId>opencv</artifactId>
+			<version>3.2.0-170503</version>
+			<type>pom</type>
+		</dependency>
+	</dependencies>
+</project>
