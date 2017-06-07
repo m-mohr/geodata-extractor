@@ -14,7 +14,7 @@
 	<description>Machine-based extraction of location information from digital publications</description>
 	<repositories>
 		<repository>
-			<id>Allenai Bintray</id>
+			<id>Allenai repository</id>
 			<url>https://allenai.bintray.com/maven/</url>
 		</repository>
 		<repository>
@@ -34,6 +34,11 @@
 			<artifactId>opencv</artifactId>
 			<version>3.2.0-170503</version>
 			<type>pom</type>
+		</dependency>
+		<dependency>
+			<groupId>com.vividsolutions</groupId>
+			<artifactId>jts-core</artifactId>
+			<version>1.14.0</version>
 		</dependency>
 	</dependencies>
 </project>
