@@ -1,5 +1,8 @@
 package de.lutana.geodataextractor;
 
+import de.lutana.geodataextractor.parser.HtmlParser;
+import de.lutana.geodataextractor.parser.Parser;
+import de.lutana.geodataextractor.parser.PdfParser;
 import java.io.File;
 
 /**
@@ -8,8 +11,15 @@ import java.io.File;
  */
 public class Config {
 	
-	public File getTempFolder() {
+	public static File getTempFolder() {
 		return new File("./temp/");
+	}
+	
+	public static Parser[] getParsers() {
+		return new Parser[] {
+			new HtmlParser(),
+			new PdfParser()
+		};
 	}
 	
 }

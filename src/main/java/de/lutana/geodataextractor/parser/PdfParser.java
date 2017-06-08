@@ -22,9 +22,16 @@ public class PdfParser implements Parser {
 	 */
 	@Override
 	public FigureCollection parse(File publication) {
-		return null;
+		return null; // ToDo
 	}
 
+	/**
+	 * Returns a list of file extensions that can be parsed by this parser.
+	 * 
+	 * Specify each extension without a leading dot.
+	 * 
+	 * @return List of valid file extensions
+	 */
 	@Override
 	public String[] getExtensions() {
 		return new String[] {".pdf"};
