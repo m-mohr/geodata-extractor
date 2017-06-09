@@ -57,7 +57,7 @@ public class ParserFactory {
 	 * @return 
 	 */
 	public Parser getParser(File file) {
-		return this.parser.get(this.getFileExtension(file));
+		return this.parser.get(ParserFactory.getFileExtension(file));
 	}
 
 	/**
@@ -67,7 +67,19 @@ public class ParserFactory {
 	 * @return true if a suitable parser has been found, false if not.
 	 */
 	public boolean hasParser(File file) {
-		return this.parser.containsKey(this.getFileExtension(file));
+		return this.parser.containsKey(ParserFactory.getFileExtension(file));
+	}
+
+	/**
+	 * Returns the file extension in lower case and without leading dot.
+	 * 
+	 * If no dot (= no file extension) is found an empty string is returned.
+	 * 
+	 * @param path
+	 * @return 
+	 */
+	public static String getFileExtension(String path) {
+		return ParserFactory.getFileExtension(new File(path));
 	}
 
 	/**
@@ -78,7 +90,7 @@ public class ParserFactory {
 	 * @param file
 	 * @return 
 	 */
-	protected String getFileExtension(File file) {
+	public static String getFileExtension(File file) {
 		String fileName = file.getName();
 		int i = fileName.lastIndexOf('.');
 		if (i >= 0) {

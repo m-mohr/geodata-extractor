@@ -25,9 +25,10 @@ public interface Parser {
 	/**
 	 * Parses figures from documents.
 	 * 
-	 * @param publication File referencing a document
+	 * @param document File referencing a document
 	 * @return
+	 * @throws de.lutana.geodataextractor.parser.ParserException
 	 */
-	public FigureCollection parse(File publication);
+	public FigureCollection parse(File document) throws ParserException;
 	
 }

@@ -56,10 +56,14 @@ public class GeodataExtractor {
 		
 		for(File file : this.files.keySet()) {
 			// ToDo: Put this in a thread
-			Parser parser = this.parserFactory.getParser(file);
-			FigureCollection figures = parser.parse(file);
-			LocationCollection locations = this.strategy.execute(figures);
-			this.files.replace(file, locations);
+			try {
+				Parser parser = this.parserFactory.getParser(file);
+				FigureCollection figures = parser.parse(file);
+				LocationCollection locations = this.strategy.execute(figures);
+				this.files.replace(file, locations);
+			} catch (Exception e) {
+				e.printStackTrace(); // ToDo: Better logging
+			}
 		}
 
 		return this.files;

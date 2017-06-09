@@ -12,7 +12,11 @@ import java.io.File;
 public class Config {
 	
 	public static File getTempFolder() {
-		return new File("./temp/");
+		File folder = new File("./temp/");
+		if (!folder.exists()) {
+			folder.mkdirs();
+		}
+		return folder;
 	}
 	
 	public static Parser[] getParsers() {

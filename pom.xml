@@ -29,6 +29,11 @@
 			<version>0.0.11</version>
 		</dependency>
 		<dependency>
+			<groupId>org.jsoup</groupId>
+			<artifactId>jsoup</artifactId>
+			<version>1.10.2</version>
+		</dependency>
+		<dependency>
 			<groupId>us.ihmc.thirdparty.org.opencv</groupId>
 			<artifactId>opencv</artifactId>
 			<version>3.2.0-170503</version>

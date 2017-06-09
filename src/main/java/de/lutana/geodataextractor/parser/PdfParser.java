@@ -16,12 +16,13 @@ public class PdfParser implements Parser {
 	 * This parser uses the PDFFigures 2.0 package from Allenai.
 	 * Some figures might not be detected correctly, which is limited by PDFFigures.
 	 * 
-	 * @param publication File referencing an PDF based publication
+	 * @param document File referencing an PDF based document
 	 * @return
+	 * @throws de.lutana.geodataextractor.parser.ParserException
 	 * @see http://pdffigures2.allenai.org/
 	 */
 	@Override
-	public FigureCollection parse(File publication) {
+	public FigureCollection parse(File document) throws ParserException {
 		return null; // ToDo
 	}
 
@@ -34,7 +35,7 @@ public class PdfParser implements Parser {
 	 */
 	@Override
 	public String[] getExtensions() {
-		return new String[] {".pdf"};
+		return new String[] {"pdf"};
 	}
 	
 }

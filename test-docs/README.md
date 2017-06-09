@@ -1,0 +1,2 @@
+Add your documents for the tests here.
+Due to licensing restrictions most of the documents used for this thesis can't be published freely. Therefore this folder is (mostly) empty in the public GitHub repository.
