@@ -59,8 +59,10 @@ public class GeodataExtractor {
 			try {
 				Parser parser = this.parserFactory.getParser(file);
 				FigureCollection figures = parser.parse(file);
-				LocationCollection locations = this.strategy.execute(figures);
-				this.files.replace(file, locations);
+				if (figures != null) {
+					LocationCollection locations = this.strategy.execute(figures);
+					this.files.replace(file, locations);
+				}
 			} catch (Exception e) {
 				e.printStackTrace(); // ToDo: Better logging
 			}

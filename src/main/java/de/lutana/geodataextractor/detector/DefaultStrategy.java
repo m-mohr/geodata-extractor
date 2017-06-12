@@ -25,7 +25,10 @@ public class DefaultStrategy implements Strategy {
 		LocationCollection locations = new LocationCollection();
 		DumbCountryDetector dumb = new DumbCountryDetector();
 		for(Figure figure : figures) {
-			locations.addAll(dumb.detect(figure));
+			LocationCollection collection = dumb.detect(figure);
+			if (collection != null) {
+				locations.addAll(collection);
+			}
 		}
 		return locations;
 	}
