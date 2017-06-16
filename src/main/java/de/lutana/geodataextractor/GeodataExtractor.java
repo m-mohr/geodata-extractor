@@ -23,6 +23,7 @@ public class GeodataExtractor {
 	private Map<File, LocationCollection> files;
 	private Strategy strategy;
 	private ParserFactory parserFactory;
+	private boolean saveFigures;
 	
 	/**
 	 * Creates an instance using the DefaultStrategy.
@@ -42,6 +43,7 @@ public class GeodataExtractor {
 		this.files = new HashMap<>();
 		this.strategy = strategy;
 		this.parserFactory = new ParserFactory();
+		this.saveFigures = false;
 	}
 	
 	/**
@@ -55,11 +57,14 @@ public class GeodataExtractor {
 		}
 		
 		for(File file : this.files.keySet()) {
-			// ToDo: Put this in a thread
+			// ToDo: Put this in a thread?
 			try {
 				Parser parser = this.parserFactory.getParser(file);
 				FigureCollection figures = parser.parse(file);
 				if (figures != null) {
+					if (canSaveFigures()) {
+						figures.save(new File(file.getAbsolutePath() + "-figures"));
+					}
 					LocationCollection locations = this.strategy.execute(figures);
 					this.files.replace(file, locations);
 				}
@@ -158,6 +163,20 @@ public class GeodataExtractor {
 	 */
 	public ParserFactory getParserFactory() {
 		return this.parserFactory;
+	}
+
+	/**
+	 * @return the saveFigures
+	 */
+	public boolean canSaveFigures() {
+		return saveFigures;
+	}
+
+	/**
+	 * @param saveFigures the saveFigures to set
+	 */
+	public void enableSaveFigures(boolean saveFigures) {
+		this.saveFigures = saveFigures;
 	}
 	
 }

@@ -3,7 +3,6 @@ package de.lutana.geodataextractor.parser;
 import de.lutana.geodataextractor.Config;
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.FigureCollection;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
@@ -44,25 +43,25 @@ public class PdfParser implements Parser {
 		FigureCollection collection = new FigureCollection();
 		PDDocument doc = null;
 		try {
-//			VisualLogger vLogger = new VisualLogger(true, true, true, true, true, detectSectionTitlesFirst, cleanRasterizedFigureRegions);
 			doc = PDDocument.load(document);
 			FigureExtractor extractor = new FigureExtractor(allowOcr, ignoreWhiteGraphics, detectSectionTitlesFirst, rebuildParagraphs, cleanRasterizedFigureRegions);
 			FigureExtractor.DocumentWithRasterizedFigures figures = extractor.getRasterizedFiguresWithText(doc, dpi, None, None);
 			Iterator<RasterizedFigure> it = figures.figures().iterator();
 			while(it.hasNext()) {
 				RasterizedFigure rfigure = it.next();
+				
+				Integer page = rfigure.figure().page();
+				String figName = rfigure.figure().name();
+				String context = "Page " + page + "; Figure " + figName;
 
-				BufferedImage imgBuffer = rfigure.bufferedImage();
-				File tempFile = File.createTempFile("fig", ".png", Config.getTempFolder());
-				ImageIO.write(imgBuffer, "png", tempFile);
+				File tempFile = new File(Config.getTempFolder(document.getName()), "pg"+page+"-fig" + figName + ".png");
+				ImageIO.write(rfigure.bufferedImage(), "png", tempFile);
 
-				String context = "Page " + rfigure.figure().page() + "; Figure " + rfigure.figure().name();
 				Figure figure = new Figure(document, context);
 				figure.setCaption(rfigure.figure().caption());
 				figure.setGraphic(tempFile);
 				collection.add(figure);
 			}
-//			vLogger.displayVisualLog(doc, dpi);
 			doc.close();
 			return collection;
 		} catch (IOException ex) {

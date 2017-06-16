@@ -11,10 +11,11 @@ import java.io.File;
  */
 public class Config {
 	
-	public static File getTempFolder() {
-		File folder = new File("./temp/");
+	public static File getTempFolder(String subFolderName) {
+		File folder = new File("./temp/" + subFolderName);
 		if (!folder.exists()) {
 			folder.mkdirs();
+			folder.deleteOnExit();
 		}
 		return folder;
 	}

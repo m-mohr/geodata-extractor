@@ -61,7 +61,7 @@ public class GeodataExtractorTest {
 		Map<File, LocationCollection> expResult = new HashMap<>();
 		// ToDo: This path works on Windows only
 		// Improve this tests a lot!
-		expResult.put(new File(".\\test-docs\\germany.html"), lc);
+		expResult.put(new File("test-docs" + File.separator + "germany.html"), lc);
 		
 		Map<File, LocationCollection> result = instance.run();
 		assertEquals(expResult, result);

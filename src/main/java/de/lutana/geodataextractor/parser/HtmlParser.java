@@ -3,6 +3,7 @@ package de.lutana.geodataextractor.parser;
 import de.lutana.geodataextractor.Config;
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.FigureCollection;
+import de.lutana.geodataextractor.util.FileExtension;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -96,8 +97,8 @@ public class HtmlParser implements Parser {
 	 */
 	protected File downloadImageFromURL(String srcUrl) throws IOException {
         URL url = new URL(srcUrl);
-		String extension = ParserFactory.getFileExtension(url.getFile());
-		File tempFile = File.createTempFile("fig", "." + extension, Config.getTempFolder());
+		String extension = FileExtension.get(url.getFile());
+		File tempFile = File.createTempFile("fig", "." + extension, Config.getTempFolder(url.getFile()));
 
 		OutputStream out = null;
 		InputStream in = null;

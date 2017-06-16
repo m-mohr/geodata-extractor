@@ -1,6 +1,7 @@
 package de.lutana.geodataextractor.parser;
 
 import de.lutana.geodataextractor.Config;
+import de.lutana.geodataextractor.util.FileExtension;
 import java.io.File;
 import java.util.HashMap;
 
@@ -57,7 +58,7 @@ public class ParserFactory {
 	 * @return 
 	 */
 	public Parser getParser(File file) {
-		return this.parser.get(ParserFactory.getFileExtension(file));
+		return this.parser.get(FileExtension.get(file));
 	}
 
 	/**
@@ -67,36 +68,7 @@ public class ParserFactory {
 	 * @return true if a suitable parser has been found, false if not.
 	 */
 	public boolean hasParser(File file) {
-		return this.parser.containsKey(ParserFactory.getFileExtension(file));
-	}
-
-	/**
-	 * Returns the file extension in lower case and without leading dot.
-	 * 
-	 * If no dot (= no file extension) is found an empty string is returned.
-	 * 
-	 * @param path
-	 * @return 
-	 */
-	public static String getFileExtension(String path) {
-		return ParserFactory.getFileExtension(new File(path));
-	}
-
-	/**
-	 * Returns the file extension in lower case and without leading dot.
-	 * 
-	 * If no dot (= no file extension) is found an empty string is returned.
-	 * 
-	 * @param file
-	 * @return 
-	 */
-	public static String getFileExtension(File file) {
-		String fileName = file.getName();
-		int i = fileName.lastIndexOf('.');
-		if (i >= 0) {
-			return fileName.substring(i + 1).toLowerCase();
-		}
-		return "";
+		return this.parser.containsKey(FileExtension.get(file));
 	}
 
 }

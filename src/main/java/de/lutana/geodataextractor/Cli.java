@@ -21,6 +21,9 @@ public class Cli {
 	@Parameter(names = "-folder", description = "Folder containing publications", converter = FolderConverter.class)
 	public File folder;
 
+	@Parameter(names = "-save", description = "Save extracted figures and data to the document's folder")
+	public boolean save = false;
+
 	/*	@Parameter(names = "-debug", description = "Debug mode")
 	private boolean debug = false; */
 	public static void main(String[] args) {
@@ -35,6 +38,9 @@ public class Cli {
 		}
 		if (cli.strategy != null) {
 			gde.setStrategy(cli.strategy);
+		}
+		if (cli.save) {
+			gde.enableSaveFigures(cli.save);
 		}
 		gde.run();
 	}

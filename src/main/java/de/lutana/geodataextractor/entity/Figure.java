@@ -1,6 +1,13 @@
 package de.lutana.geodataextractor.entity;
 
+import com.fasterxml.jackson.core.JsonEncoding;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import de.lutana.geodataextractor.util.FileExtension;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 /**
  * Defines a figure, containing an optional caption, a graphic and an optional document context.
@@ -125,6 +132,35 @@ public class Figure {
 	 */
 	public void setDocumentContext(String documentContext) {
 		this.documentContext = documentContext;
+	}
+	
+	/**
+	 * Saves all data to the specified folder.
+	 * 
+	 * @param folder
+	 * @throws IOException
+	 */
+	public void save(File folder) throws IOException {
+		if (!folder.exists()) {
+			folder.mkdirs();
+		}
+		else if (!folder.isDirectory()) {
+			folder = folder.getParentFile();
+		}
+
+		File destGraphic = new File(folder, graphic.getName());
+		Files.copy(graphic.toPath(), destGraphic.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+		File destMetadata = new File(folder, FileExtension.replace(graphic.getName(), "json"));
+		JsonFactory factory = new JsonFactory();
+		JsonGenerator g = factory.createGenerator(destMetadata, JsonEncoding.UTF8);
+		g.writeStartObject();
+		g.writeStringField("document", this.document.getName());
+		g.writeStringField("documentContext", this.documentContext);
+		g.writeStringField("caption", this.caption);
+		g.writeStringField("graphic", this.graphic.getName());
+		g.writeEndObject();
+		g.close();
 	}
 	
 }
