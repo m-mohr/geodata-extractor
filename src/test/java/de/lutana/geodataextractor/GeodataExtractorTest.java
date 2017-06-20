@@ -55,13 +55,14 @@ public class GeodataExtractorTest {
 		for(File file : instance.getFiles()) {
 			System.out.println(file.getCanonicalPath());
 		}
-		
+
 		LocationCollection lc = new LocationCollection();
 		lc.add(new Location(5.98865807458, 47.3024876979, 15.0169958839, 54.983104153));
 		Map<File, LocationCollection> expResult = new HashMap<>();
 		// ToDo: This path works on Windows only
 		// Improve this tests a lot!
-		expResult.put(new File("test-docs" + File.separator + "germany.html"), lc);
+		File file = new File("test-docs/germany.html");
+		expResult.put(file.getCanonicalFile(), lc);
 		
 		Map<File, LocationCollection> result = instance.run();
 		assertEquals(expResult, result);

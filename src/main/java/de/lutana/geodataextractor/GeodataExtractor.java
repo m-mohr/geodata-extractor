@@ -7,6 +7,7 @@ import de.lutana.geodataextractor.entity.LocationCollection;
 import de.lutana.geodataextractor.parser.Parser;
 import de.lutana.geodataextractor.parser.ParserFactory;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -102,10 +103,12 @@ public class GeodataExtractor {
 	 * @see de.lutana.geodataextractor.parser.ParserFactory
 	 */
 	public boolean addFile(File file) {
-		if (this.parserFactory.hasParser(file)) {
-			this.files.put(file, null);
-			return true;
-		}
+		try {
+			if (this.parserFactory.hasParser(file)) {
+				this.files.put(file.getCanonicalFile(), null);
+				return true;
+			}
+		} catch (IOException e) {}
 		return false;
 	}
 
