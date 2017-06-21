@@ -12,3 +12,5 @@ hs_err_pid*
 /nbproject/
 /temp/
 /test-docs/*-figures
+/test-docs/*.pdf
+nb-configuration.xml
