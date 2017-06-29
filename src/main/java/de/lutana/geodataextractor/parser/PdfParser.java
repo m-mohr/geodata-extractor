@@ -1,14 +1,21 @@
 package de.lutana.geodataextractor.parser;
 
 import de.lutana.geodataextractor.Config;
+import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.entity.Figure;
-import de.lutana.geodataextractor.entity.FigureCollection;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import org.allenai.pdffigures2.FigureExtractor;
 import org.allenai.pdffigures2.RasterizedFigure;
+import org.allenai.pdffigures2.SectionedTextBuilder.PdfText;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentInformation;
+import pl.edu.icm.cermine.ContentExtractor;
+import pl.edu.icm.cermine.exception.AnalysisException;
+import pl.edu.icm.cermine.metadata.model.DocumentMetadata;
+import pl.edu.icm.cermine.tools.timeout.TimeoutException;
 import scala.Option;
 import scala.collection.Iterator;
 
@@ -31,7 +38,7 @@ public class PdfParser implements Parser {
 	 * @see http://pdffigures2.allenai.org/
 	 */
 	@Override
-	public FigureCollection parse(File document) throws ParserException {
+	public void parse(Document document) throws ParserException {
 		int dpi = 300;
 		boolean allowOcr = true;
 		boolean ignoreWhiteGraphics = true;
@@ -40,34 +47,58 @@ public class PdfParser implements Parser {
 		boolean cleanRasterizedFigureRegions = true;
 		Option None = scala.Option.apply(null); // This is None, the scala way to use null
 
-		FigureCollection collection = new FigureCollection();
-		PDDocument doc = null;
+		// Get title and abstract using CERMINE
 		try {
-			doc = PDDocument.load(document);
-			FigureExtractor extractor = new FigureExtractor(allowOcr, ignoreWhiteGraphics, detectSectionTitlesFirst, rebuildParagraphs, cleanRasterizedFigureRegions);
-			FigureExtractor.DocumentWithRasterizedFigures figures = extractor.getRasterizedFiguresWithText(doc, dpi, None, None);
+			ContentExtractor extractor = new ContentExtractor();
+			extractor.setPDF(new FileInputStream(document.getFile()));
+			DocumentMetadata meta = extractor.getMetadata();
+			document.setTitle(meta.getTitle());
+			document.setDescription(meta.getAbstrakt());
+		} catch (IOException | AnalysisException | TimeoutException | AssertionError ex) {
+			ex.printStackTrace();
+		}
+
+		PDDocument pdfBoxDoc = null;
+		try {
+			pdfBoxDoc = PDDocument.load(document.getFile());
+			FigureExtractor figExtractor = new FigureExtractor(allowOcr, ignoreWhiteGraphics, detectSectionTitlesFirst, rebuildParagraphs, cleanRasterizedFigureRegions);
+			FigureExtractor.DocumentWithRasterizedFigures figures = figExtractor.getRasterizedFiguresWithText(pdfBoxDoc, dpi, None, None);
+			
+			// Get alternative title
+			if (document.getTitle().isEmpty()) {
+				PDDocumentInformation meta = pdfBoxDoc.getDocumentInformation();
+				if (meta != null) {
+					document.setTitle(meta.getTitle());
+				}
+			}
+			
+			// Get alternative abstract
+			if (document.getDescription().isEmpty()) {
+				Option<PdfText> description = figures.abstractText();
+				if (description != None) {
+					document.setDescription(description.get().text());
+				}
+			}
+			
+			// Get figures
 			Iterator<RasterizedFigure> it = figures.figures().iterator();
 			while(it.hasNext()) {
 				RasterizedFigure rfigure = it.next();
-				
 				Integer page = rfigure.figure().page();
 				String figName = rfigure.figure().name();
-				String context = "Page " + page + "; Figure " + figName;
 
-				File tempFile = new File(Config.getTempFolder(document.getName()), "pg"+page+"-fig" + figName + ".png");
+				File tempFile = new File(Config.getTempFolder(document.getFile().getName()), "pg"+page+"-fig" + figName + ".png");
 				ImageIO.write(rfigure.bufferedImage(), "png", tempFile);
 
-				Figure figure = new Figure(document, context);
+				Figure figure = document.addFigure(tempFile, figName, page);
 				figure.setCaption(rfigure.figure().caption());
 				figure.setGraphic(tempFile);
-				collection.add(figure);
 			}
-			doc.close();
-			return collection;
+			pdfBoxDoc.close();
 		} catch (IOException ex) {
-			if (doc != null) {
+			if (pdfBoxDoc != null) {
 				try {
-					doc.close();
+					pdfBoxDoc.close();
 				} catch(IOException e) {}
 			}
 			throw new ParserException(ex);

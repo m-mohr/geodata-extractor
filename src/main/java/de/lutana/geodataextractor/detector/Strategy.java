@@ -1,7 +1,6 @@
 package de.lutana.geodataextractor.detector;
 
-import de.lutana.geodataextractor.entity.FigureCollection;
-import de.lutana.geodataextractor.entity.LocationCollection;
+import de.lutana.geodataextractor.entity.Document;
 
 /**
  * A strategy combines the detectors and the resulting location collections.
@@ -18,6 +17,6 @@ public interface Strategy {
 	 * @param figures
 	 * @return
 	 */
-	public LocationCollection execute(FigureCollection figures);
+	public boolean execute(Document document);
 	
 }

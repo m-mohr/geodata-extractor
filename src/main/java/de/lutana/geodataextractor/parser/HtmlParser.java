@@ -1,6 +1,7 @@
 package de.lutana.geodataextractor.parser;
 
 import de.lutana.geodataextractor.Config;
+import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.FigureCollection;
 import de.lutana.geodataextractor.util.FileExtension;
@@ -12,7 +13,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
@@ -29,37 +29,46 @@ public class HtmlParser implements Parser {
 	 * Other tags and (X)HTML blocks are currently not supported.
 	 * 
 	 * @param document File referencing an HTML based document
-	 * @return
 	 * @throws de.lutana.geodataextractor.parser.ParserException
 	 * @see http://wiki.selfhtml.org/wiki/HTML/Textstrukturierung/figure
 	 * @see http://wiki.selfhtml.org/wiki/HTML/Textstrukturierung/img
 	 */
 	@Override
-	public FigureCollection parse(File document) throws ParserException {
-		FigureCollection collection = new FigureCollection();
+	public void parse(Document document) throws ParserException {
 		try {
-			Document doc = Jsoup.parse(document, "UTF-8");
-			// Try to get img tags
+			File docFile = document.getFile();
+			org.jsoup.nodes.Document doc = Jsoup.parse(docFile, "UTF-8");
+
+			// Get title of document, description is not supported.
+			Elements titles = doc.getElementsByTag("title");
+			for (Element el : titles) {
+				if (el.hasText()) {
+					String title = el.text();
+					document.setTitle(title);
+					break;
+				}
+			}
+			// Try to get images from img tags
 			Elements img = doc.getElementsByTag("img");
+			Integer i = 1;
 			for (Element el : img) {
-				Figure figure = new Figure(document);
-				File file = this.downloadImage(el, "src", document.getParentFile());
-				if (file != null) {
-					figure.setGraphic(file);
+				File gfxFile = this.downloadImage(el, "src", docFile.getParentFile());
+				if (gfxFile == null) {
+					continue;
 				}
-				String alt = el.attr("alt");
-				String title = el.attr("title");
-				if(title != null && !title.isEmpty()) {
-					figure.setCaption(title);
+				Figure figure = document.addFigure(gfxFile, i.toString());
+				String altTag = el.attr("alt");
+				String titleTag = el.attr("title");
+				if(titleTag != null && !titleTag.isEmpty()) {
+					figure.setCaption(titleTag);
 				}
-				else if(alt != null && !alt.isEmpty()) {
-					figure.setCaption(alt);
+				else if(altTag != null && !altTag.isEmpty()) {
+					figure.setCaption(altTag);
 				}
-				collection.add(figure);
+				i++;
 			}
 			// ToDo: Add figure/figcaption support, but make sure it doesn't
 			// conflict with the img parsing above (double elements, ...)
-			return collection;
 
 		} catch (IOException ex) {
 			throw new ParserException(ex);
@@ -88,8 +97,8 @@ public class HtmlParser implements Parser {
 	/**
 	 * Downloads an image from the web and stores it in a temporary folder.
 	 * 
-	 * Returns the file for the downloaded file.
-	 * Doesn't support extracting inline images using the data URI (data:image/png;base64,...).
+	 * Returns the gfxFile for the downloaded gfxFile.
+ Doesn't support extracting inline images using the data URI (data:image/png;base64,...).
 	 * 
 	 * @param srcUrl
 	 * @return
@@ -125,11 +134,11 @@ public class HtmlParser implements Parser {
 	}
 
 	/**
-	 * Returns a list of file extensions that can be parsed by this parser.
+	 * Returns a list of gfxFile extensions that can be parsed by this parser.
 	 * 
 	 * Specify each extension without a leading dot.
 	 * 
-	 * @return List of valid file extensions
+	 * @return List of valid gfxFile extensions
 	 */
 	@Override
 	public String[] getExtensions() {

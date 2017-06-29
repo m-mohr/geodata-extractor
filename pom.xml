@@ -21,6 +21,11 @@
 			<id>Inofficial OpenCV Maven repository</id>
 			<url>https://dl.bintray.com/ihmcrobotics/maven-vendor/</url>
 		</repository>
+		<repository>
+			<id>icm</id>
+			<name>ICM repository</name>
+			<url>http://maven.icm.edu.pl/artifactory/repo</url>
+		</repository>
 	</repositories>
 	<dependencies>
 		<dependency>
@@ -32,6 +37,11 @@
 			<groupId>org.jsoup</groupId>
 			<artifactId>jsoup</artifactId>
 			<version>1.10.2</version>
+		</dependency>
+		<dependency>
+			<groupId>pl.edu.icm.cermine</groupId>
+			<artifactId>cermine-impl</artifactId>
+			<version>1.13</version>
 		</dependency>
 		<dependency>
 			<groupId>us.ihmc.thirdparty.org.opencv</groupId>

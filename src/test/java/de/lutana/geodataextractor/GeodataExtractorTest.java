@@ -5,12 +5,14 @@
  */
 package de.lutana.geodataextractor;
 
+import de.lutana.geodataextractor.entity.Document;
+import de.lutana.geodataextractor.entity.Figure;
+import de.lutana.geodataextractor.entity.FigureCollection;
 import de.lutana.geodataextractor.entity.Location;
-import de.lutana.geodataextractor.entity.LocationCollection;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -22,25 +24,6 @@ import static org.junit.Assert.*;
  * @author Matthias
  */
 public class GeodataExtractorTest {
-	
-	public GeodataExtractorTest() {
-	}
-	
-	@BeforeClass
-	public static void setUpClass() {
-	}
-	
-	@AfterClass
-	public static void tearDownClass() {
-	}
-	
-	@Before
-	public void setUp() {
-	}
-	
-	@After
-	public void tearDown() {
-	}
 
 	/**
 	 * Test of run method, of class GeodataExtractor.
@@ -50,21 +33,22 @@ public class GeodataExtractorTest {
 	public void testRun() throws IOException {
 		File folder = new File("./test-docs/");
 		GeodataExtractor instance = new GeodataExtractor();
+		instance.enableSaveFigures(true);
 		instance.setFolder(folder);
 		System.out.println("Using the following documents from folder " + folder.getCanonicalPath() + ":");
-		for(File file : instance.getFiles()) {
-			System.out.println(file.getCanonicalPath());
+		for(Document doc : instance.getDocuments()) {
+			System.out.println(doc.getFile().getCanonicalPath());
 		}
 
-		LocationCollection lc = new LocationCollection();
-		lc.add(new Location(5.98865807458, 47.3024876979, 15.0169958839, 54.983104153));
-		Map<File, LocationCollection> expResult = new HashMap<>();
+		Set<Document> expResult = new HashSet<>();
 		// ToDo: This path works on Windows only
 		// Improve this tests a lot!
-		File file = new File("test-docs/germany.html");
-		expResult.put(file.getCanonicalFile(), lc);
+		Document doc = new Document(new File("test-docs/germany.html"));
+		Figure figure = doc.addFigure(null, null);
+		figure.setLocation(new Location(5.98865807458, 47.3024876979, 15.0169958839, 54.983104153));
+		expResult.add(doc);
 		
-		Map<File, LocationCollection> result = instance.run();
+		Set<Document> result = instance.run();
 		assertEquals(expResult, result);
 	}
 	

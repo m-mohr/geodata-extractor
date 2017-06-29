@@ -1,7 +1,9 @@
 package de.lutana.geodataextractor.detector;
 
+import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.FigureCollection;
+import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
 
 /**
@@ -16,21 +18,21 @@ public class DefaultStrategy implements Strategy {
 	 * for them with a certain strategy implemented here. It also combines all 
 	 * locations collected to a single location collections.
 	 * 
-	 * @param figures
+	 * @param document
 	 * @return
 	 */
 	@Override
-	public LocationCollection execute(FigureCollection figures) {
+	public boolean execute(Document document) {
 		// ToDo: Dumb detector for testing only
-		LocationCollection locations = new LocationCollection();
 		DumbCountryDetector dumb = new DumbCountryDetector();
+		FigureCollection figures = document.getFigures();
 		for(Figure figure : figures) {
 			LocationCollection collection = dumb.detect(figure);
-			if (collection != null) {
-				locations.addAll(collection);
-			}
+			// ToDo: Union strategy for testing only
+			Location location = collection.union();
+			figure.setLocation(location);
 		}
-		return locations;
+		return true;
 	}
 	
 }

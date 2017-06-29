@@ -2,26 +2,23 @@ package de.lutana.geodataextractor;
 
 import de.lutana.geodataextractor.detector.DefaultStrategy;
 import de.lutana.geodataextractor.detector.Strategy;
-import de.lutana.geodataextractor.entity.FigureCollection;
-import de.lutana.geodataextractor.entity.LocationCollection;
+import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.parser.Parser;
 import de.lutana.geodataextractor.parser.ParserFactory;
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Main class that controlls the location extraction from files.
+ * Main class that controlls the location extraction from documents.
  * 
  * @author Matthias Mohr
  */
 public class GeodataExtractor {
 	
-	private Map<File, LocationCollection> files;
+	private Set<Document> documents;
 	private Strategy strategy;
 	private ParserFactory parserFactory;
 	private boolean saveFigures;
@@ -41,85 +38,91 @@ public class GeodataExtractor {
 	 * @param strategy
 	 */
 	public GeodataExtractor(Strategy strategy) {
-		this.files = new HashMap<>();
+		this.documents = new HashSet<>();
 		this.strategy = strategy;
 		this.parserFactory = new ParserFactory();
 		this.saveFigures = false;
 	}
 	
 	/**
-	 * Executes the GeodataExtractor and detects the locations for the specified files.
+	 * Executes the GeodataExtractor and detects the locations for the specified documents.
 	 * 
-	 * @return Map containing files and their locations on success, null on failure (e.g. no strategy specified).
+	 * @return Map containing documents and their locations on success, null on failure (e.g. no strategy specified).
 	 */
-	public Map<File, LocationCollection> run() {
+	public Set<Document> run() {
 		if (this.strategy == null) {
 			return null;
 		}
 		
-		for(File file : this.files.keySet()) {
+		for(Document doc : this.documents) {
 			// ToDo: Put this in a thread?
-			try {
-				Parser parser = this.parserFactory.getParser(file);
-				FigureCollection figures = parser.parse(file);
-				if (figures != null) {
-					if (canSaveFigures()) {
-						figures.save(new File(file.getAbsolutePath() + "-figures"));
-					}
-					LocationCollection locations = this.strategy.execute(figures);
-					this.files.replace(file, locations);
-				}
-			} catch (Exception e) {
-				e.printStackTrace(); // ToDo: Better logging
-			}
+			this.runDocument(doc);
 		}
 
-		return this.files;
+		return this.documents;
+	}
+	
+	public Document runSingle(File file) {
+		if (this.strategy == null) {
+			return null;
+		}
+
+		if (this.parserFactory.hasParser(file)) {
+			Document doc = new Document(file);
+			if (this.runDocument(doc)) {
+				return doc;
+			}
+		}
+		return null;
+	}
+	
+	protected boolean runDocument(Document doc) {
+		try {
+			Parser parser = this.parserFactory.getParser(doc.getFile());
+			parser.parse(doc);
+			if (canSaveFigures()) {
+				doc.save();
+			}
+			return this.strategy.execute(doc);
+		} catch (Exception e) {
+			e.printStackTrace(); // ToDo: Better logging
+			return false;
+		}
 	}
 	
 	/**
-	 * Returns a list of files.
+	 * Returns a list of documents.
 	 * 
-	 * @return the files
+	 * @return the documents
 	 */
-	public Map<File, LocationCollection> getFileLocations() {
-		return this.files;
-	}
-	
-	/**
-	 * Returns a list of files.
-	 * 
-	 * @return the files
-	 */
-	public Set<File> getFiles() {
-		return this.files.keySet();
+	public Set<Document> getDocuments() {
+		return this.documents;
 	}
 	
 	/**
 	 * Adds a file if a parser exists for it.
 	 * 
 	 * @param file file to add
-	 * @return true if added, false if not
+	 * @return Newly created Document object if added, null if not
 	 * @see de.lutana.geodataextractor.parser.ParserFactory
 	 */
-	public boolean addFile(File file) {
-		try {
-			if (this.parserFactory.hasParser(file)) {
-				this.files.put(file.getCanonicalFile(), null);
-				return true;
-			}
-		} catch (IOException e) {}
-		return false;
+	public Document addDocument(File file) {
+		if (this.parserFactory.hasParser(file)) {
+			Document doc = new Document(file);
+			this.documents.add(doc);
+			return doc;
+		}
+		return null;
 	}
 
 	/**
-	 * @param files the files to set
-	 * @return number of added files
+	 * @param files the documents to set
+	 * @return number of added documents
 	 */
 	public int setFiles(Collection<File> files) {
 		int added = 0;
 		for(File file : files) {
-			if (this.addFile(file)) {
+			if (this.addDocument(file) != null) {
 				added++;
 			}
 		}
@@ -127,7 +130,7 @@ public class GeodataExtractor {
 	}
 	
 	/**
-	 * Adds all files from a folder (non-recursive) that can be parsed.
+	 * Adds all documents from a folder (non-recursive) that can be parsed.
 	 * 
 	 * @param file
 	 * @return 
@@ -169,14 +172,14 @@ public class GeodataExtractor {
 	}
 
 	/**
-	 * @return the saveFigures
+	 * @return the save
 	 */
 	public boolean canSaveFigures() {
 		return saveFigures;
 	}
 
 	/**
-	 * @param saveFigures the saveFigures to set
+	 * @param saveFigures the save to set
 	 */
 	public void enableSaveFigures(boolean saveFigures) {
 		this.saveFigures = saveFigures;

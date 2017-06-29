@@ -1,7 +1,6 @@
 package de.lutana.geodataextractor.parser;
 
-import de.lutana.geodataextractor.entity.FigureCollection;
-import java.io.File;
+import de.lutana.geodataextractor.entity.Document;
 
 /**
  * Interface for new document parsers that extract figures from documents.
@@ -25,10 +24,9 @@ public interface Parser {
 	/**
 	 * Parses figures from documents.
 	 * 
-	 * @param document File referencing a document
-	 * @return
+	 * @param document
 	 * @throws de.lutana.geodataextractor.parser.ParserException
 	 */
-	public FigureCollection parse(File document) throws ParserException;
+	public void parse(Document document) throws ParserException;
 	
 }

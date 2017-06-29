@@ -23,4 +23,19 @@ public class FigureCollection extends ArrayList<Figure> {
 		}
 	}
 	
+	public LocationCollection getFigureLocations() {
+		LocationCollection collection = new LocationCollection();
+		for(Figure f : this) {
+			Location l = f.getLocation();
+			if (l != null) {
+				collection.add(l);
+			}
+		}
+		return collection;
+	}
+	
+	public Location union() {
+		return this.getFigureLocations().union();
+	}
+	
 }

@@ -18,36 +18,25 @@ public class Figure {
 	
 	private String caption;
 	private File graphic;
-	private File document;
-	private String documentContext;
-	
-	/**
-	 * An empty figure.
-	 */
-	public Figure() {
-		this(null, "");
-	}
+	private Document document;
+	private Location location;
+	private String index;
+	private Integer pageNo;
 	
 	/**
 	 * An empty figure relating to a document.
 	 * 
 	 * @param document 
+	 * @param graphic
+	 * @param index
 	 */
-	public Figure(File document) {
-		this(document, "");
-	}
-	
-	/**
-	 * An empty figure relating more spcifically to a document.
-	 * 
-	 * @param document 
-	 * @param context
-	 * @see Figure.setDocumentContext()
-	 */
-	public Figure(File document, String context) {
+	public Figure(Document document, File graphic, String index) {
 		this.document = document;
-		this.documentContext = context;
+		this.index = index;
+		this.pageNo = 1;
+		this.graphic = graphic;
 		this.caption = "";
+		this.location = null;
 	}
 
 	/**
@@ -101,7 +90,7 @@ public class Figure {
 	 * 
 	 * @return the document
 	 */
-	public File getDocument() {
+	public Document getDocument() {
 		return document;
 	}
 
@@ -110,44 +99,72 @@ public class Figure {
 	 * 
 	 * @param document the document to set
 	 */
-	public void setDocument(File document) {
+	public void setDocument(Document document) {
 		this.document = document;
 	}
 
 	/**
-	 * Sets a string containing more information about the figures "context"
-	 * in the document, e.g. the page number, line number or similar.
+	 * Returns the figure name, which is basically an unique index for the figure in it's document.
 	 * 
-	 * @return the documentContext
+	 * @return the index
 	 */
-	public String getDocumentContext() {
-		return documentContext;
+	public String getIndex() {
+		return index;
 	}
 
 	/**
-	 * Returns a string containing more information about the figures "context"
-	 * in the document, e.g. the page number, line number or similar.
+	 * Sets the figure name, which is basically an unique index for the figure in it's document.
 	 * 
-	 * @param documentContext the documentContext to set
+	 * @param index the index to set
 	 */
-	public void setDocumentContext(String documentContext) {
-		this.documentContext = documentContext;
+	public void setIndex(String index) {
+		this.index = index;
+	}
+
+	/**
+	 * Returns the page number containing the figure.
+	 * 
+	 * @return the page
+	 */
+	public Integer getPageNo() {
+		return pageNo;
+	}
+
+	/**
+	 * Sets the page number containing the figure. Defaults to 1.
+	 * 
+	 * @param page the page to set
+	 */
+	public void setPageNo(Integer page) {
+		if (page == null) {
+			page = 1;
+		}
+		this.pageNo = page;
+	}
+
+	/**
+	 * @return the location
+	 */
+	public Location getLocation() {
+		return location;
+	}
+
+	/**
+	 * @param location the location to set
+	 */
+	public void setLocation(Location location) {
+		this.location = location;
 	}
 	
 	/**
 	 * Saves all data to the specified folder.
 	 * 
+	 * Make sure the specified directory exists!
+	 * 
 	 * @param folder
 	 * @throws IOException
 	 */
 	public void save(File folder) throws IOException {
-		if (!folder.exists()) {
-			folder.mkdirs();
-		}
-		else if (!folder.isDirectory()) {
-			folder = folder.getParentFile();
-		}
-
 		File destGraphic = new File(folder, graphic.getName());
 		Files.copy(graphic.toPath(), destGraphic.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
@@ -155,8 +172,9 @@ public class Figure {
 		JsonFactory factory = new JsonFactory();
 		JsonGenerator g = factory.createGenerator(destMetadata, JsonEncoding.UTF8);
 		g.writeStartObject();
-		g.writeStringField("document", this.document.getName());
-		g.writeStringField("documentContext", this.documentContext);
+		g.writeStringField("document", this.document.getFile().getName());
+		g.writeStringField("page", this.pageNo.toString());
+		g.writeStringField("index", this.index);
 		g.writeStringField("caption", this.caption);
 		g.writeStringField("graphic", this.graphic.getName());
 		g.writeEndObject();

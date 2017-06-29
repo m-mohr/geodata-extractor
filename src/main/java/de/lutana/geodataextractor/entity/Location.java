@@ -12,4 +12,8 @@ public class Location extends Envelope {
 		super(x1, x2, y1, y2);
 	}
 	
+	public Location(Envelope e) {
+		super(e);
+	}
+	
 }
