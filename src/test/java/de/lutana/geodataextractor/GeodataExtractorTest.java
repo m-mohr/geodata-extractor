@@ -7,16 +7,11 @@ package de.lutana.geodataextractor;
 
 import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.entity.Figure;
-import de.lutana.geodataextractor.entity.FigureCollection;
 import de.lutana.geodataextractor.entity.Location;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import static org.junit.Assert.*;
 
 /**

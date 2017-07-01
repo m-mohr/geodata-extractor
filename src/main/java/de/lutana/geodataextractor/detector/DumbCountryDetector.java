@@ -13,9 +13,9 @@ import java.util.Map.Entry;
  * 
  * @author Matthias Mohr
  */
-public class DumbCountryDetector extends CaptionDetector {
+public class DumbCountryDetector implements TextDetector {
 	
-	private HashMap<String, Location> countryMap;
+	private final HashMap<String, Location> countryMap;
 	
 	public DumbCountryDetector() {
 		this.countryMap = new HashMap<>();
@@ -195,17 +195,15 @@ public class DumbCountryDetector extends CaptionDetector {
 	}
 
 	@Override
-	protected LocationCollection detectFromCaption(String caption) {
-		caption = caption.toLowerCase();
-		LocationCollection collection = new LocationCollection();
+	public void detect(String text, LocationCollection locations) {
+		text = text.toLowerCase();
 		Iterator<Entry<String, Location>> it = countryMap.entrySet().iterator();
 		while(it.hasNext()) {
 			Entry<String, Location> entry = it.next();
-			if (caption.contains(entry.getKey().toLowerCase())) {
-				collection.add(entry.getValue());
+			if (text.contains(entry.getKey().toLowerCase())) {
+				locations.add(entry.getValue());
 			}
 		}
-		return collection;
 	}
 	
 }

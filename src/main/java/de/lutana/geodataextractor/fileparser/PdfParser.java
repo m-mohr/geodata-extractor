@@ -33,7 +33,6 @@ public class PdfParser implements Parser {
 	 * might not be detected correctly, which is limited by PDFFigures.
 	 *
 	 * @param document File referencing an PDF based document
-	 * @return
 	 * @throws de.lutana.geodataextractor.fileparser.ParserException
 	 * @see http://pdffigures2.allenai.org/
 	 */

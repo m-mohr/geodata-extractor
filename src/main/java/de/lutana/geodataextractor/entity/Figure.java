@@ -14,12 +14,11 @@ import java.nio.file.StandardCopyOption;
  * 
  * @author Matthias Mohr
  */
-public class Figure {
+public class Figure extends Locatable {
 	
 	private String caption;
 	private File graphic;
 	private Document document;
-	private Location location;
 	private String index;
 	private Integer pageNo;
 	
@@ -36,7 +35,6 @@ public class Figure {
 		this.pageNo = 1;
 		this.graphic = graphic;
 		this.caption = "";
-		this.location = null;
 	}
 
 	/**
@@ -141,20 +139,6 @@ public class Figure {
 		}
 		this.pageNo = page;
 	}
-
-	/**
-	 * @return the location
-	 */
-	public Location getLocation() {
-		return location;
-	}
-
-	/**
-	 * @param location the location to set
-	 */
-	public void setLocation(Location location) {
-		this.location = location;
-	}
 	
 	/**
 	 * Saves all data to the specified folder.
@@ -170,15 +154,15 @@ public class Figure {
 
 		File destMetadata = new File(folder, FileExtension.replace(graphic.getName(), "json"));
 		JsonFactory factory = new JsonFactory();
-		JsonGenerator g = factory.createGenerator(destMetadata, JsonEncoding.UTF8);
-		g.writeStartObject();
-		g.writeStringField("document", this.document.getFile().getName());
-		g.writeStringField("page", this.pageNo.toString());
-		g.writeStringField("index", this.index);
-		g.writeStringField("caption", this.caption);
-		g.writeStringField("graphic", this.graphic.getName());
-		g.writeEndObject();
-		g.close();
+		try (JsonGenerator g = factory.createGenerator(destMetadata, JsonEncoding.UTF8)) {
+			g.writeStartObject();
+			g.writeStringField("document", this.document.getFile().getName());
+			g.writeStringField("page", this.pageNo.toString());
+			g.writeStringField("index", this.index);
+			g.writeStringField("caption", this.caption);
+			g.writeStringField("graphic", this.graphic.getName());
+			g.writeEndObject();
+		}
 	}
 	
 }

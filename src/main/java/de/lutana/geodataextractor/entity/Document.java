@@ -12,7 +12,7 @@ import java.util.Objects;
  *
  * @author Matthias Mohr
  */
-public class Document {
+public class Document implements Located {
 
 	private File file;
 	private String title;
@@ -49,6 +49,7 @@ public class Document {
 
 	/**
 	 * @param title the title to set
+	 * @return 
 	 */
 	public boolean setTitle(String title) {
 		if (title == null) {
@@ -72,6 +73,7 @@ public class Document {
 
 	/**
 	 * @param description the description to set
+	 * @return 
 	 */
 	public boolean setDescription(String description) {
 		if (description == null) {
@@ -142,13 +144,13 @@ public class Document {
 		try {
 			File destMetadata = new File(folder, "document.json");
 			JsonFactory factory = new JsonFactory();
-			JsonGenerator g = factory.createGenerator(destMetadata, JsonEncoding.UTF8);
-			g.writeStartObject();
-			g.writeStringField("document", this.file.getName());
-			g.writeStringField("title", this.title);
-			g.writeStringField("abstract", this.description);
-			g.writeEndObject();
-			g.close();
+			try (JsonGenerator g = factory.createGenerator(destMetadata, JsonEncoding.UTF8)) {
+				g.writeStartObject();
+				g.writeStringField("document", this.file.getName());
+				g.writeStringField("title", this.title);
+				g.writeStringField("abstract", this.description);
+				g.writeEndObject();
+			}
 		} catch(IOException ex) {
 			// ToDo: Better logging
 			ex.printStackTrace();
@@ -157,11 +159,9 @@ public class Document {
 		figures.save(folder);
 	}
 
-	/**
-	 * @return the location
-	 */
+	@Override
 	public Location getLocation() {
-		return this.figures.union();
+		return this.figures.getLocation();
 	}
 
 	private String getPath() {

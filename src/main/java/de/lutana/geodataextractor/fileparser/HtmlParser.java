@@ -3,7 +3,6 @@ package de.lutana.geodataextractor.fileparser;
 import de.lutana.geodataextractor.Config;
 import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.entity.Figure;
-import de.lutana.geodataextractor.entity.FigureCollection;
 import de.lutana.geodataextractor.util.FileExtension;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -97,8 +96,8 @@ public class HtmlParser implements Parser {
 	/**
 	 * Downloads an image from the web and stores it in a temporary folder.
 	 * 
-	 * Returns the gfxFile for the downloaded gfxFile.
- Doesn't support extracting inline images using the data URI (data:image/png;base64,...).
+	 * Returns the gfxFile for the downloaded gfxFile. 
+	 * Doesn't support extracting inline images using the data URI (data:image/png;base64,...).
 	 * 
 	 * @param srcUrl
 	 * @return

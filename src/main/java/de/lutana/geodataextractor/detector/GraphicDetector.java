@@ -1,34 +1,21 @@
 package de.lutana.geodataextractor.detector;
 
-import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import java.io.File;
 
 /**
- * Detects location information based on a graphic.
+ * Interface for different location information detection approaches based on graphics.
  * 
  * @author Matthias Mohr
  */
-public abstract class GraphicDetector implements Detector {
-
-	/**
-	 * Returns a list of detected locations for the specified figure based on it's graphic.
-	 * 
-	 * @param figure
-	 * @return 
-	 */
-	@Override
-	public LocationCollection detect(Figure figure) {
-		File file = figure.getGraphic();
-		return this.detectFromGraphic(file);
-	}
+public interface GraphicDetector {
 	
 	/**
-	 * Returns a list of detected locations for the specified figure based on it's graphic.
+	 * Returns a list of detected locations for the specified graphic.
 	 * 
 	 * @param graphicFile
-	 * @return 
+	 * @param locations
 	 */
-	protected abstract LocationCollection detectFromGraphic(File graphicFile);
+	public void detect(File graphicFile, LocationCollection locations);
 	
 }

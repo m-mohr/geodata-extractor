@@ -7,7 +7,7 @@ import java.util.Collection;
 
 /**
  *
- * @author Matthias
+ * @author Matthias Mohr
  */
 public class GeoTools {
 	

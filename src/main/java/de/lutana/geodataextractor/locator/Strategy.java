@@ -1,4 +1,4 @@
-package de.lutana.geodataextractor.detector;
+package de.lutana.geodataextractor.locator;
 
 import de.lutana.geodataextractor.entity.Document;
 
@@ -14,7 +14,7 @@ public interface Strategy {
 	 * for them with a certain strategy implemented here. It also combines all 
 	 * locations collected to a single location collections.
 	 * 
-	 * @param figures
+	 * @param document
 	 * @return
 	 */
 	public boolean execute(Document document);

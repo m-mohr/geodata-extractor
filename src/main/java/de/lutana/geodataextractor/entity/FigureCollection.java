@@ -9,7 +9,7 @@ import java.util.Iterator;
  *
  * @author Matthias Mohr
  */
-public class FigureCollection extends ArrayList<Figure> {
+public class FigureCollection extends ArrayList<Figure> implements Located {
 	
 	public void save(File folder) {
 		Iterator<Figure> it = this.iterator();
@@ -34,8 +34,9 @@ public class FigureCollection extends ArrayList<Figure> {
 		return collection;
 	}
 	
-	public Location union() {
-		return this.getFigureLocations().union();
+	@Override
+	public Location getLocation() {
+		return this.getFigureLocations().getLocation();
 	}
 	
 }

@@ -1,7 +1,7 @@
 package de.lutana.geodataextractor;
 
-import de.lutana.geodataextractor.detector.DefaultStrategy;
-import de.lutana.geodataextractor.detector.Strategy;
+import de.lutana.geodataextractor.locator.DefaultStrategy;
+import de.lutana.geodataextractor.locator.Strategy;
 import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.fileparser.Parser;
 import de.lutana.geodataextractor.fileparser.ParserFactory;
@@ -26,7 +26,7 @@ public class GeodataExtractor {
 	/**
 	 * Creates an instance using the DefaultStrategy.
 	 * 
-	 * @see de.lutana.geodataextractor.detector.DefaultStrategy
+	 * @see de.lutana.geodataextractor.locator.DefaultStrategy
 	 */
 	public GeodataExtractor() {
 		this(new DefaultStrategy());
@@ -54,10 +54,10 @@ public class GeodataExtractor {
 			return null;
 		}
 		
-		for(Document doc : this.documents) {
+		this.documents.forEach((doc) -> {
 			// ToDo: Put this in a thread?
 			this.runDocument(doc);
-		}
+		});
 
 		return this.documents;
 	}

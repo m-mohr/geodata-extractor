@@ -12,7 +12,7 @@ import java.util.HashMap;
  */
 public class ParserFactory {
 
-	private HashMap<String, Parser> parser;
+	private final HashMap<String, Parser> parser;
 
 	/**
 	 * Creates a new instance of the parser factory and adds the default parsers.

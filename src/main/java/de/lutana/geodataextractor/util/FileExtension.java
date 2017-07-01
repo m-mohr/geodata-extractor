@@ -4,7 +4,7 @@ import java.io.File;
 
 /**
  *
- * @author Matthias
+ * @author Matthias Mohr
  */
 public class FileExtension {
 
