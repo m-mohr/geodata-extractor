@@ -1,4 +1,4 @@
-package de.lutana.geodataextractor.parser;
+package de.lutana.geodataextractor.fileparser;
 
 import de.lutana.geodataextractor.Config;
 import de.lutana.geodataextractor.util.FileExtension;

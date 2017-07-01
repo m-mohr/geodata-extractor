@@ -1,8 +1,8 @@
 package de.lutana.geodataextractor;
 
-import de.lutana.geodataextractor.parser.HtmlParser;
-import de.lutana.geodataextractor.parser.Parser;
-import de.lutana.geodataextractor.parser.PdfParser;
+import de.lutana.geodataextractor.fileparser.HtmlParser;
+import de.lutana.geodataextractor.fileparser.Parser;
+import de.lutana.geodataextractor.fileparser.PdfParser;
 import java.io.File;
 
 /**

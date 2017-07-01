@@ -3,8 +3,8 @@ package de.lutana.geodataextractor;
 import de.lutana.geodataextractor.detector.DefaultStrategy;
 import de.lutana.geodataextractor.detector.Strategy;
 import de.lutana.geodataextractor.entity.Document;
-import de.lutana.geodataextractor.parser.Parser;
-import de.lutana.geodataextractor.parser.ParserFactory;
+import de.lutana.geodataextractor.fileparser.Parser;
+import de.lutana.geodataextractor.fileparser.ParserFactory;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
@@ -104,7 +104,7 @@ public class GeodataExtractor {
 	 * 
 	 * @param file file to add
 	 * @return Newly created Document object if added, null if not
-	 * @see de.lutana.geodataextractor.parser.ParserFactory
+	 * @see de.lutana.geodataextractor.fileparser.ParserFactory
 	 */
 	public Document addDocument(File file) {
 		if (this.parserFactory.hasParser(file)) {
@@ -134,7 +134,7 @@ public class GeodataExtractor {
 	 * 
 	 * @param file
 	 * @return 
-	 * @see de.lutana.geodataextractor.parser.ParserFactory
+	 * @see de.lutana.geodataextractor.fileparser.ParserFactory
 	 */
 	public int setFolder(File file) {
 		if (!file.isDirectory()) {

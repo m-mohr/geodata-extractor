@@ -1,4 +1,4 @@
-package de.lutana.geodataextractor.parser;
+package de.lutana.geodataextractor.fileparser;
 
 import de.lutana.geodataextractor.entity.Document;
 
@@ -25,7 +25,7 @@ public interface Parser {
 	 * Parses figures from documents.
 	 * 
 	 * @param document
-	 * @throws de.lutana.geodataextractor.parser.ParserException
+	 * @throws de.lutana.geodataextractor.fileparser.ParserException
 	 */
 	public void parse(Document document) throws ParserException;
 	

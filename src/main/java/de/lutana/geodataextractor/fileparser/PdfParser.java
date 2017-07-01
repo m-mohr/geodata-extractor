@@ -1,4 +1,4 @@
-package de.lutana.geodataextractor.parser;
+package de.lutana.geodataextractor.fileparser;
 
 import de.lutana.geodataextractor.Config;
 import de.lutana.geodataextractor.entity.Document;
@@ -34,7 +34,7 @@ public class PdfParser implements Parser {
 	 *
 	 * @param document File referencing an PDF based document
 	 * @return
-	 * @throws de.lutana.geodataextractor.parser.ParserException
+	 * @throws de.lutana.geodataextractor.fileparser.ParserException
 	 * @see http://pdffigures2.allenai.org/
 	 */
 	@Override

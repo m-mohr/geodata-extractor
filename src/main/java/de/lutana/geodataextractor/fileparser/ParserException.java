@@ -1,4 +1,4 @@
-package de.lutana.geodataextractor.parser;
+package de.lutana.geodataextractor.fileparser;
 
 /**
  * Exception thrown when problems with Figure parsing occur.
