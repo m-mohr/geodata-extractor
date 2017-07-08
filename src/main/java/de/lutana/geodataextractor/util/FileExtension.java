@@ -1,6 +1,7 @@
 package de.lutana.geodataextractor.util;
 
 import java.io.File;
+import java.io.FilenameFilter;
 
 /**
  *
@@ -52,6 +53,21 @@ public class FileExtension {
 			return path.substring(0, i + 1) + newExtension;
 		}
 		return path + "." + newExtension;
+	}
+	
+	public static class Filter implements FilenameFilter {
+		
+		public String extension;
+		
+		public Filter(String extension) {
+			this.extension = extension.toLowerCase();
+		}
+	
+        @Override
+        public boolean accept(File dir, String name) {
+            return FileExtension.get(name).equals(this.extension);
+        }
+		
 	}
 	
 }

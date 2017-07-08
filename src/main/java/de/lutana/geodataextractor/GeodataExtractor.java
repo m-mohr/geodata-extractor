@@ -3,9 +3,12 @@ package de.lutana.geodataextractor;
 import de.lutana.geodataextractor.locator.DefaultStrategy;
 import de.lutana.geodataextractor.locator.Strategy;
 import de.lutana.geodataextractor.entity.Document;
+import de.lutana.geodataextractor.entity.Figure;
+import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.fileparser.Parser;
 import de.lutana.geodataextractor.fileparser.ParserFactory;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -183,6 +186,24 @@ public class GeodataExtractor {
 	 */
 	public void enableSaveFigures(boolean saveFigures) {
 		this.saveFigures = saveFigures;
+	}
+	
+	/**
+	 * 
+	 * @param args 
+	 * @throws java.io.IOException 
+	 */
+	public static void main(String[] args) throws IOException {
+		File folder = new File("./test-docs/");
+		System.out.println("Exporting all figures from folder " + folder.getCanonicalPath() + ".");
+		GeodataExtractor instance = new GeodataExtractor();
+		instance.enableSaveFigures(true);
+		instance.setFolder(folder);
+		Set<Document> result = instance.run();
+		System.out.println("Parsing results:");
+		for(Document doc : result) {
+			System.out.println("- " + doc.getFile().getName()+ ": " + doc.getLocation());
+		}
 	}
 	
 }
