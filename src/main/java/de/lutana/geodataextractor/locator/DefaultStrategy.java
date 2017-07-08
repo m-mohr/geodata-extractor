@@ -1,5 +1,6 @@
 package de.lutana.geodataextractor.locator;
 
+import de.lutana.geodataextractor.detector.ClavinDetector;
 import de.lutana.geodataextractor.detector.DumbCountryDetector;
 import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.entity.Figure;
@@ -16,9 +17,11 @@ import java.io.File;
 public class DefaultStrategy implements Strategy {
 	
 	private DumbCountryDetector dumbDetector;
+	private ClavinDetector clavinDetector;
 	
 	public DefaultStrategy() {
 		this.dumbDetector = new DumbCountryDetector();
+		this.clavinDetector = new ClavinDetector();
 	}
 
 	/**
@@ -50,6 +53,7 @@ public class DefaultStrategy implements Strategy {
 	protected void getLocationsFromText(String text, LocationCollection locations, double weight) {
 		locations.setWeight(weight);
 		this.dumbDetector.detect(text, locations);
+		this.clavinDetector.detect(text, locations);
 		// ToDo: ...
 		locations.resetWeight();
 	}

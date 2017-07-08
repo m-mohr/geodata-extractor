@@ -10,7 +10,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-Dsun.java2d.cmm=sun.java2d.cmm.kcms.KcmsServiceProvider -classpath %classpath de.lutana.geodataextractor.Cli</exec.args>
+                <exec.args>-Dsun.java2d.cmm=sun.java2d.cmm.kcms.KcmsServiceProvider -Xmx8g -classpath %classpath de.lutana.geodataextractor.Cli</exec.args>
                 <exec.executable>java</exec.executable>
             </properties>
         </action>
@@ -24,7 +24,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -Dsun.java2d.cmm=sun.java2d.cmm.kcms.KcmsServiceProvider -classpath %classpath de.lutana.geodataextractor.Cli</exec.args>
+                <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -Dsun.java2d.cmm=sun.java2d.cmm.kcms.KcmsServiceProvider -Xmx8g -classpath %classpath de.lutana.geodataextractor.Cli</exec.args>
                 <exec.executable>java</exec.executable>
                 <jpda.listen>true</jpda.listen>
             </properties>
@@ -39,8 +39,11 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-Dsun.java2d.cmm=sun.java2d.cmm.kcms.KcmsServiceProvider -classpath %classpath de.lutana.geodataextractor.Cli</exec.args>
+                <exec.args>-Dsun.java2d.cmm=sun.java2d.cmm.kcms.KcmsServiceProvider -Xmx8g -classpath %classpath de.lutana.geodataextractor.Cli</exec.args>
                 <exec.executable>java</exec.executable>
             </properties>
         </action>
+        
+        
+        
     </actions>
