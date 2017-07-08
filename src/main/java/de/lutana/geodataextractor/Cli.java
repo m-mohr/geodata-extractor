@@ -40,7 +40,7 @@ public class Cli {
 			gde.setStrategy(cli.strategy);
 		}
 		if (cli.save) {
-			gde.enableSaveFigures(cli.save);
+			gde.setCachingAllowed(cli.save);
 		}
 		gde.run();
 	}

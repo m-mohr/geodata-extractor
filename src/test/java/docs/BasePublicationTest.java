@@ -21,9 +21,8 @@ public abstract class BasePublicationTest {
 
 	private static final Double JACCARD_INDEX_THRESHOLD = 0.5;
 	protected static final File DOC_FOLDER = new File("./test-docs/");
-	protected static final File META_FOLDER = new File("./parsed-maps/");
 
-	private static GeodataExtractor instance = new GeodataExtractor();
+	private static GeodataExtractor instance;
 
 	protected void runDocumentTest(String documentFile) {
 		Document document = getDocument(documentFile);
@@ -38,7 +37,7 @@ public abstract class BasePublicationTest {
 	}
 
 	protected void runTest(String documentFile, Location location) {
-		this.assertDocument(location, this.getDocument(documentFile));
+		this.assertDocument(location, getDocument(documentFile));
 	}
 
 	protected void assertDocument(Location expected, Document document) {
@@ -47,17 +46,16 @@ public abstract class BasePublicationTest {
 
 	protected void assertLocation(String testName, Location expected, Location result) {
 		Double jaccardIndex = GeoTools.calcJaccardIndex(expected, result);
-		System.out.print(testName + ": Expected " + expected + "; Found " + result);
+		String info = " - " + testName + ": Expected " + expected + "; Found " + result;
 		if (expected == null) {
-			System.out.println(" - Not a map");
+			System.out.println("NOMAP" + info);
 			assertTrue("Not a map", true);
 		}
 		else {
-			System.out.println(" - Jaccard Index: " + jaccardIndex);
-			assertTrue(
-					"Calculated Jaccard Index (" + jaccardIndex + ") should be greater than threshold (" + JACCARD_INDEX_THRESHOLD + ")",
-					jaccardIndex > JACCARD_INDEX_THRESHOLD
-			);
+			boolean success = (jaccardIndex > JACCARD_INDEX_THRESHOLD);
+			Double formatted = Math.round(jaccardIndex * 100d) / 100d;
+			System.out.println((success ? "FOUND" : "ERROR") + info + " - Jaccard Index: " + formatted);
+			assertTrue("Calculated Jaccard Index (" + formatted + ") should be greater than threshold (" + JACCARD_INDEX_THRESHOLD + ")", success);
 		}
 	}
 
@@ -96,8 +94,13 @@ public abstract class BasePublicationTest {
 		return null;
 	}
 
-	public static Document getDocument(String documentFile) {
-		return instance.runSingle(getDocumentFile(documentFile));
+	public static Document getDocument(String documentPath) {
+		if (instance == null) {
+			instance = new GeodataExtractor();
+			instance.setCachingAllowed(true);
+		}
+		File documentFile = getDocumentFile(documentPath);
+		return instance.runSingle(documentFile);
 	}
 
 	public static File getDocumentFile(String documentFile) {
@@ -105,7 +108,7 @@ public abstract class BasePublicationTest {
 	}
 
 	public static File getFigureMetaFolder(String documentFile) {
-		File docFileObj = new File(META_FOLDER, documentFile);
+		File docFileObj = getDocumentFile(documentFile);
 		return new File(docFileObj.getAbsolutePath() + "-figures");
 	}
 
@@ -120,8 +123,10 @@ public abstract class BasePublicationTest {
 		public BBoxContainer() {}
 		public LocationCollection toLocationCollection() {
 			LocationCollection collection = new LocationCollection();
-			for(BBox location : locations) {
-				collection.add(location.toLocation());
+			if (locations != null) {
+				for(BBox location : locations) {
+					collection.add(location.toLocation());
+				}
 			}
 			return collection;
 		}

@@ -3,6 +3,8 @@ package de.lutana.geodataextractor.entity;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import de.lutana.geodataextractor.util.FileExtension;
 import java.io.File;
 import java.io.IOException;
@@ -139,6 +141,43 @@ public class Figure extends Locatable {
 		}
 		this.pageNo = page;
 	}
+
+	/**
+	 * Loads all figure data from disk.
+	 * 
+	 * @return
+	 */
+	public boolean load() {
+		File jsonFile = new File(FileExtension.replace(this.graphic.getAbsolutePath(), "json"));
+		if (!jsonFile.exists()) {
+			return false;
+		}
+		
+		try {
+			JsonFactory factory = new JsonFactory();
+			JsonParser parser = factory.createParser(jsonFile);
+			while(!parser.isClosed()){
+				JsonToken jsonToken = parser.nextToken();
+				if(JsonToken.FIELD_NAME.equals(jsonToken)){
+					String fieldName = parser.getCurrentName();
+					jsonToken = parser.nextToken();
+					if(fieldName.equals("page")){
+						this.pageNo = parser.getValueAsInt();
+					}
+					else if (fieldName.equals("index")){
+						this.index = parser.getValueAsString();
+					}
+					else if (fieldName.equals("caption")){
+						this.caption = parser.getValueAsString();
+					}
+				}
+			}
+			return true;
+		} catch(IOException ex) {
+			ex.printStackTrace();
+			return false;
+		}
+	}
 	
 	/**
 	 * Saves all data to the specified folder.
@@ -150,9 +189,14 @@ public class Figure extends Locatable {
 	 */
 	public void save(File folder) throws IOException {
 		File destGraphic = new File(folder, graphic.getName());
-		Files.copy(graphic.toPath(), destGraphic.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		if (graphic.exists()) {
+			Files.copy(graphic.toPath(), destGraphic.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		}
 
 		File destMetadata = new File(folder, FileExtension.replace(graphic.getName(), "json"));
+		if (destMetadata.exists()) {
+			return;
+		}
 		JsonFactory factory = new JsonFactory();
 		try (JsonGenerator g = factory.createGenerator(destMetadata, JsonEncoding.UTF8)) {
 			g.writeStartObject();

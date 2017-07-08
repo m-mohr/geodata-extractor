@@ -3,8 +3,6 @@ package de.lutana.geodataextractor;
 import de.lutana.geodataextractor.locator.DefaultStrategy;
 import de.lutana.geodataextractor.locator.Strategy;
 import de.lutana.geodataextractor.entity.Document;
-import de.lutana.geodataextractor.entity.Figure;
-import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.fileparser.Parser;
 import de.lutana.geodataextractor.fileparser.ParserFactory;
 import java.io.File;
@@ -24,7 +22,7 @@ public class GeodataExtractor {
 	private Set<Document> documents;
 	private Strategy strategy;
 	private ParserFactory parserFactory;
-	private boolean saveFigures;
+	private boolean cachingAllowed;
 	
 	/**
 	 * Creates an instance using the DefaultStrategy.
@@ -44,7 +42,7 @@ public class GeodataExtractor {
 		this.documents = new HashSet<>();
 		this.strategy = strategy;
 		this.parserFactory = new ParserFactory();
-		this.saveFigures = false;
+		this.cachingAllowed = false;
 	}
 	
 	/**
@@ -80,15 +78,26 @@ public class GeodataExtractor {
 	}
 	
 	protected boolean runDocument(Document doc) {
-		try {
-			Parser parser = this.parserFactory.getParser(doc.getFile());
-			parser.parse(doc);
-			if (canSaveFigures()) {
-				doc.save();
+		boolean loaded = false;
+		if (this.isCachingAllowed()) {
+			loaded = doc.load();
+		}
+		if (!loaded) {
+			try {
+				Parser parser = this.parserFactory.getParser(doc.getFile());
+				parser.parse(doc);
+				if (this.isCachingAllowed()) {
+					doc.save();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				return false;
 			}
+		}
+		try {
 			return this.strategy.execute(doc);
 		} catch (Exception e) {
-			e.printStackTrace(); // ToDo: Better logging
+			e.printStackTrace();
 			return false;
 		}
 	}
@@ -175,17 +184,17 @@ public class GeodataExtractor {
 	}
 
 	/**
-	 * @return the save
+	 * @return
 	 */
-	public boolean canSaveFigures() {
-		return saveFigures;
+	public boolean isCachingAllowed() {
+		return cachingAllowed;
 	}
 
 	/**
-	 * @param saveFigures the save to set
+	 * @param allowed
 	 */
-	public void enableSaveFigures(boolean saveFigures) {
-		this.saveFigures = saveFigures;
+	public void setCachingAllowed(boolean allowed) {
+		this.cachingAllowed = allowed;
 	}
 	
 	/**
@@ -197,7 +206,7 @@ public class GeodataExtractor {
 		File folder = new File("./test-docs/");
 		System.out.println("Exporting all figures from folder " + folder.getCanonicalPath() + ".");
 		GeodataExtractor instance = new GeodataExtractor();
-		instance.enableSaveFigures(true);
+		instance.setCachingAllowed(true);
 		instance.setFolder(folder);
 		Set<Document> result = instance.run();
 		System.out.println("Parsing results:");

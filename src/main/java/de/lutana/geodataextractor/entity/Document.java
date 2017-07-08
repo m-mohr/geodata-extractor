@@ -3,6 +3,8 @@ package de.lutana.geodataextractor.entity;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
@@ -130,16 +132,51 @@ public class Document implements Located {
 	}
 
 	/**
+	 * Loads all figure data from disk.
+	 * 
+	 * @return
+	 */
+	public boolean load() {
+		File folder = new File(this.file.getAbsolutePath() + "-figures");
+		if (!folder.exists()) {
+			return false;
+		}
+		
+		try {
+			File jsonFile = new File(folder, "document.json");
+			JsonFactory factory = new JsonFactory();
+			JsonParser parser = factory.createParser(jsonFile);
+			while(!parser.isClosed()){
+				JsonToken jsonToken = parser.nextToken();
+				if(JsonToken.FIELD_NAME.equals(jsonToken)){
+					String fieldName = parser.getCurrentName();
+					jsonToken = parser.nextToken();
+					if(fieldName.equals("title")){
+						this.title = parser.getValueAsString();
+					}
+					else if (fieldName.equals("abstract")){
+						this.description = parser.getValueAsString();
+					}
+				}
+			}
+			
+			return figures.load(folder, this);
+		} catch(IOException ex) {
+			ex.printStackTrace();
+			return false;
+		}
+	}
+
+	/**
 	 * Saves all figure data to disk.
 	 */
 	public void save() {
 		File folder = new File(this.file.getAbsolutePath() + "-figures");
-		if (!folder.exists()) {
-			folder.mkdirs();
+		if (folder.exists()) {
+			return;
 		}
-		else if (!folder.isDirectory()) {
-			folder = folder.getParentFile();
-		}
+
+		folder.mkdirs();
 		
 		try {
 			File destMetadata = new File(folder, "document.json");
@@ -152,7 +189,6 @@ public class Document implements Located {
 				g.writeEndObject();
 			}
 		} catch(IOException ex) {
-			// ToDo: Better logging
 			ex.printStackTrace();
 		}
 		
