@@ -53,9 +53,9 @@ public class PdfParser implements Parser {
 			DocumentMetadata meta = extractor.getMetadata();
 			document.setTitle(meta.getTitle());
 			document.setDescription(meta.getAbstrakt());
-		} catch (IOException | AnalysisException | TimeoutException | AssertionError ex) {
+		} catch (IOException | AnalysisException | TimeoutException ex) {
 			ex.printStackTrace();
-		}
+		} catch (AssertionError er) {}
 
 		PDDocument pdfBoxDoc = null;
 		try {

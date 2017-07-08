@@ -41,6 +41,9 @@ public class LocationCollection implements Located, SortedSet<Location>, Compara
 	}
 	
 	public Location getMostLikelyLocation() {
+		if (this.isEmpty()) {
+			return null;
+		}
 		// ToDo: Merge bboxes and calculate the most probable place based on all locations (remember: they might intersect!)
 		return this.first();
 	}
