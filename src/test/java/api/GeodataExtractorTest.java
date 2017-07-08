@@ -22,16 +22,18 @@ public class GeodataExtractorTest {
 	 */
 	@org.junit.Test
 	public void testRun() throws IOException {
-		File folder = new File("./test-docs/");
-		GeodataExtractor instance = new GeodataExtractor();
-		instance.setFolder(folder);
+		File documentFile = new File("test-docs/germany.html");
+
 		Set<Document> expResult = new HashSet<>();
-		Document doc = new Document(new File("test-docs/germany.html"));
+		Document doc = new Document(documentFile);
 		Figure figure = doc.addFigure(null, null);
 		figure.setLocation(new Location(5.98865807458, 47.3024876979, 15.0169958839, 54.983104153));
 		expResult.add(doc);
-		
+
+		GeodataExtractor instance = new GeodataExtractor();
+		instance.addDocument(documentFile);
 		Set<Document> result = instance.run();
+
 		assertEquals(expResult, result);
 	}
 	
