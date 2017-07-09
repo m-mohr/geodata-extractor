@@ -3,8 +3,9 @@ package de.lutana.geodataextractor.detector;
 import com.bericotech.clavin.ClavinException;
 import com.bericotech.clavin.GeoParser;
 import com.bericotech.clavin.GeoParserFactory;
-import com.bericotech.clavin.extractor.LocationOccurrence;
+import com.bericotech.clavin.gazetteer.GeoName;
 import com.bericotech.clavin.resolver.ResolvedLocation;
+import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import de.lutana.geodataextractor.util.ClavinIndexDirectoryBuilder;
 import java.io.File;
@@ -19,7 +20,6 @@ public class ClavinDetector implements TextDetector {
 	private static final String DEFAULT_INDEX_DIRECTORY = "./IndexDirectory";
 
 	public static GeoParser getGeoParser() throws ClavinException {
-		System.out.println((new File(".")).getAbsolutePath());
 		if (geoParser == null) {
 			createIndex();
 			geoParser = GeoParserFactory.getDefault(DEFAULT_INDEX_DIRECTORY);
@@ -58,11 +58,10 @@ public class ClavinDetector implements TextDetector {
 
 			// Display the ResolvedLocations found for the location names
 			for (ResolvedLocation resolvedLocation : resolvedLocations) {
-				LocationOccurrence lo = resolvedLocation.getLocation();
-				System.out.println(lo);
-				/*				Location l = new Location(lo.);
+				GeoName geoname = resolvedLocation.getGeoname();
+				Location l = new Location(geoname.getLongitude(), geoname.getLongitude(), geoname.getLatitude(), geoname.getLatitude());
 				l.setProbability(resolvedLocation.getConfidence());
-				locations.add(l); */
+				locations.add(l);
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
