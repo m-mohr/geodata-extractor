@@ -2,6 +2,7 @@ package de.lutana.geodataextractor.locator;
 
 import de.lutana.geodataextractor.detector.ClavinDetector;
 import de.lutana.geodataextractor.detector.DumbCountryDetector;
+import de.lutana.geodataextractor.detector.OcrDetector;
 import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.FigureCollection;
@@ -18,10 +19,12 @@ public class DefaultStrategy implements Strategy {
 	
 	private DumbCountryDetector dumbDetector;
 	private ClavinDetector clavinDetector;
+	private OcrDetector ocrDetector;
 	
 	public DefaultStrategy() {
 		this.dumbDetector = new DumbCountryDetector();
 		this.clavinDetector = new ClavinDetector();
+		this.ocrDetector = new OcrDetector();
 	}
 
 	/**
@@ -44,7 +47,8 @@ public class DefaultStrategy implements Strategy {
 			this.getLocationsFromText(figure.getCaption(), locations, 0.9);
 			this.getLocationsFromGraphic(figure.getGraphic(), locations, 1);
 
-			Location location = locations.getMostLikelyLocation();
+//			Location location = locations.getMostLikelyLocation();
+			Location location = locations.getLocation();
 			figure.setLocation(location);
 		}
 		return true;
@@ -60,6 +64,7 @@ public class DefaultStrategy implements Strategy {
 	
 	protected void getLocationsFromGraphic(File graphicFile, LocationCollection locations, double weight) {
 		locations.setWeight(weight);
+		this.ocrDetector.detect(graphicFile, locations);
 		// ToDo: ...
 		locations.resetWeight();
 	}
