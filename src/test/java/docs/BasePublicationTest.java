@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.lutana.geodataextractor.Config;
 import de.lutana.geodataextractor.GeodataExtractor;
 import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.entity.Figure;
@@ -14,6 +15,7 @@ import de.lutana.geodataextractor.util.FileExtension;
 import de.lutana.geodataextractor.util.GeoTools;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import static org.junit.Assert.assertTrue;
 
@@ -27,13 +29,13 @@ public abstract class BasePublicationTest {
 	protected void runDocumentTest(String documentFile) {
 		Document document = getDocument(documentFile);
 		Location expected = this.getExpectedLocationForDocument(document);
-		this.assertLocation(documentFile, expected, document.getLocation());
+		this.assertLocation(documentFile, expected, document.getLocation(), null);
 	}
 
 	protected void runFigureTest(Figure figure) {
 		Document document = figure.getDocument();
 		Location expected = this.getExpectedLocationForFigure(figure);
-		this.assertLocation(document.getFile().getName() + "#" + figure.getGraphic().getName(), expected, figure.getLocation());
+		this.assertLocation(document.getFile().getName() + "#" + figure.getGraphic().getName(), expected, figure.getLocation(), figure.getGraphic());
 	}
 
 	protected void runTest(String documentFile, Location location) {
@@ -41,10 +43,10 @@ public abstract class BasePublicationTest {
 	}
 
 	protected void assertDocument(Location expected, Document document) {
-		this.assertLocation(document.getFile().getName(), expected, document.getLocation());
+		this.assertLocation(document.getFile().getName(), expected, document.getLocation(), document.getFile());
 	}
 
-	protected void assertLocation(String testName, Location expected, Location result) {
+	protected void assertLocation(String testName, Location expected, Location result, File contextFile) {
 		Double jaccardIndex = GeoTools.calcJaccardIndex(expected, result);
 		String info = " - " + testName + ": Expected " + expected + "; Found " + result;
 		if (expected == null) {
@@ -55,6 +57,9 @@ public abstract class BasePublicationTest {
 			boolean success = (jaccardIndex > JACCARD_INDEX_THRESHOLD);
 			Double formatted = Math.round(jaccardIndex * 100d) / 100d;
 			System.out.println((success ? "FOUND" : "ERROR") + info + " - Jaccard Index: " + formatted);
+			try {
+				System.out.println("        " + Config.getTestUrl(expected, result, contextFile));
+			} catch (UnsupportedEncodingException ex) {}
 			assertTrue("Calculated Jaccard Index (" + formatted + ") should be greater than threshold (" + JACCARD_INDEX_THRESHOLD + ")", success);
 		}
 	}
