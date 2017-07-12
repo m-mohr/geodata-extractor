@@ -1,5 +1,6 @@
 package de.lutana.geodataextractor.detector;
 
+import de.lutana.geodataextractor.entity.Graphic;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import java.util.ArrayList;
@@ -18,9 +19,15 @@ public class CoordinateDetector implements TextDetector {
 
 	@Override
 	public void detect(String text, LocationCollection locations) {
-		List<Double> longitude = new ArrayList<>();
-		List<Double> latitude = new ArrayList<>();
-		
+		CoordinatePairs cp = this.parseWgsCoordinates(text);
+		Location l = cp.getLocation();
+		if (l != null) {
+			locations.add(l);
+		}
+	}
+	
+	public CoordinatePairs parseWgsCoordinates(String text) {
+		CoordinatePairs cp = new CoordinatePairs();
 		Matcher m = wgsPattern.matcher(text);
 		while (m.find()) {
 			String degStr = m.group(1).replace(',', '.').replace('‚', '.').replace('’', '.').replace('-', '.').replace('_', '.');
@@ -40,30 +47,50 @@ public class CoordinateDetector implements TextDetector {
 				sec = Double.parseDouble(secStr);
 			}
 			
+			Double coord = deg + (min / 60d) + (sec / 3600d);
+			
 			String sigStr = m.group(4);
-			Integer sig = 1;
 			if (sigStr.equalsIgnoreCase("S") || sigStr.equalsIgnoreCase("W")) {
-				sig = -1;
+				coord = -1 * coord;
 			}
 			
-			Double coord = sig * (deg + (min / 60d) + (sec / 3600d));
 			// ToDO: Remove outliers
 			if (sigStr.equalsIgnoreCase("S") || sigStr.equalsIgnoreCase("N")) {
-				latitude.add(coord);
+				cp.latitude().add(coord);
 			}
 			else {
-				longitude.add(coord);
+				cp.longitude().add(coord);
 			}
 		}
-
-		if (longitude.size() > 0 && latitude.size() > 0) {
-			Double minLon = Collections.min(longitude);
-			Double maxLon = Collections.max(longitude);
-			Double minLat = Collections.min(latitude);
-			Double maxLat = Collections.max(latitude);
-			Location l = new Location(minLon, maxLon, minLat, maxLat);
-			locations.add(l);
+		return cp;
+	}
+	
+	public class CoordinatePairs {
+		
+		private final List<Double> longitude = new ArrayList<>();
+		private final List<Double> latitude = new ArrayList<>();
+		
+		public List<Double> longitude() {
+			return this.longitude;
 		}
+		
+		public List<Double> latitude() {
+			return this.latitude;
+		}
+		
+		public Location getLocation() {
+			if (longitude.size() > 0 && latitude.size() > 0) {
+				Double minLon = Collections.min(longitude);
+				Double maxLon = Collections.max(longitude);
+				Double minLat = Collections.min(latitude);
+				Double maxLat = Collections.max(latitude);
+				return new Location(minLon, maxLon, minLat, maxLat);
+			}
+			else {
+				return null;
+			}
+		}
+		
 	}
 
 }

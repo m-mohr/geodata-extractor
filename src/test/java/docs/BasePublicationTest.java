@@ -35,7 +35,7 @@ public abstract class BasePublicationTest {
 	protected void runFigureTest(Figure figure) {
 		Document document = figure.getDocument();
 		Location expected = this.getExpectedLocationForFigure(figure);
-		this.assertLocation(document.getFile().getName() + "#" + figure.getGraphic().getName(), expected, figure.getLocation(), figure.getGraphic());
+		this.assertLocation(document.getFile().getName() + "#" + figure.getGraphicFile().getName(), expected, figure.getLocation(), figure.getGraphicFile());
 	}
 
 	protected void runTest(String documentFile, Location location) {
@@ -119,7 +119,7 @@ public abstract class BasePublicationTest {
 
 	public static File getFigureMetaFile(Figure figure) {
 		File metaFolder = getFigureMetaFolder(figure.getDocument().getFile().getName());
-		return new File(metaFolder, FileExtension.replace(figure.getGraphic().getName(), "json"));
+		return new File(metaFolder, FileExtension.replace(figure.getGraphicFile().getName(), "json"));
 	}
 	
 	@JsonIgnoreProperties(ignoreUnknown = true)

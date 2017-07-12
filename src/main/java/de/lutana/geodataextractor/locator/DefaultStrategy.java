@@ -6,9 +6,9 @@ import de.lutana.geodataextractor.detector.OcrDetector;
 import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.FigureCollection;
+import de.lutana.geodataextractor.entity.Graphic;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
-import java.io.File;
 
 /**
  * Default strategy to gather and combine location information.
@@ -62,9 +62,9 @@ public class DefaultStrategy implements Strategy {
 		locations.resetWeight();
 	}
 	
-	protected void getLocationsFromGraphic(File graphicFile, LocationCollection locations, double weight) {
+	protected void getLocationsFromGraphic(Graphic graphic, LocationCollection locations, double weight) {
 		locations.setWeight(weight);
-		this.ocrDetector.detect(graphicFile, locations);
+		this.ocrDetector.detect(graphic, locations);
 		// ToDo: ...
 		locations.resetWeight();
 	}

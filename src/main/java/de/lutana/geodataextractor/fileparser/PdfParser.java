@@ -91,7 +91,7 @@ public class PdfParser implements Parser {
 
 				Figure figure = document.addFigure(tempFile, figName, page);
 				figure.setCaption(rfigure.figure().caption());
-				figure.setGraphic(tempFile);
+				figure.setGraphicFile(tempFile);
 			}
 			pdfBoxDoc.close();
 		} catch (IOException ex) {

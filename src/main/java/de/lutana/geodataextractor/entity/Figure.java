@@ -19,7 +19,7 @@ import java.nio.file.StandardCopyOption;
 public class Figure extends Locatable {
 	
 	private String caption;
-	private File graphic;
+	private Graphic graphic;
 	private Document document;
 	private String index;
 	private Integer pageNo;
@@ -35,8 +35,8 @@ public class Figure extends Locatable {
 		this.document = document;
 		this.index = index;
 		this.pageNo = 1;
-		this.graphic = graphic;
 		this.caption = "";
+		this.setGraphicFile(graphic);
 	}
 
 	/**
@@ -62,13 +62,22 @@ public class Figure extends Locatable {
 	}
 
 	/**
+	 * Returns the graphic.
+	 * 
+	 * @return the graphic
+	 */
+	public Graphic getGraphic() {
+		return this.graphic;
+	}
+
+	/**
 	 * Returns the graphic file.
 	 * 
 	 * @return the graphic
 	 * @see Figure.setGraphic()
 	 */
-	public File getGraphic() {
-		return graphic;
+	public File getGraphicFile() {
+		return this.graphic.getFile();
 	}
 
 	/**
@@ -81,8 +90,8 @@ public class Figure extends Locatable {
 	 * 
 	 * @param graphic the graphic to set
 	 */
-	public void setGraphic(File graphic) {
-		this.graphic = graphic;
+	public final void setGraphicFile(File graphic) {
+		this.graphic = new Graphic(graphic);
 	}
 
 	/**
@@ -148,7 +157,7 @@ public class Figure extends Locatable {
 	 * @return
 	 */
 	public boolean load() {
-		File jsonFile = new File(FileExtension.replace(this.graphic.getAbsolutePath(), "json"));
+		File jsonFile = new File(FileExtension.replace(getGraphicFile().getAbsolutePath(), "json"));
 		if (!jsonFile.exists()) {
 			return false;
 		}
@@ -188,12 +197,13 @@ public class Figure extends Locatable {
 	 * @throws IOException
 	 */
 	public void save(File folder) throws IOException {
-		File destGraphic = new File(folder, graphic.getName());
-		if (graphic.exists()) {
-			Files.copy(graphic.toPath(), destGraphic.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		File graphicFile = getGraphicFile();
+		File destGraphic = new File(folder, graphicFile.getName());
+		if (graphicFile.exists()) {
+			Files.copy(graphicFile.toPath(), destGraphic.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
 
-		File destMetadata = new File(folder, FileExtension.replace(graphic.getName(), "json"));
+		File destMetadata = new File(folder, FileExtension.replace(graphicFile.getName(), "json"));
 		if (destMetadata.exists()) {
 			return;
 		}
@@ -204,7 +214,7 @@ public class Figure extends Locatable {
 			g.writeStringField("page", this.pageNo.toString());
 			g.writeStringField("index", this.index);
 			g.writeStringField("caption", this.caption);
-			g.writeStringField("graphic", this.graphic.getName());
+			g.writeStringField("graphic", graphicFile.getName());
 			g.writeEndObject();
 		}
 	}
