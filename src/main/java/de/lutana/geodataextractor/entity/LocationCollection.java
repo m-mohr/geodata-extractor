@@ -110,6 +110,9 @@ public class LocationCollection implements Located, SortedSet<Location>, Compara
 
 	@Override
 	public boolean add(Location o) {
+		if (o == null) {
+			throw new NullPointerException();
+		}
 		o.setWeight(this.weight);
 		return this.data.add(o);
 	}

@@ -7,7 +7,7 @@ package de.lutana.geodataextractor.entity;
  */
 public abstract class Locatable implements Located {
 	
-	private Location location;
+	protected Location location;
 
 	@Override
 	public Location getLocation() {
