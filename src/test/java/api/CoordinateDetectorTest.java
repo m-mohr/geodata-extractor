@@ -31,12 +31,8 @@ public class CoordinateDetectorTest {
 			{"34 G 683473 4942631", new Location(23.3545, -45.6456)},
 			{"25 L 404859 8588690", new Location(-33.8765, -12.765)},
 			{"02 C 506346 1057742", new Location(-170.654, -80.5434)},
-			{"60 Z 500000 9997964", new Location(177.0, 90.0)},
-			{"01 A 500000 2035", new Location(-177.0, -90.0)},
-			{"31 Z 500000 9997964", new Location(3.0, 90.0)},
 			{"08 Q 453580 2594272", new Location(-135.4545, 23.4578)},
-			{"57 X 450793 8586116", new Location(156.9876, 77.3450)},
-			{"You can find it at UTM 22A 502639 75072.", new Location(-48.9306, -89.3454)}
+			{"You can find it at UTM 57 X 450793 8586116.", new Location(156.9876, 77.3450)}
 		};
 		return Arrays.asList(list);
     }

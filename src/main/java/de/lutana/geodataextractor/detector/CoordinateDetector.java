@@ -3,12 +3,12 @@ package de.lutana.geodataextractor.detector;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import de.lutana.geodataextractor.util.GeoTools;
-import de.lutana.geodataextractor.util.UtmCoordinateConversion;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import uk.me.jstott.jcoord.LatLng;
+import uk.me.jstott.jcoord.UTMRef;
 
 /**
  * Parses coordinates from text and converts them to Dezimalgrad.
@@ -40,13 +40,16 @@ public class CoordinateDetector implements TextDetector {
 
 	public CoordinatePairs parseUtmCoordinates(String text) {
 		CoordinatePairs cp = new CoordinatePairs();
-		UtmCoordinateConversion converter = new UtmCoordinateConversion();
 		Matcher m = GeoTools.UTM_PATTERN.matcher(text);
 		while (m.find()) {
-			double[] latlon = converter.utm2LatLon(m.group());
-
-			cp.latitude().add(latlon[0]);
-			cp.longitude().add(latlon[1]);
+			Integer lngZone = Integer.parseInt(m.group(1));
+			Character latZone = m.group(2).charAt(0);
+			Double easting = Double.parseDouble(m.group(3));
+			Double northing = Double.parseDouble(m.group(4));
+			UTMRef utm = new UTMRef(lngZone, latZone, easting, northing);
+			LatLng latlng = utm.toLatLng();
+			cp.latitude().add(latlng.getLatitude());
+			cp.longitude().add(latlng.getLongitude());
 		}
 		return cp;
 	}
@@ -55,6 +58,7 @@ public class CoordinateDetector implements TextDetector {
 		CoordinatePairs cp = new CoordinatePairs();
 		Matcher m = GeoTools.WGS84_PATTERN.matcher(text);
 		while (m.find()) {
+			// These replaces try to reduce bad OCR detections.
 			String degStr = m.group(1).replace(',', '.').replace('‚', '.').replace('’', '.').replace('-', '.').replace('_', '.');
 			Double deg = Double.parseDouble(degStr);
 
