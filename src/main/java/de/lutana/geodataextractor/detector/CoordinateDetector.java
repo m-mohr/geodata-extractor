@@ -19,8 +19,9 @@ import uk.me.jstott.jcoord.UTMRef;
  * - Decimal degree
  * - Degree Minutes
  * - Degree Minutes Seconds
- * - UTM coordinates
- * - Ordnance Survey
+ * - Universal Transverse Mercator (UTM)
+ * - Ordnance Survey (OS)
+ * - Military Grid Reference System (MGRS)
  *
  * @author Matthias
  */
