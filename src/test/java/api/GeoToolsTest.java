@@ -1,14 +1,7 @@
 package api;
 
-import de.lutana.geodataextractor.GeodataExtractor;
-import de.lutana.geodataextractor.entity.Document;
-import de.lutana.geodataextractor.entity.Figure;
-import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.util.GeoTools;
-import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 import static org.junit.Assert.assertEquals;
 
 public class GeoToolsTest {

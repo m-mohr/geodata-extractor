@@ -17,7 +17,7 @@ public class GeoTools {
 	
 	/**
 	 * Detects UTM coorinates.
-	 * First and second matches are the grid number (longitude zone as number, latitude zone as letter), thirs is the easting value and fourth is the northing value.
+	 * First and second matches are the grid number (longitude zone as number, latitude zone as letter), third is the easting value and fourth is the northing value.
 	 */
 	public static final Pattern UTM_PATTERN = Pattern.compile("\\b(\\d{1,2})\\s?([A-Z])\\s(\\d{6})\\s(\\d{1,7})\\b");
 	
@@ -25,7 +25,14 @@ public class GeoTools {
 	 * Detects: Dezimalgrad, Grad Minuten and Grad Minuten Sekunden
 	 * First match is degree, second is minutes (might be empty), third is seconds (might be empty) and third is the cardinal point (N/S/E/W).
 	 */
-	public static final Pattern WGS84_PATTERN = Pattern.compile("(-?\\d+(?:[\\.,‚’_-]\\d+)?)[°o](?:\\s*(\\d+(?:[\\.,‚’_-]\\d+)?)['‘’‚,`´\\|])?(?:\\s*(\\d+(?:[\\.,‚’_-]\\d+)?)(?:\"|''|“|”|„))?\\s*(N|S|W|E)", Pattern.CASE_INSENSITIVE);
+	public static final Pattern WGS84_PATTERN = Pattern.compile("\\b(-?\\d+(?:[\\.,‚’_-]\\d+)?)[°o](?:\\s*(\\d+(?:[\\.,‚’_-]\\d+)?)['‘’‚,`´\\|])?(?:\\s*(\\d+(?:[\\.,‚’_-]\\d+)?)(?:\"|''|“|”|„))?\\s*(N|S|W|E)\\b", Pattern.CASE_INSENSITIVE);
+	
+	/**
+	 * Detects Ordnance Survey coordinates.
+	 * First match are the grid letters, second is the easting value and third is the northing value.
+	 * If there is a fourth match there is no second and third match. The fourth match then includes both easting and northing, which need to be splitted in the middle.
+	 */
+	public static final Pattern OS_PATTERN = Pattern.compile("\\b(H[PTUW-Z]|N[A-DF-KL-OR-UW-Z]|OV|S[CDEHJKM-PR-Z]|T[AFGLMQRV])(?:\\s?(\\d{2,5})\\s(\\d{2,5})|(\\d{4}|\\d{6}|\\d{8}|\\d{10})(?!\\s\\d{2,5}))\\b");
 	
 	public static Location union(Collection<Location> collection) {
 		// ToDo: Testing

@@ -32,7 +32,20 @@ public class CoordinateDetectorTest {
 			{"25 L 404859 8588690", new Location(-33.8765, -12.765)},
 			{"02 C 506346 1057742", new Location(-170.654, -80.5434)},
 			{"08 Q 453580 2594272", new Location(-135.4545, 23.4578)},
-			{"You can find it at UTM 57 X 450793 8586116.", new Location(156.9876, 77.3450)}
+			{"You can find it at UTM 57 X 450793 8586116.", new Location(156.9876, 77.3450)},
+			// Ordnance Survey
+/*			{"NZ 23330 68220", new Location(-1.63509470, 55.00793350)},
+			{"NZ 2333 6822", new Location(-1.63509470, 55.00793350)},
+			{"NY 9545 9776", new Location(-2.07162170, 55.27392830)},
+			{"NZ2906 7594", new Location(-1.54471670, 55.07704000)},
+			{"NU1918 2813", new Location(-1.69597330, 55.54650170)},
+			{"NT70480598", new Location(-2.46549256, 55.34695322)},
+			{"NU22413063", new Location(-1.64451170, 55.56885670)},
+			{"NZ22437334", new Location(-1.64884000, 55.05398170)},
+			{"NZ01328364", new Location(-1.97922751, 55.14710372)},
+			{"NT92420457", new Location(-2.11948693, 55.33516630)},
+			{"NU28080242", new Location(-1.55736380, 55.31509120)},
+			{"Please visit NU 2813 0223.", new Location(-1.55670170, 55.31332170)} */
 		};
 		return Arrays.asList(list);
     }

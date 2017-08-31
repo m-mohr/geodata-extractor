@@ -8,16 +8,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import uk.me.jstott.jcoord.LatLng;
+import uk.me.jstott.jcoord.OSRef;
 import uk.me.jstott.jcoord.UTMRef;
 
 /**
- * Parses coordinates from text and converts them to Dezimalgrad.
+ * Parses coordinates from text and converts them to decimal degree.
  *
  * Supports: 
- * - Dezimalgrad
- * - Grad Minuten
- * - Grad Minuten Sekunden
- * - UTM-Koordinaten
+ * - Decimal degree
+ * - Degree Minutes
+ * - Degree Minutes Seconds
+ * - UTM coordinates
+ * - Ordnance Survey
  *
  * @author Matthias
  */
@@ -28,14 +30,17 @@ public class CoordinateDetector implements TextDetector {
 		try {
 			CoordinatePairs wgsCP = this.parseWgsCoordinates(text);
 			locations.add(wgsCP.getLocation());
-		} catch (NullPointerException e) {
-		}
+		} catch (NullPointerException e) {}
 
 		try {
 			CoordinatePairs utmCP = this.parseUtmCoordinates(text);
 			locations.add(utmCP.getLocation());
-		} catch (NullPointerException e) {
-		}
+		} catch (NullPointerException e) {}
+
+		try {
+			CoordinatePairs osCP = this.parseOsCoordinates(text);
+			locations.add(osCP.getLocation());
+		} catch (NullPointerException e) {}
 	}
 
 	public CoordinatePairs parseUtmCoordinates(String text) {
@@ -48,6 +53,33 @@ public class CoordinateDetector implements TextDetector {
 			Double northing = Double.parseDouble(m.group(4));
 			UTMRef utm = new UTMRef(lngZone, latZone, easting, northing);
 			LatLng latlng = utm.toLatLng();
+			cp.latitude().add(latlng.getLatitude());
+			cp.longitude().add(latlng.getLongitude());
+		}
+		return cp;
+	}
+
+	public CoordinatePairs parseOsCoordinates(String text) {
+		CoordinatePairs cp = new CoordinatePairs();
+		Matcher m = GeoTools.OS_PATTERN.matcher(text);
+		while (m.find()) {
+			String zone = m.group(1);
+			String eastingStr;
+			String northingStr;
+			if (m.groupCount() == 4 && m.group(4) != null) {
+				String coords = m.group(4);
+				int coordLength = coords.length() / 2;
+				eastingStr = coords.substring(0, coordLength-1);
+				northingStr = coords.substring(coordLength);
+			}
+			else {
+				eastingStr = m.group(2);
+				northingStr = m.group(3);
+			}
+			Integer easting = Integer.parseInt(eastingStr);
+			Integer northing = Integer.parseInt(northingStr);
+			OSRef os = new OSRef(zone, easting, northing);
+			LatLng latlng = os.toLatLng();
 			cp.latitude().add(latlng.getLatitude());
 			cp.longitude().add(latlng.getLongitude());
 		}
