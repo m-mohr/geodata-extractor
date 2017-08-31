@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import uk.me.jstott.jcoord.LatLng;
+import uk.me.jstott.jcoord.MGRSRef;
 import uk.me.jstott.jcoord.OSRef;
 import uk.me.jstott.jcoord.UTMRef;
 
@@ -41,6 +42,24 @@ public class CoordinateDetector implements TextDetector {
 			CoordinatePairs osCP = this.parseOsCoordinates(text);
 			locations.add(osCP.getLocation());
 		} catch (NullPointerException e) {}
+
+		try {
+			CoordinatePairs mgrsCP = this.parseMgrsCoordinates(text);
+			locations.add(mgrsCP.getLocation());
+		} catch (NullPointerException e) {}
+	}
+
+	public CoordinatePairs parseMgrsCoordinates(String text) {
+		CoordinatePairs cp = new CoordinatePairs();
+		Matcher m = GeoTools.MGRS_PATTERN.matcher(text);
+		while (m.find()) {
+			String ref = m.group().replaceAll("\\s", "");
+			try {
+				MGRSRef mgrs = new MGRSRef(ref); // We assume it's not Bessel based as we can't really know.
+				cp.addLatLng(mgrs.toLatLng());
+			} catch(IllegalArgumentException e) {}
+		}
+		return cp;
 	}
 
 	public CoordinatePairs parseUtmCoordinates(String text) {
@@ -52,9 +71,7 @@ public class CoordinateDetector implements TextDetector {
 			Double easting = Double.parseDouble(m.group(3));
 			Double northing = Double.parseDouble(m.group(4));
 			UTMRef utm = new UTMRef(lngZone, latZone, easting, northing);
-			LatLng latlng = utm.toLatLng();
-			cp.latitude().add(latlng.getLatitude());
-			cp.longitude().add(latlng.getLongitude());
+			cp.addLatLng(utm.toLatLng());
 		}
 		return cp;
 	}
@@ -69,7 +86,7 @@ public class CoordinateDetector implements TextDetector {
 			if (m.groupCount() == 4 && m.group(4) != null) {
 				String coords = m.group(4);
 				int coordLength = coords.length() / 2;
-				eastingStr = coords.substring(0, coordLength-1);
+				eastingStr = coords.substring(0, coordLength);
 				northingStr = coords.substring(coordLength);
 			}
 			else {
@@ -79,9 +96,7 @@ public class CoordinateDetector implements TextDetector {
 			Integer easting = Integer.parseInt(eastingStr);
 			Integer northing = Integer.parseInt(northingStr);
 			OSRef os = new OSRef(zone, easting, northing);
-			LatLng latlng = os.toLatLng();
-			cp.latitude().add(latlng.getLatitude());
-			cp.longitude().add(latlng.getLongitude());
+			cp.addLatLng(os.toLatLng());
 		}
 		return cp;
 	}
@@ -129,6 +144,14 @@ public class CoordinateDetector implements TextDetector {
 
 		private final List<Double> longitude = new ArrayList<>();
 		private final List<Double> latitude = new ArrayList<>();
+		
+		public void addLatLng(LatLng ll) {
+			if (ll == null) {
+				return;
+			}
+			latitude.add(ll.getLatitude());
+			longitude.add(ll.getLongitude());
+		}
 
 		public List<Double> longitude() {
 			return this.longitude;

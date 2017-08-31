@@ -34,6 +34,13 @@ public class GeoTools {
 	 */
 	public static final Pattern OS_PATTERN = Pattern.compile("\\b(H[PTUW-Z]|N[A-DF-KL-OR-UW-Z]|OV|S[CDEHJKM-PR-Z]|T[AFGLMQRV])(?:\\s?(\\d{2,5})\\s(\\d{2,5})|(\\d{4}|\\d{6}|\\d{8}|\\d{10})(?!\\s\\d{2,5}))\\b");
 	
+	/**
+	 * Detects Military Grid Reference System.
+	 * Regexp is a little to simple, so might parse some invalid coordinates.
+	 * First match is the grid code, second match are the grid numbers (might be separated by a space).
+	 */
+	public static final Pattern MGRS_PATTERN = Pattern.compile("\\b(\\d{1,2}[C-X][A-HJ-NP-Z]{2})\\s?(\\d{1,5}\\s?\\d{1,5})\\b");
+	
 	public static Location union(Collection<Location> collection) {
 		// ToDo: Testing
 		Geometry env = null;
