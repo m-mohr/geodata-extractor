@@ -18,11 +18,11 @@ import java.nio.file.StandardCopyOption;
  */
 public class Figure extends Locatable {
 	
-	private String caption;
-	private Graphic graphic;
-	private Document document;
-	private String index;
-	private Integer pageNo;
+	protected String caption;
+	protected Graphic graphic;
+	protected Document document;
+	protected String index;
+	protected Integer page;
 	
 	/**
 	 * An empty figure relating to a document.
@@ -34,7 +34,7 @@ public class Figure extends Locatable {
 	public Figure(Document document, File graphic, String index) {
 		this.document = document;
 		this.index = index;
-		this.pageNo = 1;
+		this.page = 1;
 		this.caption = "";
 		this.setGraphicFile(graphic);
 	}
@@ -135,8 +135,8 @@ public class Figure extends Locatable {
 	 * 
 	 * @return the page
 	 */
-	public Integer getPageNo() {
-		return pageNo;
+	public Integer getPage() {
+		return page;
 	}
 
 	/**
@@ -144,11 +144,11 @@ public class Figure extends Locatable {
 	 * 
 	 * @param page the page to set
 	 */
-	public void setPageNo(Integer page) {
+	public void setPage(Integer page) {
 		if (page == null) {
 			page = 1;
 		}
-		this.pageNo = page;
+		this.page = page;
 	}
 
 	/**
@@ -171,7 +171,7 @@ public class Figure extends Locatable {
 					String fieldName = parser.getCurrentName();
 					jsonToken = parser.nextToken();
 					if(fieldName.equals("page")){
-						this.pageNo = parser.getValueAsInt();
+						this.page = parser.getValueAsInt();
 					}
 					else if (fieldName.equals("index")){
 						this.index = parser.getValueAsString();
@@ -211,7 +211,7 @@ public class Figure extends Locatable {
 		try (JsonGenerator g = factory.createGenerator(destMetadata, JsonEncoding.UTF8)) {
 			g.writeStartObject();
 			g.writeStringField("document", this.document.getFile().getName());
-			g.writeStringField("page", this.pageNo.toString());
+			g.writeStringField("page", this.page.toString());
 			g.writeStringField("index", this.index);
 			g.writeStringField("caption", this.caption);
 			g.writeStringField("graphic", graphicFile.getName());

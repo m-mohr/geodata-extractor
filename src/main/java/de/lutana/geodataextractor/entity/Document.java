@@ -16,10 +16,10 @@ import java.util.Objects;
  */
 public class Document implements Located {
 
-	private File file;
-	private String title;
-	private String description;
-	private FigureCollection figures;
+	protected File file;
+	protected String title;
+	protected String description;
+	protected FigureCollection figures;
 
 	public Document(File file) {
 		this.file = file;
@@ -120,7 +120,7 @@ public class Document implements Located {
 	 */
 	public Figure addFigure(File graphic, String index, Integer pageNo) {
 		Figure figure = this.addFigure(graphic, index);
-		figure.setPageNo(pageNo);
+		figure.setPage(pageNo);
 		return figure;
 	}
 

@@ -7,8 +7,8 @@ import javax.imageio.ImageIO;
 
 public class Graphic {
 	
-	private File file;
-	private BufferedImage image;
+	protected File file;
+	protected BufferedImage image;
 	
 	public Graphic(File file) {
 		this.file = file;
