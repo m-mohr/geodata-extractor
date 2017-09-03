@@ -32,26 +32,26 @@ public class CoordinateDetector implements TextDetector {
 		if (text == null) {
 			return;
 		}
-		
-		try {
-			CoordinatePairs wgsCP = this.parseWgsCoordinates(text);
+
+		CoordinatePairs wgsCP = this.parseWgsCoordinates(text);
+		if (wgsCP.hasLocation()) {
 			locations.add(wgsCP.getLocation());
-		} catch (NullPointerException e) {}
+		}
 
-		try {
-			CoordinatePairs utmCP = this.parseUtmCoordinates(text);
+		CoordinatePairs utmCP = this.parseUtmCoordinates(text);
+		if (utmCP.hasLocation()) {
 			locations.add(utmCP.getLocation());
-		} catch (NullPointerException e) {}
+		}
 
-		try {
-			CoordinatePairs osCP = this.parseOsCoordinates(text);
+		CoordinatePairs osCP = this.parseOsCoordinates(text);
+		if (osCP.hasLocation()) {
 			locations.add(osCP.getLocation());
-		} catch (NullPointerException e) {}
+		}
 
-		try {
-			CoordinatePairs mgrsCP = this.parseMgrsCoordinates(text);
+		CoordinatePairs mgrsCP = this.parseMgrsCoordinates(text);
+		if (mgrsCP.hasLocation()) {
 			locations.add(mgrsCP.getLocation());
-		} catch (NullPointerException e) {}
+		}
 	}
 
 	public CoordinatePairs parseMgrsCoordinates(String text) {
@@ -164,6 +164,10 @@ public class CoordinateDetector implements TextDetector {
 
 		public List<Double> latitude() {
 			return this.latitude;
+		}
+		
+		public boolean hasLocation() {
+			return (longitude.size() > 0 && latitude.size() > 0);
 		}
 
 		public Location getLocation() {
