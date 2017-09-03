@@ -57,9 +57,11 @@ public abstract class BasePublicationTest {
 			boolean success = (jaccardIndex > JACCARD_INDEX_THRESHOLD);
 			Double formatted = Math.round(jaccardIndex * 100d) / 100d;
 			System.out.println((success ? "FOUND" : "ERROR") + info + " - Jaccard Index: " + formatted);
-			try {
-				System.out.println("        " + Config.getTestUrl(expected, result, contextFile));
-			} catch (UnsupportedEncodingException ex) {}
+			if (result != null) {
+				try {
+					System.out.println("        " + Config.getTestUrl(expected, result, contextFile));
+				} catch (UnsupportedEncodingException ex) {}
+			}
 			assertTrue("Calculated Jaccard Index (" + formatted + ") should be greater than threshold (" + JACCARD_INDEX_THRESHOLD + ")", success);
 		}
 	}

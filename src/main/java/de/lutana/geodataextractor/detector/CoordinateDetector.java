@@ -29,6 +29,10 @@ public class CoordinateDetector implements TextDetector {
 
 	@Override
 	public void detect(String text, LocationCollection locations) {
+		if (text == null) {
+			return;
+		}
+		
 		try {
 			CoordinatePairs wgsCP = this.parseWgsCoordinates(text);
 			locations.add(wgsCP.getLocation());
