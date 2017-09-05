@@ -20,8 +20,8 @@ public class CoordinateDetector implements TextDetector {
 
 	@Override
 	public void detect(String text, LocationCollection locations) {
-		CoordinateParser p = new CoordinateParser(false);
-		p.parse(text, locations);
+		CoordinateParser p = new CoordinateParser();
+		p.parseFullText(text, locations);
 	}
 
 }

@@ -1,7 +1,9 @@
 package de.lutana.geodataextractor.detector;
 
 import de.lutana.geodataextractor.entity.Graphic;
+import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
+import de.lutana.geodataextractor.util.CoordinatePairs;
 import de.lutana.geodataextractor.util.CoordinateParser;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -17,7 +19,7 @@ import org.apache.commons.io.FileUtils;
 
 public class OcrDetector implements GraphicDetector {
 
-	private final CoordinateParser parser = new CoordinateParser(true);
+	private final CoordinateParser parser = new CoordinateParser();
 	private static ITesseract instance = null;
 	private static final float MIN_CONFIDENCE = 0.25f;
 	private static final int MIN_WORD_LENGTH = 3;
@@ -62,19 +64,20 @@ public class OcrDetector implements GraphicDetector {
 	@Override
 	public void detect(Graphic graphic, LocationCollection locations) {
 		try {
+			CoordinatePairs cp = new CoordinatePairs();
 			BufferedImage img = graphic.getBufferedImage();
 			List<Word> words = getTesseract().getWords(img, 0);
-			// ToDo: This is a temporary workaround as Coordinate Detector needs 
-			// lon/lat values in one string to combine them correctly together.
-			String all = "";
 			for(Word word : words) {
 				String text = word.getText();
-				if (text.length() >= MIN_WORD_LENGTH && word.getConfidence() >= MIN_CONFIDENCE) {
-					all += word.getText() + " ";
+				if (text.length() >= MIN_WORD_LENGTH && word.getConfidence() >= MIN_CONFIDENCE && parser.parseWord(text, cp)) {
+					System.out.println(word);
 				}
 			}
 			
-			parser.parse(all, locations);
+			Location location = cp.getLocation(true);
+			if (location != null) {
+				locations.add(location);
+			}
 
 			graphic.freeBufferedImage();
 		} catch (UnsatisfiedLinkError e) {

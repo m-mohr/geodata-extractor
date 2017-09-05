@@ -1,13 +1,8 @@
 package de.lutana.geodataextractor.util;
 
-import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import uk.me.jstott.jcoord.LatLng;
 import uk.me.jstott.jcoord.MGRSRef;
 import uk.me.jstott.jcoord.NotDefinedOnUTMGridException;
 import uk.me.jstott.jcoord.OSRef;
@@ -41,24 +36,39 @@ public class CoordinateParser {
 	 */
 	public static final Pattern MGRS_PATTERN = Pattern.compile("\\b(\\d{1,2}[C-X][A-HJ-NP-Z]{2})\\s?(\\d{1,5}\\s?\\d{1,5})\\b");
 	
-	private boolean removeWgs84Outliers;
-	
-	public CoordinateParser() {
-		this(false);
+	public boolean parseWord(String word, CoordinatePairs cp) {
+		if (word == null) {
+			return false;
+		}
+
+		boolean found = false;
+		if (this.parseWgs84Coordinates(word, cp)) {
+			found = true;
+		}
+		if (this.parseUtmCoordinates(word, cp)) {
+			found = true;
+		}
+		if (this.parseMgrsCoordinates(word, cp)) {
+			found = true;
+		}
+		if (this.parseOsCoordinates(word, cp)) {
+			found = true;
+		}
+		return found;
+	}
+
+	public void parseFullText(String text, LocationCollection locations) {
+		this.parseFullText(text, locations, false);
 	}
 	
-	public CoordinateParser(boolean removeWgs84Outliers) {
-		this.removeWgs84Outliers = removeWgs84Outliers;
-	}
-	
-	public void parse(String text, LocationCollection locations) {
+	public void parseFullText(String text, LocationCollection locations, boolean removeWgs84Outliers) {
 		if (text == null) {
 			return;
 		}
 
-		CoordinatePairs wgsCP = this.parseWgsCoordinates(text);
+		CoordinatePairs wgsCP = this.parseWgs84Coordinates(text);
 		if (wgsCP.hasLocation()) {
-			locations.add(wgsCP.getLocation(this.removeWgs84Outliers));
+			locations.add(wgsCP.getLocation(removeWgs84Outliers));
 		}
 
 		CoordinatePairs utmCP = this.parseUtmCoordinates(text);
@@ -78,25 +88,51 @@ public class CoordinateParser {
 	}
 
 	/**
-	 * Detect Military Grid Reference System coordinates.
-	 * 
-	 * We assume it's not Bessel based as we can't really know.
-	 * This detects only full coordinates (including both easting and northing).
+	 * See parseMgrsCoordinates(String text, CoordinatePairs cp) for details.
 	 * 
 	 * @param text
 	 * @return 
 	 */
 	public CoordinatePairs parseMgrsCoordinates(String text) {
 		CoordinatePairs cp = new CoordinatePairs();
+		this.parseMgrsCoordinates(text, cp);
+		return cp;
+	}
+	
+	/**
+	 * Detect Military Grid Reference System coordinates.
+	 * 
+	 * We assume it's not Bessel based as we can't really know.
+	 * This detects only full coordinates (including both easting and northing).
+	 * 
+	 * @param text
+	 * @param cp
+	 * @return 
+	 */
+	protected boolean parseMgrsCoordinates(String text, CoordinatePairs cp) {
+		boolean found = false;
 		Matcher m = MGRS_PATTERN.matcher(text);
 		while (m.find()) {
 			String ref = m.group().replaceAll("\\s", "");
 			try {
 				MGRSRef mgrs = new MGRSRef(ref); // We assume it's not Bessel based as we can't really know.
 				cp.addLatLng(mgrs.toLatLng());
+				found = true;
 			} catch(IllegalArgumentException | NotDefinedOnUTMGridException e) {
 			}
 		}
+		return found;
+	}
+
+	/**
+	 * See parseUtmCoordinates(String text, CoordinatePairs cp) for details.
+	 * 
+	 * @param text
+	 * @return 
+	 */
+	public CoordinatePairs parseUtmCoordinates(String text) {
+		CoordinatePairs cp = new CoordinatePairs();
+		this.parseUtmCoordinates(text, cp);
 		return cp;
 	}
 
@@ -106,10 +142,11 @@ public class CoordinateParser {
 	 * This detects only full coordinates (including both easting and northing).
 	 * 
 	 * @param text
+	 * @param cp
 	 * @return 
 	 */
-	public CoordinatePairs parseUtmCoordinates(String text) {
-		CoordinatePairs cp = new CoordinatePairs();
+	protected boolean parseUtmCoordinates(String text, CoordinatePairs cp) {
+		boolean found = false;
 		Matcher m = UTM_PATTERN.matcher(text);
 		while (m.find()) {
 			try {
@@ -119,9 +156,22 @@ public class CoordinateParser {
 				Double northing = Double.parseDouble(m.group(4));
 				UTMRef utm = new UTMRef(lngZone, latZone, easting, northing);
 				cp.addLatLng(utm.toLatLng());
+				found = true;
 			} catch(NotDefinedOnUTMGridException | NumberFormatException e) {
 			}
 		}
+		return found;
+	}
+
+	/**
+	 * See parseOsCoordinates(String text, CoordinatePairs cp) for details.
+	 * 
+	 * @param text
+	 * @return 
+	 */
+	public CoordinatePairs parseOsCoordinates(String text) {
+		CoordinatePairs cp = new CoordinatePairs();
+		this.parseOsCoordinates(text, cp);
 		return cp;
 	}
 
@@ -131,10 +181,11 @@ public class CoordinateParser {
 	 * This detects only full coordinates (including both easting and northing).
 	 * 
 	 * @param text
+	 * qparam cp
 	 * @return 
 	 */
-	public CoordinatePairs parseOsCoordinates(String text) {
-		CoordinatePairs cp = new CoordinatePairs();
+	protected boolean parseOsCoordinates(String text, CoordinatePairs cp) {
+		boolean found = false;
 		Matcher m = OS_PATTERN.matcher(text);
 		while (m.find()) {
 			String zone = m.group(1);
@@ -154,7 +205,20 @@ public class CoordinateParser {
 			Integer northing = Integer.parseInt(northingStr);
 			OSRef os = new OSRef(zone, easting, northing);
 			cp.addLatLng(os.toLatLng());
+			found = true;
 		}
+		return found;
+	}
+
+	/**
+	 * See parseWgs84Coordinates(String text, CoordinatePairs cp) for details.
+	 * 
+	 * @param text
+	 * @return 
+	 */
+	public CoordinatePairs parseWgs84Coordinates(String text) {
+		CoordinatePairs cp = new CoordinatePairs();
+		this.parseWgs84Coordinates(text, cp);
 		return cp;
 	}
 
@@ -164,10 +228,11 @@ public class CoordinateParser {
 	 * This also detects single longitude or latitude values.
 	 * 
 	 * @param text
+	 * @param cp
 	 * @return 
 	 */
-	public CoordinatePairs parseWgsCoordinates(String text) {
-		CoordinatePairs cp = new CoordinatePairs();
+	protected boolean parseWgs84Coordinates(String text, CoordinatePairs cp) {
+		boolean found = false;
 		Matcher m = WGS84_PATTERN.matcher(text);
 		while (m.find()) {
 			Double deg;
@@ -199,58 +264,9 @@ public class CoordinateParser {
 			} else {
 				cp.longitude().add(coord);
 			}
+			found = true;
 		}
-		return cp;
-	}
-
-
-	public class CoordinatePairs {
-
-		private final List<Double> longitude = new ArrayList<>();
-		private final List<Double> latitude = new ArrayList<>();
-		
-		public void addLatLng(LatLng ll) {
-			if (ll == null) {
-				return;
-			}
-			latitude.add(ll.getLatitude());
-			longitude.add(ll.getLongitude());
-		}
-
-		public List<Double> longitude() {
-			return this.longitude;
-		}
-
-		public List<Double> latitude() {
-			return this.latitude;
-		}
-		
-		public boolean hasLocation() {
-			return (longitude.size() > 0 && latitude.size() > 0);
-		}
-		
-		public Location getLocation() {
-			return this.getLocation(false);
-		}
-
-		public Location getLocation(boolean removeOutliers) {
-			if (longitude.size() > 0 && latitude.size() > 0) {
-				if (removeOutliers) {
-					SpatialOutlierDetector sod = new SpatialOutlierDetector();
-					sod.detectWgs84Outliers(longitude, true);
-					sod.detectWgs84Outliers(latitude, false);
-				}
-
-				Double minLon = Collections.min(longitude);
-				Double maxLon = Collections.max(longitude);
-				Double minLat = Collections.min(latitude);
-				Double maxLat = Collections.max(latitude);
-				return new Location(minLon, maxLon, minLat, maxLat);
-			} else {
-				return null;
-			}
-		}
-
+		return found;
 	}
 	
 }
