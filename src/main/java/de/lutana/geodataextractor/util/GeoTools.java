@@ -4,42 +4,17 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import de.lutana.geodataextractor.entity.Location;
 import java.util.Collection;
-import java.util.regex.Pattern;
+import org.apache.commons.math3.util.Precision;
+import org.gavaghan.geodesy.Ellipsoid;
+import org.gavaghan.geodesy.GeodeticCalculator;
+import org.gavaghan.geodesy.GeodeticCurve;
+import org.gavaghan.geodesy.GlobalCoordinates;
 
-/**
- *
- * @author Matthias Mohr
- */
 public class GeoTools {
 	
 	private static GeometryFactory geometryFactory = new GeometryFactory();
 	private static final int LAT_LON_PRECISION = 4;
-	
-	/**
-	 * Detects UTM coorinates.
-	 * First and second matches are the grid number (longitude zone as number, latitude zone as letter), third is the easting value and fourth is the northing value.
-	 */
-	public static final Pattern UTM_PATTERN = Pattern.compile("\\b(\\d{1,2})\\s?([A-Z])\\s(\\d{6})\\s(\\d{1,7})\\b");
-	
-	/**
-	 * Detects: Dezimalgrad, Grad Minuten and Grad Minuten Sekunden
-	 * First match is degree, second is minutes (might be empty), third is seconds (might be empty) and third is the cardinal point (N/S/E/W).
-	 */
-	public static final Pattern WGS84_PATTERN = Pattern.compile("\\b(-?\\d+(?:[\\.,‚’_-]\\d+)?)[°o](?:\\s*(\\d+(?:[\\.,‚’_-]\\d+)?)['‘’‚,`´\\|])?(?:\\s*(\\d+(?:[\\.,‚’_-]\\d+)?)(?:\"|''|“|”|„))?\\s*(N|S|W|E)\\b", Pattern.CASE_INSENSITIVE);
-	
-	/**
-	 * Detects Ordnance Survey coordinates.
-	 * First match are the grid letters, second is the easting value and third is the northing value.
-	 * If there is a fourth match there is no second and third match. The fourth match then includes both easting and northing, which need to be splitted in the middle.
-	 */
-	public static final Pattern OS_PATTERN = Pattern.compile("\\b(H[PTUW-Z]|N[A-DF-KL-OR-UW-Z]|OV|S[CDEHJKM-PR-Z]|T[AFGLMQRV])(?:\\s?(\\d{2,5})\\s(\\d{2,5})|(\\d{4}|\\d{6}|\\d{8}|\\d{10})(?!\\s\\d{2,5}))\\b");
-	
-	/**
-	 * Detects Military Grid Reference System.
-	 * Regexp is a little to simple, so might parse some invalid coordinates.
-	 * First match is the grid code, second match are the grid numbers (might be separated by a space).
-	 */
-	public static final Pattern MGRS_PATTERN = Pattern.compile("\\b(\\d{1,2}[C-X][A-HJ-NP-Z]{2})\\s?(\\d{1,5}\\s?\\d{1,5})\\b");
+    public static final double EARTH_R = 6372.8; // In kilometers, for haversine calculation
 	
 	public static Location union(Collection<Location> collection) {
 		// ToDo: Testing
@@ -58,8 +33,47 @@ public class GeoTools {
 		}
 		return null;
 	}
+
+	/**
+	 * Returns the distance between two WGS84 based coordinates in meters.
+	 * 
+	 * Claculated using Haversine formulae.
+	 * 
+	 * @param lat1
+	 * @param lon1
+	 * @param lat2
+	 * @param lon2
+	 * @return 
+	 */
+    public static double calcHaversineDistance(double lat1, double lon1, double lat2, double lon2) {
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.pow(Math.sin(dLat / 2),2) + Math.pow(Math.sin(dLon / 2),2) * Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2));
+        double c = 2 * Math.asin(Math.sqrt(a));
+        return EARTH_R * c;
+    }
 	
 	/**
+	 * Returns the distance between two WGS84 based coordinates in meters.
+	 * 
+	 * Claculated using Vincenty’s formulae.
+	 * 
+	 * @param lat1
+	 * @param lon1
+	 * @param lat2
+	 * @param lon2
+	 * @return 
+	 */
+	public static double calcVincentyDistance(double lat1, double lon1, double lat2, double lon2) {
+		GeodeticCalculator geoCalc = new GeodeticCalculator();
+		GlobalCoordinates point1 = new GlobalCoordinates(lat1, lon1);
+		GlobalCoordinates point2 = new GlobalCoordinates(lat2, lon2);
+		GeodeticCurve geoCurve = geoCalc.calculateGeodeticCurve(Ellipsoid.WGS84, point1, point2);
+		return geoCurve.getEllipsoidalDistance();
+	}
+	
+	/**
+	 * Calculates the Jackard Index (also known as Intersection over Union).
 	 * 
 	 * @param expected
 	 * @param result
@@ -89,8 +103,7 @@ public class GeoTools {
 	 * @see https://gis.stackexchange.com/questions/8650/measuring-accuracy-of-latitude-and-longitude/8674#8674
 	 */
 	public static double roundLatLon(double deg) {
-		double pow = Math.pow(10, LAT_LON_PRECISION);
-		return Math.round(deg * pow) / pow;
+		return Precision.round(deg, LAT_LON_PRECISION);
 	}
 	
 }
