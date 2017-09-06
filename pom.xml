@@ -19,11 +19,6 @@
 			<id>Allenai repository</id>
 			<url>https://allenai.bintray.com/maven/</url>
 		</repository>
-		<!-- Repo for OpenCV -->
-		<repository>
-			<id>Inofficial OpenCV Maven repository</id>
-			<url>https://dl.bintray.com/ihmcrobotics/maven-vendor/</url>
-		</repository>
 		<!-- Repo for Apache Commons Math and Cermine -->
 		<repository>
 			<id>icm</id>
@@ -52,10 +47,9 @@
 		</dependency>
 		<!-- Used for image processing and computer vision based features -->
 		<dependency>
-			<groupId>us.ihmc.thirdparty.org.opencv</groupId>
+			<groupId>org.openpnp</groupId>
 			<artifactId>opencv</artifactId>
-			<version>3.2.0-170503</version>
-			<type>pom</type>
+			<version>3.2.0-1</version>
 		</dependency>
 		<!-- Used to do geo-related stuff, like union calculation, bounding boxes, ... -->
 		<dependency>

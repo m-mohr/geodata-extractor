@@ -181,7 +181,7 @@ public class CoordinateParser {
 	 * This detects only full coordinates (including both easting and northing).
 	 * 
 	 * @param text
-	 * qparam cp
+	 * @param cp
 	 * @return 
 	 */
 	protected boolean parseOsCoordinates(String text, CoordinatePairs cp) {
