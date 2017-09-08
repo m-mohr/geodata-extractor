@@ -21,6 +21,11 @@ public class LocationCollection implements Located, Collection<Location>, Compar
 		this.data = new ArrayList<>();
 		this.resetWeight();
 	}
+
+	public LocationCollection(LocationCollection collection) {
+		this.data = new ArrayList<>(collection.data);
+		this.weight = collection.weight;
+	}
 	
 	public void setWeight(double weight) {
 		this.weight = weight;

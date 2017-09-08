@@ -37,19 +37,23 @@ public class DefaultStrategy implements Strategy {
 	 */
 	@Override
 	public boolean execute(Document document) {
-		LocationCollection locations = new LocationCollection();
+		LocationCollection globalLocations = new LocationCollection();
 
-		this.getLocationsFromText(document.getTitle(), locations, 0.75);
-		this.getLocationsFromText(document.getDescription(), locations, 0.5);
+		this.getLocationsFromText(document.getTitle(), globalLocations, 0.75);
+		this.getLocationsFromText(document.getDescription(), globalLocations, 0.5);
 
 		FigureCollection figures = document.getFigures();
 		for(Figure figure : figures) {
-			this.getLocationsFromText(figure.getCaption(), locations, 0.9);
-			this.getLocationsFromGraphic(figure.getGraphic(), locations, 1);
+			LocationCollection figureLocations = new LocationCollection(globalLocations);
+			this.getLocationsFromText(figure.getCaption(), figureLocations, 0.9);
+			this.getLocationsFromGraphic(figure.getGraphic(), figureLocations, 1);
 
-//			Location location = locations.getMostLikelyLocation();
-			Location location = locations.getLocation();
-			figure.setLocation(location);
+			// TODO: Improve this - for now we only add the location to the figure in case we detected something from the figure itself
+			if (figureLocations.size() > globalLocations.size()) {
+	//			Location location = figureLocations.getMostLikelyLocation();
+				Location location = figureLocations.getLocation();
+				figure.setLocation(location);
+			}
 		}
 		return true;
 	}
