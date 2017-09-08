@@ -13,12 +13,12 @@ public class Location extends Envelope {
 	protected double probability = 1;
 	protected double weight = 1;
 
-	public Location(double x1, double x2, double y1, double y2) {
-		super(x1, x2, y1, y2);
+	public Location(double minLon, double maxLon, double minLat, double maxLat) {
+		super(minLon, maxLon, minLat, maxLat);
 	}
 
-	public Location(double x, double y) {
-		super(x, x, y, y);
+	public Location(double lon, double lat) {
+		super(lon, lon, lat, lat);
 	}
 
 	public Location(Envelope e) {
@@ -58,6 +58,20 @@ public class Location extends Envelope {
 				&& GeoTools.roundLatLon(getMaxY()) == GeoTools.roundLatLon(otherEnvelope.getMaxY())
 				&& GeoTools.roundLatLon(getMinX()) == GeoTools.roundLatLon(otherEnvelope.getMinX())
 				&& GeoTools.roundLatLon(getMinY()) == GeoTools.roundLatLon(otherEnvelope.getMinY());
+	}
+
+	@Override
+	public int hashCode() {
+		int hash = 3;
+		double v1 = GeoTools.roundLatLon(getMaxX());
+		hash = 43 * hash + (int) (Double.doubleToLongBits(v1) ^ (Double.doubleToLongBits(v1) >>> 32));
+		double v2 = GeoTools.roundLatLon(getMaxY());
+		hash = 43 * hash + (int) (Double.doubleToLongBits(v2) ^ (Double.doubleToLongBits(v2) >>> 32));
+		double v3 = GeoTools.roundLatLon(getMinX());
+		hash = 43 * hash + (int) (Double.doubleToLongBits(v3) ^ (Double.doubleToLongBits(v3) >>> 32));
+		double v4 = GeoTools.roundLatLon(getMinY());
+		hash = 43 * hash + (int) (Double.doubleToLongBits(v4) ^ (Double.doubleToLongBits(v4) >>> 32));
+		return hash;
 	}
 
 }

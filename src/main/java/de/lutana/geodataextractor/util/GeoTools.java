@@ -1,7 +1,6 @@
 package de.lutana.geodataextractor.util;
 
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.Envelope;
 import de.lutana.geodataextractor.entity.Location;
 import java.util.Collection;
 import org.apache.commons.math3.util.Precision;
@@ -11,25 +10,28 @@ import org.gavaghan.geodesy.GeodeticCurve;
 import org.gavaghan.geodesy.GlobalCoordinates;
 
 public class GeoTools {
-	
-	private static GeometryFactory geometryFactory = new GeometryFactory();
+
+	/**
+	 * @see GeoTools::roundLatLon()
+	 */
 	private static final int LAT_LON_PRECISION = 4;
-    public static final double EARTH_R = 6372.8; // In kilometers, for haversine calculation
+	/**
+	 * Earth radius in kilometers, for haversine calculation.
+	 */
+    public static final double EARTH_R = 6372.8;
 	
 	public static Location union(Collection<Location> collection) {
-		// ToDo: Testing
-		Geometry env = null;
+		Location env = null;
 		for(Location l : collection) {
-			Geometry geom = geometryFactory.toGeometry(l);
 			if (env == null) {
-				env = geom;
+				env = l;
 			}
 			else {
-				env.union(geom);
+				env.expandToInclude(l);
 			}
 		}
 		if (env != null) {
-			return new Location(env.getEnvelopeInternal());
+			return new Location(env);
 		}
 		return null;
 	}
@@ -87,11 +89,13 @@ public class GeoTools {
 		else if (expected == null && result == null) {
 			return 1;
 		}
+		
 
-		Geometry expectedGeom = geometryFactory.toGeometry(expected);
-		Geometry resultGeom = geometryFactory.toGeometry(result);
-		Geometry intersection = expectedGeom.intersection(resultGeom);
-		Geometry union = expectedGeom.union(resultGeom);
+		Envelope intersection = expected.intersection(result);
+
+		Envelope union = new Envelope(expected);
+		union.expandToInclude(result);
+
 		return intersection.getArea() / union.getArea();
 	}
 	
