@@ -22,7 +22,8 @@ public class GeodataExtractor {
 	private Set<Document> documents;
 	private Strategy strategy;
 	private ParserFactory parserFactory;
-	private boolean cachingAllowed;
+	private boolean cachingEnabled;
+	private boolean fastOcrModeEnabled;
 	
 	/**
 	 * Creates an instance using the DefaultStrategy.
@@ -42,7 +43,8 @@ public class GeodataExtractor {
 		this.documents = new HashSet<>();
 		this.strategy = strategy;
 		this.parserFactory = new ParserFactory();
-		this.cachingAllowed = false;
+		this.cachingEnabled = false;
+		this.fastOcrModeEnabled = Config.isOcrFastModeEnabled();
 	}
 	
 	/**
@@ -79,14 +81,14 @@ public class GeodataExtractor {
 	
 	protected boolean runDocument(Document doc) {
 		boolean loaded = false;
-		if (this.isCachingAllowed()) {
+		if (this.isCachingEnabled()) {
 			loaded = doc.load();
 		}
 		if (!loaded) {
 			try {
 				Parser parser = this.parserFactory.getParser(doc.getFile());
 				parser.parse(doc);
-				if (this.isCachingAllowed()) {
+				if (this.isCachingEnabled()) {
 					doc.save();
 				}
 			} catch (Exception e) {
@@ -186,15 +188,29 @@ public class GeodataExtractor {
 	/**
 	 * @return
 	 */
-	public boolean isCachingAllowed() {
-		return cachingAllowed;
+	public boolean isCachingEnabled() {
+		return cachingEnabled;
 	}
 
 	/**
 	 * @param allowed
 	 */
-	public void setCachingAllowed(boolean allowed) {
-		this.cachingAllowed = allowed;
+	public void enableCaching(boolean allowed) {
+		this.cachingEnabled = allowed;
+	}
+
+	/**
+	 * @return the fastOcrMode
+	 */
+	public boolean isFastOcrModeEnabled() {
+		return Config.isOcrFastModeEnabled();
+	}
+
+	/**
+	 * @param fastOcrMode the fastOcrMode to set
+	 */
+	public void enableFastOcrMode(boolean fastOcrMode) {
+		Config.enableFastOcrMode(fastOcrMode);
 	}
 	
 	/**
@@ -206,7 +222,7 @@ public class GeodataExtractor {
 		File folder = new File("./test-docs/");
 		System.out.println("Exporting all figures from folder " + folder.getCanonicalPath() + ".");
 		GeodataExtractor instance = new GeodataExtractor();
-		instance.setCachingAllowed(true);
+		instance.enableCaching(true);
 		instance.setFolder(folder);
 		Set<Document> result = instance.run();
 		System.out.println("Parsing results:");

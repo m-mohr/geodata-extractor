@@ -1,5 +1,6 @@
 package de.lutana.geodataextractor.detector;
 
+import de.lutana.geodataextractor.Config;
 import de.lutana.geodataextractor.detector.coordinates.Coordinate;
 import de.lutana.geodataextractor.entity.Graphic;
 import de.lutana.geodataextractor.entity.Location;
@@ -29,14 +30,13 @@ public class OcrDetector implements GraphicDetector {
 		TesseractOCR instance = TesseractOCR.getInstance();
 		// Sparse is more accurate for randomly located text parts than automatic detection as it assumes bigger text paragraphs.
 		instance.setPageSegMode(TessAPI.TessPageSegMode.PSM_SPARSE_TEXT_OSD);
-//		instance.setOcrEngineMode(TessAPI.TessOcrEngineMode.OEM_TESSERACT_CUBE_COMBINED); // Cube results in memory errors
+		// Set the OCR mode (slow and more accurate = Cube and Tesseract / fast and more inaccurate = Tesseract only)
+		instance.setOcrEngineMode(Config.isOcrFastModeEnabled() ? TessAPI.TessOcrEngineMode.OEM_TESSERACT_ONLY : TessAPI.TessOcrEngineMode.OEM_TESSERACT_CUBE_COMBINED);
 		// Avoid word list/dictionaries as geonaames and coordinates are not in those lists
 		instance.setTessVariable("load_system_dawg", "false");
 		instance.setTessVariable("load_freq_dawg", "false");
-		// Force proportional word segmentation on all rows
-		instance.setTessVariable("textord_force_make_prop_words", "true");
 		// Limit characters to the ones used for coordinates, especially to avoid confusion between - and _, dot and comma, ° and o etc.
-		instance.setTessVariable("tessedit_char_whitelist", "-,.°'\"1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+		instance.setTessVariable("tessedit_char_whitelist", "-.°'\"1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 	}
 
 	@Override

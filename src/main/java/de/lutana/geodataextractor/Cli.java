@@ -24,6 +24,9 @@ public class Cli {
 	@Parameter(names = "-save", description = "Save extracted figures and data to the document's folder")
 	public boolean save = false;
 
+	@Parameter(names = "-fastOCR", description = "Use faster but more inaccurate OCR mode")
+	public boolean fastOcr = false;
+
 	/*	@Parameter(names = "-debug", description = "Debug mode")
 	private boolean debug = false; */
 	public static void main(String[] args) {
@@ -40,7 +43,10 @@ public class Cli {
 			gde.setStrategy(cli.strategy);
 		}
 		if (cli.save) {
-			gde.setCachingAllowed(cli.save);
+			gde.enableCaching(cli.save);
+		}
+		if (cli.fastOcr) {
+			gde.enableFastOcrMode(true);
 		}
 		gde.run();
 	}

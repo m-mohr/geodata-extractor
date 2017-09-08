@@ -1,5 +1,6 @@
 package de.lutana.geodataextractor.util;
 
+import de.lutana.geodataextractor.Config;
 import de.lutana.geodataextractor.detector.OcrDetector;
 import java.io.File;
 import java.io.IOException;
@@ -24,13 +25,22 @@ public class TesseractOCR extends Tesseract {
 	}
 
 	private static void extractCustomTessResources(File tessDataFolder) {
-		String[] fileNames = new String[] {"eng.user-words", "eng.user-patterns"};
+		String[] fileNames = new String[] {
+			// Custom words and patterns for Tesseract
+			// See https://stackoverflow.com/questions/17209919/tesseract-user-patterns for user pattern syntax
+			"eng.user-words", "eng.user-patterns",
+			// Training data for the slower Cube OCR mode
+			"eng.cube.bigrams", "eng.cube.fold", "eng.cube.lm", "eng.cube.nn",
+			"eng.cube.params", "eng.cube.size", "eng.cube.size", "eng.cube.word-freq"
+		};
 		for (String name : fileNames) {
+			if (Config.isOcrFastModeEnabled() && name.contains(".cube")) {
+				continue;
+			}
 			try {
 				File target = new File(tessDataFolder, name);
 				if (!target.exists()) {
 					URL words = OcrDetector.class.getClassLoader().getResource("tessdata/" + name);
-					System.out.println(target);
 					FileUtils.copyURLToFile(words, target);
 				}
 			} catch (IOException ex) {

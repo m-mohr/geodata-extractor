@@ -15,6 +15,16 @@ import java.net.URLEncoder;
  */
 public class Config {
 	
+	private static boolean fastOcrModeEnabled = false;
+	
+	public static boolean isOcrFastModeEnabled() {
+		return fastOcrModeEnabled;
+	}
+	
+	public static void enableFastOcrMode(boolean enableFastOcrMode) {
+		fastOcrModeEnabled = enableFastOcrMode;
+	}
+	
 	public static File getTempFolder(String subFolderName) {
 		File folder = new File("./temp/" + subFolderName);
 		if (!folder.exists()) {

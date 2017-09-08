@@ -104,7 +104,7 @@ public abstract class BasePublicationTest {
 	public static Document getDocument(String documentPath) {
 		if (instance == null) {
 			instance = new GeodataExtractor();
-			instance.setCachingAllowed(true);
+			instance.enableCaching(true);
 		}
 		File documentFile = getDocumentFile(documentPath);
 		return instance.runSingle(documentFile);
