@@ -1,6 +1,6 @@
 package api;
 
-import de.lutana.geodataextractor.util.SpatialOutlierDetector;
+import de.lutana.geodataextractor.detector.coordinates.SpatialOutlierDetector;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;

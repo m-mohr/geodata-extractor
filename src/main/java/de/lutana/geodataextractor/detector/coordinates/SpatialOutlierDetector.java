@@ -1,5 +1,6 @@
-package de.lutana.geodataextractor.util;
+package de.lutana.geodataextractor.detector.coordinates;
 
+import de.lutana.geodataextractor.util.GeoTools;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.math3.stat.StatUtils;

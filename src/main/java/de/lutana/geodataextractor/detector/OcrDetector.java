@@ -1,89 +1,115 @@
 package de.lutana.geodataextractor.detector;
 
+import de.lutana.geodataextractor.detector.coordinates.Coordinate;
 import de.lutana.geodataextractor.entity.Graphic;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
-import de.lutana.geodataextractor.util.CoordinatePairs;
-import de.lutana.geodataextractor.util.CoordinateParser;
+import de.lutana.geodataextractor.detector.coordinates.CoordinateList;
+import de.lutana.geodataextractor.detector.coordinates.CoordinateParser;
+import de.lutana.geodataextractor.util.TesseractOCR;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-import net.sourceforge.tess4j.ITesseract;
+import java.util.Map.Entry;
+import net.sourceforge.tess4j.ITessAPI.TessPageIteratorLevel;
 import net.sourceforge.tess4j.TessAPI;
-import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.Word;
-import net.sourceforge.tess4j.util.LoadLibs;
-import org.apache.commons.io.FileUtils;
 
 public class OcrDetector implements GraphicDetector {
 
 	private final CoordinateParser parser = new CoordinateParser();
-	private static ITesseract instance = null;
 	private static final float MIN_CONFIDENCE = 0.25f;
 	private static final int MIN_WORD_LENGTH = 3;
 
-	public static ITesseract getTesseract() {
-		if (instance == null) {
-			instance = new Tesseract();
-			// Extract language data and copy custom rules
-			File tessDataFolder = LoadLibs.extractTessResources("tessdata"); // Maven build bundles English data
-			extractCustomTessResources(tessDataFolder);
-			instance.setDatapath(tessDataFolder.getAbsolutePath());
-			// Sparse is more accurate for randomly located text parts than automatic detection as it assumes bigger text paragraphs.
-			instance.setPageSegMode(TessAPI.TessPageSegMode.PSM_SPARSE_TEXT_OSD);
-//			instance.setOcrEngineMode(TessAPI.TessOcrEngineMode.OEM_TESSERACT_CUBE_COMBINED); // Cube results in memory errors
-			// Avoid word list/dictionaries as geonaames and coordinates are not in those lists
-			instance.setTessVariable("load_system_dawg", "false");
-			instance.setTessVariable("load_freq_dawg", "false");
-			// Force proportional word segmentation on all rows
-			instance.setTessVariable("textord_force_make_prop_words", "true");
-			// Limit characters to the ones used for coordinates, especially to avoid confusion between - and _, dot and comma, ° and o etc.
-			instance.setTessVariable("tessedit_char_whitelist", "-,.°'\"1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-		}
-		return instance;
-	}
-
-	private static void extractCustomTessResources(File tessDataFolder) {
-		String[] fileNames = new String[] {"eng.user-words", "eng.user-patterns"};
-		for (String name : fileNames) {
-			try {
-				File target = new File(tessDataFolder, name);
-				if (!target.exists()) {
-					URL words = OcrDetector.class.getClassLoader().getResource("tessdata/" + name);
-					System.out.println(target);
-					FileUtils.copyURLToFile(words, target);
-				}
-			} catch (IOException ex) {
-				ex.printStackTrace();
-			}
-		}
+	public OcrDetector() {
+		TesseractOCR instance = TesseractOCR.getInstance();
+		// Sparse is more accurate for randomly located text parts than automatic detection as it assumes bigger text paragraphs.
+		instance.setPageSegMode(TessAPI.TessPageSegMode.PSM_SPARSE_TEXT_OSD);
+//		instance.setOcrEngineMode(TessAPI.TessOcrEngineMode.OEM_TESSERACT_CUBE_COMBINED); // Cube results in memory errors
+		// Avoid word list/dictionaries as geonaames and coordinates are not in those lists
+		instance.setTessVariable("load_system_dawg", "false");
+		instance.setTessVariable("load_freq_dawg", "false");
+		// Force proportional word segmentation on all rows
+		instance.setTessVariable("textord_force_make_prop_words", "true");
+		// Limit characters to the ones used for coordinates, especially to avoid confusion between - and _, dot and comma, ° and o etc.
+		instance.setTessVariable("tessedit_char_whitelist", "-,.°'\"1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 	}
 
 	@Override
 	public void detect(Graphic graphic, LocationCollection locations) {
 		try {
-			CoordinatePairs cp = new CoordinatePairs();
 			BufferedImage img = graphic.getBufferedImage();
-			List<Word> words = getTesseract().getWords(img, 0);
-			for(Word word : words) {
+			List<Word> words = TesseractOCR.getInstance().getWords(img, TessPageIteratorLevel.RIL_WORD);
+			graphic.freeBufferedImage();
+
+			Text textBuilder = new Text();
+			for (Word word : words) {
 				String text = word.getText();
-				if (text.length() >= MIN_WORD_LENGTH && word.getConfidence() >= MIN_CONFIDENCE && parser.parseWord(text, cp)) {
-					System.out.println(word);
+				if (text.length() < MIN_WORD_LENGTH || word.getConfidence() < MIN_CONFIDENCE) {
+					continue;
 				}
+
+				textBuilder.add(word);
 			}
-			
-			Location location = cp.getLocation(true);
+
+			CoordinateList coords = parser.parse(textBuilder.getText());
+			Location location = coords.getLocation(true);
 			if (location != null) {
 				locations.add(location);
 			}
 
-			graphic.freeBufferedImage();
 		} catch (UnsatisfiedLinkError e) {
 			e.printStackTrace();
 			System.out.println("Tess4J not installed correctly, please visit http://tess4j.sourceforge.net/usage.html for instructions.");
 		}
+	}
+
+	private Point getCenter(Rectangle r) {
+		return new Point((int) Math.round(r.getCenterX()), (int) Math.round(r.getCenterY()));
+	}
+
+	public class Text {
+
+		private final HashMap<Integer, Word> words;
+		private StringBuilder text;
+
+		public Text() {
+			this.words = new HashMap<>();
+			this.text = new StringBuilder();
+		}
+
+		public void add(Word word) {
+			// This order is important: First get current length of text then append word to text.
+			this.words.put(this.text.length(), word);
+			this.text.append(word.getText());
+			this.text.append(" ");
+		}
+
+		public List<Word> getWordsBetween(int begin, int end) {
+			List<Word> list = new ArrayList<>();
+			Iterator<Entry<Integer, Word>> it = this.words.entrySet().iterator();
+			while(it.hasNext()) {
+				Entry<Integer, Word> entry = it.next();
+				if (entry.getKey() >= begin && entry.getKey() <= end) {
+					list.add(entry.getValue());
+				}
+			}
+			return list;
+		}
+
+		public String getText() {
+			return text.toString();
+		}
+
+		@Override
+		public String toString() {
+			return text.toString();
+		}
+
 	}
 
 }

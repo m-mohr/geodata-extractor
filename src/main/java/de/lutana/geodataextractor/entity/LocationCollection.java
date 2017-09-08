@@ -1,23 +1,24 @@
 package de.lutana.geodataextractor.entity;
 
 import de.lutana.geodataextractor.util.GeoTools;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.List;
 
 /**
  *
  * @author Matthias Mohr
  */
-public class LocationCollection implements Located, SortedSet<Location>, Comparator<Location> {
+public class LocationCollection implements Located, Collection<Location>, Comparator<Location> {
 
-	private final SortedSet<Location> data;
+	private final List<Location> data;
 	private double weight;
 
 	public LocationCollection() {
-		this.data = new TreeSet<>((Comparator<Location>) this);
+		this.data = new ArrayList<>();
 		this.resetWeight();
 	}
 	
@@ -44,38 +45,14 @@ public class LocationCollection implements Located, SortedSet<Location>, Compara
 		if (this.isEmpty()) {
 			return null;
 		}
+		List<Location> cloned = new ArrayList<>(this.data);
+		Collections.sort(cloned);
 		// ToDo: Merge bboxes and calculate the most probable place based on all locations (remember: they might intersect!)
-		return this.first();
+		return cloned.get(0);
 	}
-
-	@Override
-	public Comparator<? super Location> comparator() {
-		return this.data.comparator();
-	}
-
-	@Override
-	public SortedSet<Location> subSet(Location fromElement, Location toElement) {
-		return this.data.subSet(fromElement, toElement);
-	}
-
-	@Override
-	public SortedSet<Location> headSet(Location toElement) {
-		return this.data.headSet(toElement);
-	}
-
-	@Override
-	public SortedSet<Location> tailSet(Location fromElement) {
-		return this.data.tailSet(fromElement);
-	}
-
-	@Override
-	public Location first() {
-		return this.data.first();
-	}
-
-	@Override
-	public Location last() {
-		return this.data.last();
+	
+	public Location get(int index) {
+		return this.data.get(index);
 	}
 
 	@Override
