@@ -3,6 +3,7 @@ package de.lutana.geodataextractor.detector.coordinates;
 import de.lutana.geodataextractor.util.GeoTools;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 
@@ -17,7 +18,7 @@ public class SpatialOutlierDetector {
 	 * accurate than Haversine formula. Median +/- 2 * standard deviation is used
 	 * on the distances to detect outliers.
 	 * 
-	 * Only executed when there are more than 2 values.
+	 * Only executed when there are more than 2 distinct values.
 	 * 
 	 * Removed outliers are returned.
 	 *
@@ -27,14 +28,16 @@ public class SpatialOutlierDetector {
 	 */
 	public List<Double> detectWgs84Outliers(List<Double> list, boolean isLongitude) {
 		List<Double> removed = new ArrayList<>();
-		if (list.size() < 3) {
+		// Remove duplicates
+		List<Double> set = list.stream().distinct().collect(Collectors.toList());
+		if (set.size() < 3) {
 			return removed;
 		}
 
 		// Calculate distance from each point to 0,0
-		double[] distances = new double[list.size()];
-		for(int i = 0; i < list.size(); i++) {
-			Double value = list.get(i);
+		double[] distances = new double[set.size()];
+		for(int i = 0; i < set.size(); i++) {
+			Double value = set.get(i);
 			if (isLongitude) {
 				distances[i] = GeoTools.calcVincentyDistance(0, value, 0, 0) / 1000;
 			}
@@ -50,10 +53,10 @@ public class SpatialOutlierDetector {
 		double lowerBorder = median - 2 * sd;
 		double upperBorder = median + 2 * sd;
 		
-		for(int i = 0; i < list.size(); i++) {
+		for(int i = 0; i < set.size(); i++) {
 			double entry = distances[i];
 			if (entry < lowerBorder  || entry > upperBorder) {
-				removed.add(list.get(i));
+				removed.add(set.get(i));
 			}
 		}
 		list.removeAll(removed);

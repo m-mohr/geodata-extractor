@@ -25,7 +25,8 @@ public class SpatialOutlierDetectorTest {
 			{new Double[] {35.5, 36.0, 36.5, 37.0, 38.0}, true, new Double[] {}},
 			{new Double[] {35.0, 35.5, 36.5, 37.0, 40.0}, true, new Double[] {40.0}},
 			{new Double[] {35.0, 35.5, 36.5, 37.0, 40.0, 41.0}, true, new Double[] {}},
-			{new Double[] {85.0, 87.0, 89.0, -89.0, 0.0}, false, new Double[] {0.0}}
+			{new Double[] {85.0, 87.0, 89.0, -89.0, 0.0}, false, new Double[] {0.0}},
+			{new Double[] {42.0, 42.0, 42.0, 31.0, 31.0}, false, new Double[] {}}
 		};
 		return Arrays.asList(list);
     }

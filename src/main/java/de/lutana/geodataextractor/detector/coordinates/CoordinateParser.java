@@ -13,27 +13,27 @@ public class CoordinateParser {
 	 * Detects UTM coorinates.
 	 * First and second matches are the grid number (longitude zone as number, latitude zone as letter), third is the easting value and fourth is the northing value.
 	 */
-	public static final Pattern UTM_PATTERN = Pattern.compile("\\b(\\d{1,2})\\s?([A-Z])\\s(\\d{6})\\s(\\d{1,7})\\b");
+	public static final Pattern UTM_PATTERN = Pattern.compile("(?<![\\w\\.°'\"-])(\\d{1,2})\\s?([A-Z])\\s(\\d{6})\\s(\\d{1,7})(?![\\w°'\"-])");
 	
 	/**
 	 * Detects: Dezimalgrad, Grad Minuten and Grad Minuten Sekunden
 	 * First match is degree, second is minutes (might be empty), third is seconds (might be empty) and third is the cardinal point (N/S/E/W).
 	 */
-	public static final Pattern WGS84_PATTERN = Pattern.compile("(?<![\\w\\.°'\"-])(-?\\d+(?:\\.\\d+)?)°(?:\\s*(\\d+(?:\\.\\d+)?)')?(?:\\s*(\\d+(?:\\.\\d+)?)(?:\"|''))?\\s*(N|S|W|E)(?![\\w°'\"])");
+	public static final Pattern WGS84_PATTERN = Pattern.compile("(?<![\\w\\.°'\"-])(-?\\d+(?:\\.\\d+)?)°(?:\\s*(\\d+(?:\\.\\d+)?)')?(?:\\s*(\\d+(?:\\.\\d+)?)(?:\"|''))?\\s*(N|S|W|E)(?![\\w°'\"-])");
 	
 	/**
 	 * Detects Ordnance Survey coordinates.
 	 * First match are the grid letters, second is the easting value and third is the northing value.
 	 * If there is a fourth match there is no second and third match. The fourth match then includes both easting and northing, which need to be splitted in the middle.
 	 */
-	public static final Pattern OS_PATTERN = Pattern.compile("\\b(H[PTUW-Z]|N[A-DF-KL-OR-UW-Z]|OV|S[CDEHJKM-PR-Z]|T[AFGLMQRV])(?:\\s?(\\d{2,5})\\s(\\d{2,5})|(\\d{4}|\\d{6}|\\d{8}|\\d{10})(?!\\s\\d{2,5}))\\b");
+	public static final Pattern OS_PATTERN = Pattern.compile("(?<![\\w\\.°'\"-])(H[PTUW-Z]|N[A-DF-KL-OR-UW-Z]|OV|S[CDEHJKM-PR-Z]|T[AFGLMQRV])(?:\\s?(\\d{2,5})\\s(\\d{2,5})|(\\d{4}|\\d{6}|\\d{8}|\\d{10})(?!\\s\\d{2,5}))(?![\\w°'\"-])");
 	
 	/**
 	 * Detects Military Grid Reference System.
 	 * Regexp is a little to simple, so might parse some invalid coordinates.
 	 * First match is the grid code, second match are the grid numbers (might be separated by a space).
 	 */
-	public static final Pattern MGRS_PATTERN = Pattern.compile("\\b(\\d{1,2}[C-X][A-HJ-NP-Z]{2})\\s?(\\d{1,5}\\s?\\d{1,5})\\b");
+	public static final Pattern MGRS_PATTERN = Pattern.compile("(?<![\\w\\.°'\"-])(\\d{1,2}[C-X][A-HJ-NP-Z]{2})\\s?(\\d{1,5}\\s?\\d{1,5})(?![\\w°'\"-])");
 	
 	public CoordinateList parse(String text) {
 		CoordinateList list = new CoordinateList();
@@ -211,9 +211,16 @@ public class CoordinateParser {
 			}
 
 			Coordinate c;
+			long roundedCoord = Math.round(coord);
 			if (sigStr.equalsIgnoreCase("S") || sigStr.equalsIgnoreCase("N")) {
+				if (roundedCoord > 90 || roundedCoord < -90) {
+					continue;
+				}
 				c = new Coordinate(coord, null, m.start(), m.end());
 			} else {
+				if (roundedCoord > 180 || roundedCoord < -180) {
+					continue;
+				}
 				c = new Coordinate(null, coord, m.start(), m.end());
 			}
 			clist.add(c);
