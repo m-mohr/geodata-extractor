@@ -17,7 +17,7 @@ import de.lutana.geodataextractor.detector.coordinates.CoordinateParser;
  *
  * @author Matthias Mohr
  */
-public class CoordinateDetector implements TextDetector {
+public class CoordinateTextDetector implements TextDetector {
 
 	@Override
 	public void detect(String text, LocationCollection locations) {

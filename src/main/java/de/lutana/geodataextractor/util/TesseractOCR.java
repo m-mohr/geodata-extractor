@@ -1,7 +1,7 @@
 package de.lutana.geodataextractor.util;
 
 import de.lutana.geodataextractor.Config;
-import de.lutana.geodataextractor.detector.OcrDetector;
+import de.lutana.geodataextractor.detector.CoordinateGraphicDetector;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -40,7 +40,7 @@ public class TesseractOCR extends Tesseract {
 			try {
 				File target = new File(tessDataFolder, name);
 				if (!target.exists()) {
-					URL words = OcrDetector.class.getClassLoader().getResource("tessdata/" + name);
+					URL words = TesseractOCR.class.getClassLoader().getResource("tessdata/" + name);
 					FileUtils.copyURLToFile(words, target);
 				}
 			} catch (IOException ex) {

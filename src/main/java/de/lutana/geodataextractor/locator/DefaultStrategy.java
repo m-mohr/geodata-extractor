@@ -1,8 +1,8 @@
 package de.lutana.geodataextractor.locator;
 
-import de.lutana.geodataextractor.detector.ClavinDetector;
-import de.lutana.geodataextractor.detector.DumbCountryDetector;
-import de.lutana.geodataextractor.detector.OcrDetector;
+import de.lutana.geodataextractor.detector.ClavinTextDetector;
+import de.lutana.geodataextractor.detector.DumbCountryTextDetector;
+import de.lutana.geodataextractor.detector.CoordinateGraphicDetector;
 import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.FigureCollection;
@@ -17,14 +17,14 @@ import de.lutana.geodataextractor.entity.LocationCollection;
  */
 public class DefaultStrategy implements Strategy {
 	
-	private DumbCountryDetector dumbDetector;
-	private ClavinDetector clavinDetector;
-	private OcrDetector ocrDetector;
+	private DumbCountryTextDetector dumbDetector;
+	private ClavinTextDetector clavinDetector;
+	private CoordinateGraphicDetector ocrDetector;
 	
 	public DefaultStrategy() {
-		this.dumbDetector = new DumbCountryDetector();
-		this.clavinDetector = new ClavinDetector();
-		this.ocrDetector = new OcrDetector();
+		this.dumbDetector = new DumbCountryTextDetector();
+		this.clavinDetector = new ClavinTextDetector();
+		this.ocrDetector = new CoordinateGraphicDetector();
 	}
 
 	/**

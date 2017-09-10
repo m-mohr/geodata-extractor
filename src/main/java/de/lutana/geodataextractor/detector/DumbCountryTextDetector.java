@@ -13,11 +13,11 @@ import java.util.Map.Entry;
  * 
  * @author Matthias Mohr
  */
-public class DumbCountryDetector implements TextDetector {
+public class DumbCountryTextDetector implements TextDetector {
 	
 	private final HashMap<String, Location> countryMap;
 	
-	public DumbCountryDetector() {
+	public DumbCountryTextDetector() {
 		this.countryMap = new HashMap<>();
 		this.countryMap.put("Afghanistan", new Location(60.5284298033, 75.1580277851, 29.318572496, 38.4862816432));
 		this.countryMap.put("Angola", new Location(11.6400960629, 24.0799052263, -17.9306364885, -4.43802336998));

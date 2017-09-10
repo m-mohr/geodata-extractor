@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClavinDetector implements TextDetector {
+public class ClavinTextDetector implements TextDetector {
 
 	private static GeoParser geoParser = null;
 	private static final String[] DEFAULT_GAZETTEER_FILES = new String[]{"./allCountries.txt"};

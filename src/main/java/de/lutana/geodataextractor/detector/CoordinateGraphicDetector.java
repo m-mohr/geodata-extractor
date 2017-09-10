@@ -25,13 +25,13 @@ import net.sourceforge.tess4j.TessAPI;
 import net.sourceforge.tess4j.Word;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 
-public class OcrDetector implements GraphicDetector {
+public class CoordinateGraphicDetector implements GraphicDetector {
 
 	private final CoordinateParser parser = new CoordinateParser();
 	private static final float MIN_CONFIDENCE = 0.25f;
 	private static final int MIN_WORD_LENGTH = 3;
 
-	public OcrDetector() {
+	public CoordinateGraphicDetector() {
 		TesseractOCR instance = TesseractOCR.getInstance();
 		// Sparse is more accurate for randomly located text parts than automatic detection as it assumes bigger text paragraphs.
 		instance.setPageSegMode(TessAPI.TessPageSegMode.PSM_SPARSE_TEXT);

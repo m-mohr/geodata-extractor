@@ -1,6 +1,6 @@
 package api;
 
-import de.lutana.geodataextractor.detector.CoordinateDetector;
+import de.lutana.geodataextractor.detector.CoordinateTextDetector;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import java.util.Arrays;
@@ -15,7 +15,7 @@ public class CoordinateDetectorTest {
     @org.junit.runners.Parameterized.Parameter(1)
     public Location location;
 	
-	private final CoordinateDetector detector = new CoordinateDetector();
+	private final CoordinateTextDetector detector = new CoordinateTextDetector();
 
     @org.junit.runners.Parameterized.Parameters
     public static Collection<Object[]> data() {
