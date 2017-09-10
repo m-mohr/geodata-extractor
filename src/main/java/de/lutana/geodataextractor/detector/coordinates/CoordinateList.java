@@ -5,12 +5,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class CoordinateList extends ArrayList<Coordinate> {
+public class CoordinateList extends ArrayList<CoordinateFromText> {
 
 	public boolean hasLocation() {
 		boolean hasLon = false;
 		boolean hasLat = false;
-		for(Coordinate c : this) {
+		for(CoordinateFromText c : this) {
 			if (c.getLatitude() != null) {
 				hasLat = true;
 			}
@@ -31,7 +31,7 @@ public class CoordinateList extends ArrayList<Coordinate> {
 	public Location getLocation(boolean removeOutliers) {
 		List<Double> longitude = new ArrayList<>();
 		List<Double> latitude = new ArrayList<>();
-		for(Coordinate c : this) {
+		for(CoordinateFromText c : this) {
 			Double lat = c.getLatitude();
 			if (lat != null) {
 				latitude.add(lat);

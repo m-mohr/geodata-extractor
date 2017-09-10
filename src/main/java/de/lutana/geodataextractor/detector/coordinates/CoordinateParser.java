@@ -74,7 +74,7 @@ public class CoordinateParser {
 			String ref = m.group().replaceAll("\\s", "");
 			try {
 				MGRSRef mgrs = new MGRSRef(ref); // We assume it's not Bessel based as we can't really know.
-				Coordinate c = new Coordinate(mgrs.toLatLng(), m.start(), m.end());
+				CoordinateFromText c = new CoordinateFromText(mgrs.toLatLng(), m.group(), m.start(), m.end());
 				clist.add(c);
 			} catch(IllegalArgumentException | NotDefinedOnUTMGridException e) {
 			}
@@ -110,7 +110,7 @@ public class CoordinateParser {
 				Double easting = Double.parseDouble(m.group(3));
 				Double northing = Double.parseDouble(m.group(4));
 				UTMRef utm = new UTMRef(lngZone, latZone, easting, northing);
-				Coordinate c = new Coordinate(utm.toLatLng(), m.start(), m.end());
+				CoordinateFromText c = new CoordinateFromText(utm.toLatLng(), m.group(), m.start(), m.end());
 				clist.add(c);
 			} catch(NotDefinedOnUTMGridException | NumberFormatException e) {
 			}
@@ -157,7 +157,7 @@ public class CoordinateParser {
 			Integer easting = Integer.parseInt(eastingStr);
 			Integer northing = Integer.parseInt(northingStr);
 			OSRef os = new OSRef(zone, easting, northing);
-			Coordinate c = new Coordinate(os.toLatLng(), m.start(), m.end());
+			CoordinateFromText c = new CoordinateFromText(os.toLatLng(), m.group(), m.start(), m.end());
 			clist.add(c);
 		}
 	}
@@ -210,18 +210,18 @@ public class CoordinateParser {
 				coord = -1 * coord;
 			}
 
-			Coordinate c;
+			CoordinateFromText c;
 			long roundedCoord = Math.round(coord);
 			if (sigStr.equalsIgnoreCase("S") || sigStr.equalsIgnoreCase("N")) {
 				if (roundedCoord > 90 || roundedCoord < -90) {
 					continue;
 				}
-				c = new Coordinate(coord, null, m.start(), m.end());
+				c = new CoordinateFromText(coord, null, m.group(), m.start(), m.end());
 			} else {
 				if (roundedCoord > 180 || roundedCoord < -180) {
 					continue;
 				}
-				c = new Coordinate(null, coord, m.start(), m.end());
+				c = new CoordinateFromText(null, coord, m.group(), m.start(), m.end());
 			}
 			clist.add(c);
 		}

@@ -4,27 +4,35 @@ import de.lutana.geodataextractor.util.GeoTools;
 import java.util.Objects;
 import uk.me.jstott.jcoord.LatLng;
 
-public class Coordinate {
+public class CoordinateFromText {
 	
 	private final Double latitude;
 	private final Double longitude;
+
+	private final String text;
 	private final int beginMatch;
 	private final int endMatch;
 	
-	public Coordinate(LatLng ll, int beginMatch, int endMatch) {
-		this(ll.getLatitude(), ll.getLongitude(), beginMatch, endMatch);
+	public CoordinateFromText(CoordinateFromText c) {
+		this(c.latitude, c.longitude, c.text, c.beginMatch, c.endMatch);
 	}
 	
-	public Coordinate(Double lat, Double lon, int beginMatch, int endMatch) {
+	public CoordinateFromText(LatLng ll, String text, int beginMatch, int endMatch) {
+		this(ll.getLatitude(), ll.getLongitude(), text, beginMatch, endMatch);
+	}
+	
+	public CoordinateFromText(Double lat, Double lon, String text, int beginMatch, int endMatch) {
 		this.latitude = lat;
 		this.longitude = lon;
+		this.text = text;
 		this.beginMatch = beginMatch;
 		this.endMatch = endMatch;
 	}
 	
-	public Coordinate(Double lat, Double lon) {
+	public CoordinateFromText(Double lat, Double lon) {
 		this.latitude = lat;
 		this.longitude = lon;
+		this.text = null;
 		this.beginMatch = -1;
 		this.endMatch = -1;
 	}
@@ -35,12 +43,23 @@ public class Coordinate {
 	public Double getLatitude() {
 		return this.latitude;
 	}
+	
+	public com.vividsolutions.jts.geom.Coordinate toJtsCoordinate() {
+		return new com.vividsolutions.jts.geom.Coordinate(this.longitude, this.latitude);
+	}
 
 	/**
 	 * @return the value
 	 */
 	public Double getLongitude() {
 		return this.longitude;
+	}
+
+	/**
+	 * @return the text
+	 */
+	public String getText() {
+		return this.text;
 	}
 
 	/**
@@ -68,10 +87,10 @@ public class Coordinate {
 
 	@Override
 	public boolean equals(Object other) {
-		if (!(other instanceof Coordinate)) {
+		if (!(other instanceof CoordinateFromText)) {
 			return false;
 		}
-		Coordinate oc = (Coordinate) other;
+		CoordinateFromText oc = (CoordinateFromText) other;
 		return ((oc.longitude == null && this.longitude == null) || (this.longitude != null && GeoTools.roundLatLon(oc.longitude) == GeoTools.roundLatLon(this.longitude)))
 				&& ((oc.latitude == null && this.latitude == null) || (this.latitude != null && GeoTools.roundLatLon(oc.latitude) == GeoTools.roundLatLon(this.latitude)));
 	}

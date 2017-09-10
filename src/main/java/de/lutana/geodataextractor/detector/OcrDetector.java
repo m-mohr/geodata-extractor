@@ -1,14 +1,18 @@
 package de.lutana.geodataextractor.detector;
 
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Envelope;
+import com.vividsolutions.jts.geom.LineSegment;
 import de.lutana.geodataextractor.Config;
-import de.lutana.geodataextractor.detector.coordinates.Coordinate;
+import de.lutana.geodataextractor.detector.coordinates.CoordinateFromText;
 import de.lutana.geodataextractor.entity.Graphic;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import de.lutana.geodataextractor.detector.coordinates.CoordinateList;
 import de.lutana.geodataextractor.detector.coordinates.CoordinateParser;
+import de.lutana.geodataextractor.detector.cv.LineParser;
+import de.lutana.geodataextractor.detector.cv.OpenCV;
 import de.lutana.geodataextractor.util.TesseractOCR;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -19,6 +23,7 @@ import java.util.Map.Entry;
 import net.sourceforge.tess4j.ITessAPI.TessPageIteratorLevel;
 import net.sourceforge.tess4j.TessAPI;
 import net.sourceforge.tess4j.Word;
+import org.apache.commons.math3.stat.regression.SimpleRegression;
 
 public class OcrDetector implements GraphicDetector {
 
@@ -29,7 +34,7 @@ public class OcrDetector implements GraphicDetector {
 	public OcrDetector() {
 		TesseractOCR instance = TesseractOCR.getInstance();
 		// Sparse is more accurate for randomly located text parts than automatic detection as it assumes bigger text paragraphs.
-		instance.setPageSegMode(TessAPI.TessPageSegMode.PSM_SPARSE_TEXT_OSD);
+		instance.setPageSegMode(TessAPI.TessPageSegMode.PSM_SPARSE_TEXT);
 		// Set the OCR mode (slow and more accurate = Cube and Tesseract / fast and more inaccurate = Tesseract only)
 		instance.setOcrEngineMode(Config.isOcrFastModeEnabled() ? TessAPI.TessOcrEngineMode.OEM_TESSERACT_ONLY : TessAPI.TessOcrEngineMode.OEM_TESSERACT_CUBE_COMBINED);
 		// Avoid word list/dictionaries as geonaames and coordinates are not in those lists
@@ -44,21 +49,44 @@ public class OcrDetector implements GraphicDetector {
 		try {
 			BufferedImage img = graphic.getBufferedImage();
 			List<Word> words = TesseractOCR.getInstance().getWords(img, TessPageIteratorLevel.RIL_WORD);
-			graphic.freeBufferedImage();
 
+			// Add a text with a directory of words
 			Text textBuilder = new Text();
 			for (Word word : words) {
 				String text = word.getText();
 				if (text.length() < MIN_WORD_LENGTH || word.getConfidence() < MIN_CONFIDENCE) {
 					continue;
 				}
-
 				textBuilder.add(word);
 			}
 
+			// Combine coordinates with OCR rectangles
 			CoordinateList coords = parser.parse(textBuilder.getText());
+			for (int i = 0; i < coords.size(); i++) {
+				CoordinateFromText coord = coords.get(i);
+				List<Word> textWords = textBuilder.getWordsBetween(coord.getBeginMatch(), coord.getEndMatch());
+
+				// Combine bounding boxes if a coordinate was built from multiple words
+				Rectangle rectangle = null;
+				for (Word word : textWords) {
+					if (rectangle == null) {
+						rectangle = word.getBoundingBox();
+					} else {
+						rectangle.add(word.getBoundingBox());
+					}
+				}
+
+				CoordinateFromOcr newCoord = new CoordinateFromOcr(coord, rectangle);
+				coords.set(i, newCoord);
+			}
+
+			// Try to get location using axes and labels
 			Location location = coords.getLocation(true);
 			if (location != null) {
+				Location locationByAxes = this.getLocationUsingAxes(img, coords);
+				if (locationByAxes != null) {
+					location.expandToInclude(locationByAxes);
+				}
 				locations.add(location);
 			}
 
@@ -67,15 +95,167 @@ public class OcrDetector implements GraphicDetector {
 			System.out.println("Tess4J not installed correctly, please visit http://tess4j.sourceforge.net/usage.html for instructions.");
 		}
 	}
+	
+	public Location getLocationUsingAxes(BufferedImage img, CoordinateList coords) {
+		// Do countour finding to get the axes
+		LineParser lp = OpenCV.getInstance().createLineParser(img);
+		List<LineSegment> lines = lp.parse();
+		if (lines.isEmpty()) {
+			return null;
+		}
+		
+		List<Axis> axes = new ArrayList<>();
+		for(LineSegment line : lines) {
+			axes.add(new Axis(line));
+		}
 
-	private Point getCenter(Rectangle r) {
-		return new Point((int) Math.round(r.getCenterX()), (int) Math.round(r.getCenterY()));
+		for (CoordinateFromText coord : coords) {
+			CoordinateFromOcr ocrCoord = (CoordinateFromOcr) coord;
+			if (ocrCoord == null) {
+				continue;
+			}
+
+			Coordinate c = ocrCoord.getBoundingBoxCenter();
+
+			Axis nearestAxis = null;
+			double minDistanceFromNearestAxis = Double.MAX_VALUE;
+			for(Axis axis : axes) {
+				LineSegment l = axis.getLine();
+				// Check whether the text is not inside the line bounds => reject it
+				if (l.isHorizontal() && (c.x < l.minX() || c.x > l.maxX())) {
+					continue;
+				}
+				else if (l.isVertical() && (c.y < l.minY() || c.y > l.maxY())) {
+					continue;
+				}
+				
+				Coordinate snappedPoint = axis.getLine().closestPoint(c);
+				double distance = snappedPoint.distance(c);
+				if (minDistanceFromNearestAxis > distance) {
+					nearestAxis = axis;
+					minDistanceFromNearestAxis = distance;
+				}
+			}
+
+			ocrCoord.setNearestAxis(nearestAxis);
+		}
+		
+		for (CoordinateFromText coord : coords) {
+			CoordinateFromOcr ocrCoord = (CoordinateFromOcr) coord;
+			if (ocrCoord == null) {
+				continue;
+			}
+			Axis axis = ocrCoord.getNearestAxis();
+			if (axis != null) {
+				axis.addCoordinate(ocrCoord);
+			}
+		}
+		
+		double xMin = Double.NaN;
+		double xMax = Double.NaN;
+		double yMin = Double.NaN;
+		double yMax = Double.NaN;
+		for(Axis axis : axes) {
+			double length = axis.getLine().getLength();
+			if (axis.getLine().isHorizontal()) {
+				Double xMinPred = axis.predictValue(0);
+				if (Double.isNaN(xMin) || xMin > xMinPred) {
+					xMin = xMinPred;
+				}
+				Double xMaxPred = axis.predictValue(length);
+				if (Double.isNaN(xMax) || xMax < xMaxPred) {
+					xMax = xMaxPred;
+				}
+			}
+			else {
+				Double yMinPred = axis.predictValue(0);
+				if (Double.isNaN(yMin) || yMin > yMinPred) {
+					yMin = yMinPred;
+				}
+				Double yMaxPred = axis.predictValue(length);
+				if (Double.isNaN(yMax) || yMax < yMaxPred) {
+					yMax = yMaxPred;
+				}
+			}
+		}
+		
+		if (!Double.isNaN(xMin) && !Double.isNaN(xMax) && !Double.isNaN(yMin) && !Double.isNaN(yMax)) {
+			return new Location(xMin, xMax, yMin, yMax);
+		}
+		return null;
+	}
+	
+	public class Axis {
+		
+		private SimpleRegression data;
+		private LineSegment line;
+		
+		public Axis(LineSegment line) {
+			this.line = line;
+			this.data = new SimpleRegression();
+		}
+		
+		public LineSegment getLine() {
+			return this.line;
+		}
+		
+		public void addCoordinate(CoordinateFromOcr coord) {
+			if (this.line.isHorizontal() && coord.getLongitude() != null) {
+				double x = coord.getBoundingBoxCenter().x - this.line.minX();
+				this.data.addData(x, coord.getLongitude());
+			}
+			else if (this.line.isVertical() && coord.getLatitude() != null) {
+				double x = coord.getBoundingBoxCenter().y - this.line.minY();
+				this.data.addData(x, coord.getLatitude());
+			}
+		}
+		
+		public double predictValue(double x) {
+			double significance = this.data.getSignificance();
+			if (!Double.isNaN(data.getSlope()) && (Double.isNaN(significance) || significance > 0.5)) {
+				return this.data.predict(x);
+			}
+			return Double.NaN;
+		}
+		
+	}
+
+	public class CoordinateFromOcr extends CoordinateFromText {
+
+		private Envelope env;
+		private Axis nearestAxis;
+
+		public CoordinateFromOcr(CoordinateFromText coord, Rectangle rect) {
+			this(coord, new Envelope(rect.getMinX(), rect.getMaxX(), rect.getMinY(), rect.getMaxY()));
+		}
+
+		public CoordinateFromOcr(CoordinateFromText coord, Envelope env) {
+			super(coord);
+			this.env = env;
+		}
+
+		public Envelope getBoundingBox() {
+			return this.env;
+		}
+
+		private Coordinate getBoundingBoxCenter() {
+			return env.centre();
+		}
+
+		public Axis getNearestAxis() {
+			return nearestAxis;
+		}
+
+		public void setNearestAxis(Axis nearest) {
+			this.nearestAxis = nearest;
+		}
+
 	}
 
 	public class Text {
 
 		private final HashMap<Integer, Word> words;
-		private StringBuilder text;
+		private final StringBuilder text;
 
 		public Text() {
 			this.words = new HashMap<>();
@@ -92,7 +272,7 @@ public class OcrDetector implements GraphicDetector {
 		public List<Word> getWordsBetween(int begin, int end) {
 			List<Word> list = new ArrayList<>();
 			Iterator<Entry<Integer, Word>> it = this.words.entrySet().iterator();
-			while(it.hasNext()) {
+			while (it.hasNext()) {
 				Entry<Integer, Word> entry = it.next();
 				if (entry.getKey() >= begin && entry.getKey() <= end) {
 					list.add(entry.getValue());

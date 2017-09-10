@@ -8,7 +8,6 @@ import javax.imageio.ImageIO;
 public class Graphic {
 	
 	protected File file;
-	protected BufferedImage image;
 	
 	public Graphic(File file) {
 		this.file = file;
@@ -29,16 +28,13 @@ public class Graphic {
 	}
 	
 	public BufferedImage getBufferedImage() {
+		BufferedImage image = null;
 		try {
 			image = ImageIO.read(this.file);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return image;
-	}
-	
-	public void freeBufferedImage() {
-		this.image = null;
 	}
 	
 }
