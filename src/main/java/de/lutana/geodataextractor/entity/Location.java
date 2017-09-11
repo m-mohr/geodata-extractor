@@ -24,6 +24,14 @@ public class Location extends Envelope {
 	public Location(Envelope e) {
 		super(e);
 	}
+	
+	public void setX(double min, double max) {
+		this.init(min, max, this.getMinY(), this.getMaxY());
+	}
+	
+	public void setY(double min, double max) {
+		this.init(this.getMinX(), this.getMaxX(), min, max);
+	}
 
 	public double getProbability() {
 		return this.probability;

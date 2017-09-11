@@ -6,8 +6,8 @@ import uk.me.jstott.jcoord.LatLng;
 
 public class CoordinateFromText {
 	
-	private final Double latitude;
-	private final Double longitude;
+	private Double latitude;
+	private Double longitude;
 
 	private final String text;
 	private final int beginMatch;
@@ -36,6 +36,14 @@ public class CoordinateFromText {
 		this.beginMatch = -1;
 		this.endMatch = -1;
 	}
+	
+	public com.vividsolutions.jts.geom.Coordinate toJtsCoordinate() {
+		return new com.vividsolutions.jts.geom.Coordinate(this.longitude, this.latitude);
+	}
+	
+	public boolean isEmpty() {
+		return (latitude == null && longitude == null);
+	}
 
 	/**
 	 * @return the value
@@ -43,16 +51,26 @@ public class CoordinateFromText {
 	public Double getLatitude() {
 		return this.latitude;
 	}
-	
-	public com.vividsolutions.jts.geom.Coordinate toJtsCoordinate() {
-		return new com.vividsolutions.jts.geom.Coordinate(this.longitude, this.latitude);
-	}
 
 	/**
 	 * @return the value
 	 */
 	public Double getLongitude() {
 		return this.longitude;
+	}
+
+	/**
+	 * @param latitude the latitude to set
+	 */
+	public void setLatitude(Double latitude) {
+		this.latitude = latitude;
+	}
+
+	/**
+	 * @param longitude the longitude to set
+	 */
+	public void setLongitude(Double longitude) {
+		this.longitude = longitude;
 	}
 
 	/**

@@ -29,13 +29,13 @@ import org.slf4j.LoggerFactory;
 public class CoordinateGraphicDetector implements GraphicDetector {
 
 	private final CoordinateParser parser = new CoordinateParser();
-	private static final float MIN_CONFIDENCE = 0.25f;
+	private static final float MIN_CONFIDENCE = 25f; // in percent
 	private static final int MIN_WORD_LENGTH = 3;
 
 	public CoordinateGraphicDetector() {
 		TesseractOCR instance = TesseractOCR.getInstance();
 		// Sparse is more accurate for randomly located text parts than automatic detection as it assumes bigger text paragraphs.
-		instance.setPageSegMode(TessAPI.TessPageSegMode.PSM_SPARSE_TEXT);
+		instance.setPageSegMode(TessAPI.TessPageSegMode.PSM_SPARSE_TEXT_OSD);
 		// Set the OCR mode (slow and more accurate = Cube and Tesseract / fast and more inaccurate = Tesseract only)
 		instance.setOcrEngineMode(Config.isOcrFastModeEnabled() ? TessAPI.TessOcrEngineMode.OEM_TESSERACT_ONLY : TessAPI.TessOcrEngineMode.OEM_TESSERACT_CUBE_COMBINED);
 		// Avoid word list/dictionaries as geonaames and coordinates are not in those lists
@@ -58,9 +58,10 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 				if (text.length() < MIN_WORD_LENGTH || word.getConfidence() < MIN_CONFIDENCE) {
 					continue;
 				}
-				textBuilder.add(word);
 				LoggerFactory.getLogger(this.getClass()).debug(word.toString());
+				textBuilder.add(word);
 			}
+			LoggerFactory.getLogger(this.getClass()).debug(textBuilder.getText());
 
 			// Combine coordinates with OCR rectangles
 			CoordinateList coords = parser.parse(textBuilder.getText());
@@ -83,13 +84,12 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 				LoggerFactory.getLogger(this.getClass()).debug(newCoord.toString());
 			}
 
+			// Remove obvious outliers
+			coords.removeOutliers();
 			// Try to get location using axes and labels
-			Location location = coords.getLocation(true);
+			Location location = coords.getLocation();
 			if (location != null) {
-				Location locationByAxes = this.getLocationUsingAxes(img, coords);
-				if (locationByAxes != null) {
-					location.expandToInclude(locationByAxes);
-				}
+				this.improveLocationUsingAxes(img, coords, location);
 				locations.add(location);
 			}
 
@@ -99,12 +99,12 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 		}
 	}
 	
-	public Location getLocationUsingAxes(BufferedImage img, CoordinateList coords) {
+	public void improveLocationUsingAxes(BufferedImage img, CoordinateList coords, Location baseLocation) {
 		// Do countour finding to get the axes
 		LineParser lp = OpenCV.getInstance().createLineParser(img);
 		List<LineSegment> lines = lp.parse();
 		if (lines.isEmpty()) {
-			return null;
+			return;
 		}
 		
 		List<Axis> axes = new ArrayList<>();
@@ -159,6 +159,10 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 		double yMin = Double.NaN;
 		double yMax = Double.NaN;
 		for(Axis axis : axes) {
+			if (!axis.hasCoordinates()) {
+				continue;
+			}
+			LoggerFactory.getLogger(this.getClass()).debug(axis.toString());
 			double length = axis.getLine().getLength();
 			if (axis.getLine().isHorizontal()) {
 				Double xMinPred = axis.predictValue(0);
@@ -182,43 +186,58 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 			}
 		}
 		
-		if (!Double.isNaN(xMin) && !Double.isNaN(xMax) && !Double.isNaN(yMin) && !Double.isNaN(yMax)) {
-			return new Location(xMin, xMax, yMin, yMax);
+		if (!Double.isNaN(xMin) && !Double.isNaN(xMax)) {
+			baseLocation.setX(xMin, xMax);
 		}
-		return null;
+		if (!Double.isNaN(yMin) && !Double.isNaN(yMax)) {
+			baseLocation.setY(yMin, yMax);
+		}
 	}
 	
 	public class Axis {
 		
-		private SimpleRegression data;
+		private List<CoordinateFromOcr> data;
+		private SimpleRegression regression;
 		private LineSegment line;
 		
 		public Axis(LineSegment line) {
 			this.line = line;
-			this.data = new SimpleRegression();
+			this.data = new ArrayList<>();
+			this.regression = new SimpleRegression();
 		}
 		
 		public LineSegment getLine() {
 			return this.line;
 		}
 		
+		public boolean hasCoordinates() {
+			return (this.data.size() >= 2);
+		}
+		
 		public void addCoordinate(CoordinateFromOcr coord) {
 			if (this.line.isHorizontal() && coord.getLongitude() != null) {
+				this.data.add(coord);
 				double x = coord.getBoundingBoxCenter().x - this.line.minX();
-				this.data.addData(x, coord.getLongitude());
+				this.regression.addData(x, coord.getLongitude());
 			}
 			else if (this.line.isVertical() && coord.getLatitude() != null) {
+				this.data.add(coord);
 				double x = coord.getBoundingBoxCenter().y - this.line.minY();
-				this.data.addData(x, coord.getLatitude());
+				this.regression.addData(x, coord.getLatitude());
 			}
 		}
 		
 		public double predictValue(double x) {
-			double significance = this.data.getSignificance();
-			if (!Double.isNaN(data.getSlope()) && (Double.isNaN(significance) || significance > 0.5)) {
-				return this.data.predict(x);
+			double significance = this.regression.getSignificance();
+			if (!Double.isNaN(this.regression.getSlope()) && (Double.isNaN(significance) || significance < 0.1)) {
+				return this.regression.predict(x);
 			}
 			return Double.NaN;
+		}
+		
+		@Override
+		public String toString() {
+			return "["+this.line+" with "+this.data+"]";
 		}
 		
 	}
