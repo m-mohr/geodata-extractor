@@ -42,14 +42,18 @@ public class Config {
 	}
 	
 	public static String getTestUrl(Location expected, Location result, File file) throws UnsupportedEncodingException {
-		String path = file.getName();
-		ParserFactory pf = new ParserFactory();
-		if (!pf.hasParser(file)) {
-			path = file.getParentFile().getName() + File.separator + file.getName();
-		}
-		return "http://giv-project8.uni-muenster.de/study-app/test.php?file=" + URLEncoder.encode(path, "UTF-8") + 
+		String url = "http://giv-project8.uni-muenster.de/study-app/test.php?" + 
 				"&eminlon=" + expected.getMinX() + "&emaxlon=" + expected.getMaxX() + "&eminlat=" + expected.getMinY() + "&emaxlat=" + expected.getMaxY() + 
 				"&rminlon=" + result.getMinX() + "&rmaxlon=" + result.getMaxX() + "&rminlat=" + result.getMinY() + "&rmaxlat=" + result.getMaxY();
+		if (file != null) {
+			String path = file.getName();
+			ParserFactory pf = new ParserFactory();
+			if (!pf.hasParser(file)) {
+				path = file.getParentFile().getName() + File.separator + file.getName();
+			}
+			url += "&file=" + URLEncoder.encode(path, "UTF-8");
+		}
+		return url;
 	}
 	
 }

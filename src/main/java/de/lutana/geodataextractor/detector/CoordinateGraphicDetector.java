@@ -58,7 +58,6 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 				if (text.length() < MIN_WORD_LENGTH || word.getConfidence() < MIN_CONFIDENCE) {
 					continue;
 				}
-				LoggerFactory.getLogger(this.getClass()).debug(word.toString());
 				textBuilder.add(word);
 			}
 			LoggerFactory.getLogger(this.getClass()).debug(textBuilder.getText());
