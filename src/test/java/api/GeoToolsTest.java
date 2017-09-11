@@ -4,7 +4,6 @@ import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import de.lutana.geodataextractor.util.GeoTools;
 import java.io.IOException;
-import java.util.Collections;
 import org.junit.Assert;
 
 public class GeoToolsTest {

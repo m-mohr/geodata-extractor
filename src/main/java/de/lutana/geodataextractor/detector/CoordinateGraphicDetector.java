@@ -24,6 +24,7 @@ import net.sourceforge.tess4j.ITessAPI.TessPageIteratorLevel;
 import net.sourceforge.tess4j.TessAPI;
 import net.sourceforge.tess4j.Word;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
+import org.slf4j.LoggerFactory;
 
 public class CoordinateGraphicDetector implements GraphicDetector {
 
@@ -58,6 +59,7 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 					continue;
 				}
 				textBuilder.add(word);
+				LoggerFactory.getLogger(this.getClass()).debug(word.toString());
 			}
 
 			// Combine coordinates with OCR rectangles
@@ -78,6 +80,7 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 
 				CoordinateFromOcr newCoord = new CoordinateFromOcr(coord, rectangle);
 				coords.set(i, newCoord);
+				LoggerFactory.getLogger(this.getClass()).debug(newCoord.toString());
 			}
 
 			// Try to get location using axes and labels

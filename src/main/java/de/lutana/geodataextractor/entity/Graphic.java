@@ -37,4 +37,9 @@ public class Graphic {
 		return image;
 	}
 	
+	@Override
+	public String toString() {
+		return this.file.getName();
+	}
+	
 }

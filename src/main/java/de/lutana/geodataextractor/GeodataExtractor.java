@@ -44,7 +44,6 @@ public class GeodataExtractor {
 		this.strategy = strategy;
 		this.parserFactory = new ParserFactory();
 		this.cachingEnabled = false;
-		this.fastOcrModeEnabled = Config.isOcrFastModeEnabled();
 	}
 	
 	/**

@@ -1,15 +1,12 @@
 package de.lutana.geodataextractor.detector.cv;
 
+import de.lutana.geodataextractor.util.JImageFrame;
 import java.awt.Color;
-import java.awt.FlowLayout;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -157,17 +154,11 @@ public class OpenCV {
 	}
 
 	public void showImage(BufferedImage bImage, String title) {
-		JFrame frame = new JFrame();
+		JImageFrame frame = new JImageFrame(bImage);
 		if (title != null && !title.isEmpty()) {
 			frame.setTitle(title);
 		}
-		frame.setLayout(new FlowLayout());
-		frame.setSize(bImage.getWidth(null) + 50, bImage.getHeight(null) + 50);
-		JLabel lbl = new JLabel();
-		lbl.setIcon(new ImageIcon(bImage));
-		frame.add(lbl);
 		frame.setVisible(true);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 
 	public void showImage(Mat mImage) {

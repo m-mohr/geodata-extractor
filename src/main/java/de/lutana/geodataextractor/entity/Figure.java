@@ -219,4 +219,9 @@ public class Figure extends Locatable {
 		}
 	}
 	
+	@Override
+	public String toString() {
+		return "Figure " + this.index + " (page " + this.page.toString() + ")";
+	}
+	
 }

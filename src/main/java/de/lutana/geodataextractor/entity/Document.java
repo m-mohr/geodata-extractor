@@ -224,5 +224,10 @@ public class Document implements Located {
 		hash = 23 * hash + Objects.hashCode(this.getPath());
 		return hash;
 	}
+	
+	@Override
+	public String toString() {
+		return this.file.getName();
+	}
 
 }
