@@ -14,9 +14,12 @@ public interface Strategy {
 	 * for them with a certain strategy implemented here. It also combines all 
 	 * locations collected to a single location collections.
 	 * 
+	 * If page is not null, only the selected page will be parsed and detected.
+	 * 
 	 * @param document
+	 * @param page
 	 * @return
 	 */
-	public boolean execute(Document document);
+	public boolean execute(Document document, Integer page);
 	
 }

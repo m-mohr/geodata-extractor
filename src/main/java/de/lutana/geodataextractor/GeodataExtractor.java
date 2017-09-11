@@ -65,13 +65,17 @@ public class GeodataExtractor {
 	}
 	
 	public Document runSingle(File file) {
+		return this.runSingle(file, null);
+	}
+
+	public Document runSingle(File file, Integer page) {
 		if (this.strategy == null) {
 			return null;
 		}
 
 		if (this.parserFactory.hasParser(file)) {
 			Document doc = new Document(file);
-			if (this.runDocument(doc)) {
+			if (this.runDocument(doc, page)) {
 				return doc;
 			}
 		}
@@ -79,6 +83,10 @@ public class GeodataExtractor {
 	}
 	
 	protected boolean runDocument(Document doc) {
+		return this.runDocument(doc, null);
+	}
+	
+	protected boolean runDocument(Document doc, Integer page) {
 		boolean loaded = false;
 		if (this.isCachingEnabled()) {
 			loaded = doc.load();
@@ -96,7 +104,7 @@ public class GeodataExtractor {
 			}
 		}
 		try {
-			return this.strategy.execute(doc);
+			return this.strategy.execute(doc, page);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;

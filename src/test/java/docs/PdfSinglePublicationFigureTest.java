@@ -11,6 +11,7 @@ import java.util.Collection;
 public class PdfSinglePublicationFigureTest extends BasePublicationTest {
 
 	private static final File file = new File("Ganguli and Ganguly - 2016 - Space-time trends in U.S. meteorological droughts.pdf");
+	private static final Integer page = 16;
 	
     @org.junit.runners.Parameterized.Parameter(0)
     public Figure figureObj;
@@ -18,10 +19,12 @@ public class PdfSinglePublicationFigureTest extends BasePublicationTest {
     @org.junit.runners.Parameterized.Parameters
     public static Collection<Object[]> data() {
 		Collection<Object[]> list = new ArrayList<>();
-		Document document = getDocument(file.getName());
+		Document document = getDocument(file.getName(), page);
 		FigureCollection figures = document.getFigures();
 		for (Figure figure : figures) {
-			list.add(new Object[]{figure});
+			if (page == null || page.equals(figure.getPage())) {
+				list.add(new Object[]{figure});
+			}
 		}
 		return list;
     }

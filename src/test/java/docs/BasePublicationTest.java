@@ -102,12 +102,16 @@ public abstract class BasePublicationTest {
 	}
 
 	public static Document getDocument(String documentPath) {
+		return getDocument(documentPath, null);
+	}
+	
+	public static Document getDocument(String documentPath, Integer page) {
 		if (instance == null) {
 			instance = new GeodataExtractor();
 			instance.enableCaching(true);
 		}
 		File documentFile = getDocumentFile(documentPath);
-		return instance.runSingle(documentFile);
+		return instance.runSingle(documentFile, page);
 	}
 
 	public static File getDocumentFile(String documentFile) {

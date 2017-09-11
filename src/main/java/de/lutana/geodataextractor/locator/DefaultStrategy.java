@@ -36,11 +36,14 @@ public class DefaultStrategy implements Strategy {
 	 * for them with a certain strategy implemented here. It also combines all 
 	 * locations collected to a single location collections.
 	 * 
+	 * If page is not null, only the selected page will be parsed and detected.
+	 * 
 	 * @param document
+	 * @param page
 	 * @return
 	 */
 	@Override
-	public boolean execute(Document document) {
+	public boolean execute(Document document, Integer page) {
 		LocationCollection globalLocations = new LocationCollection();
 
 		LoggerFactory.getLogger(this.getClass()).info("## Document: " + document);
@@ -49,6 +52,9 @@ public class DefaultStrategy implements Strategy {
 
 		FigureCollection figures = document.getFigures();
 		for(Figure figure : figures) {
+			if (page != null && !figure.getPage().equals(page)) {
+				continue;
+			}
 			LoggerFactory.getLogger(this.getClass()).info("# " + figure);
 			LocationCollection figureLocations = new LocationCollection(globalLocations);
 			this.getLocationsFromText(figure.getCaption(), figureLocations, 0.9);
