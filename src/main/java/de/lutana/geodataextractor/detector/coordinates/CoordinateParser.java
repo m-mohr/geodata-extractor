@@ -74,7 +74,7 @@ public class CoordinateParser {
 			String ref = m.group().replaceAll("\\s", "");
 			try {
 				MGRSRef mgrs = new MGRSRef(ref); // We assume it's not Bessel based as we can't really know.
-				CoordinateFromText c = new CoordinateFromText(mgrs.toLatLng(), m.group(), m.start(), m.end());
+				CoordinateFromText c = new CoordinateFromText(mgrs.toLatLng(), m.group(), m.start(), m.end(), 0.9);
 				clist.add(c);
 			} catch(IllegalArgumentException | NotDefinedOnUTMGridException e) {
 			}
@@ -110,7 +110,7 @@ public class CoordinateParser {
 				Double easting = Double.parseDouble(m.group(3));
 				Double northing = Double.parseDouble(m.group(4));
 				UTMRef utm = new UTMRef(lngZone, latZone, easting, northing);
-				CoordinateFromText c = new CoordinateFromText(utm.toLatLng(), m.group(), m.start(), m.end());
+				CoordinateFromText c = new CoordinateFromText(utm.toLatLng(), m.group(), m.start(), m.end(), 0.9);
 				clist.add(c);
 			} catch(NotDefinedOnUTMGridException | NumberFormatException e) {
 			}
@@ -157,7 +157,7 @@ public class CoordinateParser {
 			Integer easting = Integer.parseInt(eastingStr);
 			Integer northing = Integer.parseInt(northingStr);
 			OSRef os = new OSRef(zone, easting, northing);
-			CoordinateFromText c = new CoordinateFromText(os.toLatLng(), m.group(), m.start(), m.end());
+			CoordinateFromText c = new CoordinateFromText(os.toLatLng(), m.group(), m.start(), m.end(), 1);
 			clist.add(c);
 		}
 	}
@@ -216,12 +216,12 @@ public class CoordinateParser {
 				if (roundedCoord > 90 || roundedCoord < -90) {
 					continue;
 				}
-				c = new CoordinateFromText(coord, null, m.group(), m.start(), m.end());
+				c = new CoordinateFromText(coord, null, m.group(), m.start(), m.end(), 0.7);
 			} else {
 				if (roundedCoord > 180 || roundedCoord < -180) {
 					continue;
 				}
-				c = new CoordinateFromText(null, coord, m.group(), m.start(), m.end());
+				c = new CoordinateFromText(null, coord, m.group(), m.start(), m.end(), 0.7);
 			}
 			clist.add(c);
 		}

@@ -47,7 +47,7 @@ public class DefaultStrategy implements Strategy {
 		LocationCollection globalLocations = new LocationCollection();
 
 		LoggerFactory.getLogger(this.getClass()).info("## Document: " + document);
-		this.getLocationsFromText(document.getTitle(), globalLocations, 0.75);
+		this.getLocationsFromText(document.getTitle(), globalLocations, 0.5);
 		this.getLocationsFromText(document.getDescription(), globalLocations, 0.5);
 
 		FigureCollection figures = document.getFigures();
@@ -57,13 +57,12 @@ public class DefaultStrategy implements Strategy {
 			}
 			LoggerFactory.getLogger(this.getClass()).info("# " + figure);
 			LocationCollection figureLocations = new LocationCollection(globalLocations);
-			this.getLocationsFromText(figure.getCaption(), figureLocations, 0.9);
+			this.getLocationsFromText(figure.getCaption(), figureLocations, 0.75);
 			this.getLocationsFromGraphic(figure.getGraphic(), figureLocations, 1);
 
 			// TODO: Improve this - for now we only add the location to the figure in case we detected something from the figure itself
 			if (figureLocations.size() > globalLocations.size()) {
-	//			Location location = figureLocations.getMostLikelyLocation();
-				Location location = figureLocations.getLocation();
+				Location location = figureLocations.getMostLikelyLocation();
 				figure.setLocation(location);
 			}
 		}

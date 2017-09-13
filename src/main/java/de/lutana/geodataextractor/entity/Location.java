@@ -2,6 +2,8 @@ package de.lutana.geodataextractor.entity;
 
 import com.vividsolutions.jts.geom.Envelope;
 import de.lutana.geodataextractor.util.GeoTools;
+import java.security.InvalidParameterException;
+import java.util.Comparator;
 
 /**
  * Represents a bounding box.
@@ -10,7 +12,7 @@ import de.lutana.geodataextractor.util.GeoTools;
  */
 public class Location extends Envelope {
 
-	protected double probability = 1;
+	protected double probability = 0;
 	protected double weight = 1;
 
 	public Location(double minLon, double maxLon, double minLat, double maxLat) {
@@ -38,6 +40,9 @@ public class Location extends Envelope {
 	}
 
 	public void setProbability(double probability) {
+		if (probability < 0 || probability > 1.0) {
+			throw new InvalidParameterException("Probability needs to be between 0 and 1");
+		}
 		this.probability = probability;
 	}
 
@@ -46,11 +51,40 @@ public class Location extends Envelope {
 	}
 
 	public void setWeight(double weight) {
+		if (weight < 0 || weight > 1.0) {
+			throw new InvalidParameterException("Probability needs to be between 0 and 1");
+		}
 		this.weight = weight;
 	}
 
 	public double getScore() {
 		return this.weight * this.probability;
+	}
+	
+	public boolean isPoint() {
+		return (GeoTools.roundLatLon(getWidth()) == 0 && GeoTools.roundLatLon(getHeight()) == 0);
+	}
+	
+	public boolean isLine() {
+		return (GeoTools.roundLatLon(getWidth()) == 0 ^ GeoTools.roundLatLon(getHeight()) == 0); // ^ = xor
+	}
+	
+	public double getScoreWithPenalty() {
+		double score = this.getScore();
+
+		// Points and Lines get a penalty
+		if (isPoint()) {
+			score *= 0.5;
+		}
+		else if (isLine()) {
+			score *= 0.75;
+		}
+		
+		return score;
+	}
+	
+	public static ScoreComparator getScoreComparator() {
+		return new ScoreComparator();
 	}
 
 	@Override
@@ -80,6 +114,14 @@ public class Location extends Envelope {
 		double v4 = GeoTools.roundLatLon(getMinY());
 		hash = 43 * hash + (int) (Double.doubleToLongBits(v4) ^ (Double.doubleToLongBits(v4) >>> 32));
 		return hash;
+	}
+	
+	public static class ScoreComparator implements Comparator<Location> {
+		@Override
+		public int compare(Location o1, Location o2) {
+			Double w1 = o1.getScore();
+			return w1.compareTo(o2.getScore());
+		}
 	}
 
 }

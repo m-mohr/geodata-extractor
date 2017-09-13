@@ -3,16 +3,16 @@ package de.lutana.geodataextractor.entity;
 import de.lutana.geodataextractor.util.GeoTools;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author Matthias Mohr
  */
-public class LocationCollection implements Located, Collection<Location>, Comparator<Location> {
+public class LocationCollection implements Located, Collection<Location> {
 
 	private final List<Location> data;
 	private double weight;
@@ -34,12 +34,6 @@ public class LocationCollection implements Located, Collection<Location>, Compar
 	public final void resetWeight() {
 		this.weight = 1;
 	}
-
-	@Override
-	public int compare(Location o1, Location o2) {
-		Double w1 = o1.getScore();
-		return w1.compareTo(o2.getScore());
-	}
 	
 	@Override
 	public Location getLocation() {
@@ -50,10 +44,56 @@ public class LocationCollection implements Located, Collection<Location>, Compar
 		if (this.isEmpty()) {
 			return null;
 		}
-		List<Location> cloned = new ArrayList<>(this.data);
-		Collections.sort(cloned);
-		// ToDo: Merge bboxes and calculate the most probable place based on all locations (remember: they might intersect!)
-		return cloned.get(0);
+		else if (this.size() < 3) {
+			return this.getLocation();
+		}
+
+		// ToDo: Pretty slow O(n²) - is there a more elegant solution?
+		int count = this.data.size();
+		double[] scores = new double[count];
+		for(int i = 0; i < count; i++) {
+			Location l = this.data.get(i);
+			double otherScores = 0;
+			for(Location l2 : this.data) {
+				if (l == l2) {
+					continue;
+				}
+
+				// Points/Lines are calculated differntly as jackard always returns someting near to 0 for them.
+				// If they are contained in the area slightly increase the score otherwirse decrease it.
+				double l2Weight;
+				if (l2.isPoint() || l2.isLine()) {
+					l2Weight = l.contains(l2) ? 0.2 : 0.0;
+				}
+				else {
+					// The more the rectangles have in common the better - "commonness" based on jackard
+					l2Weight = GeoTools.calcJaccardIndex(l, l2);
+				}
+				l2Weight /= count - 1;
+				otherScores += l2Weight * l2.getScore();
+			}
+			// simple points or lines get a penalty
+			scores[i] = (l.getScoreWithPenalty() + otherScores) / 2;
+
+			Logger logger = LoggerFactory.getLogger(this.getClass());
+			logger.debug("Location: " + l);
+			logger.debug("score: " + scores[i] + "(other: " + otherScores + ")");
+		}
+		
+		double maxValue = -1;
+		int maxIndex = -1;
+		for(int i = 0; i < scores.length; i++) {
+			if (scores[i] > maxValue) {
+				maxValue = scores[i];
+				maxIndex = i;
+			}
+		}
+		
+		if (maxIndex == -1) {
+			return null;
+		}
+
+		return this.data.get(maxIndex);
 	}
 	
 	public Location get(int index) {

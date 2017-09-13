@@ -201,7 +201,9 @@ public class DumbCountryTextDetector implements TextDetector {
 		while(it.hasNext()) {
 			Entry<String, Location> entry = it.next();
 			if (text.contains(entry.getKey().toLowerCase())) {
-				locations.add(entry.getValue());
+				Location l = entry.getValue();
+				l.setProbability(0.9);
+				locations.add(l);
 			}
 		}
 	}

@@ -69,6 +69,7 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 				List<Word> textWords = textBuilder.getWordsBetween(coord.getBeginMatch(), coord.getEndMatch());
 
 				// Combine bounding boxes if a coordinate was built from multiple words
+				double confidenceSum = 0;
 				Rectangle rectangle = null;
 				for (Word word : textWords) {
 					if (rectangle == null) {
@@ -76,7 +77,10 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 					} else {
 						rectangle.add(word.getBoundingBox());
 					}
+					confidenceSum += word.getConfidence() / 100;
 				}
+				double avgConfidence = confidenceSum / textWords.size();
+				coord.setProbability((coord.getProbability() + avgConfidence) / 2);
 
 				CoordinateFromOcr newCoord = new CoordinateFromOcr(coord, rectangle);
 				coords.set(i, newCoord);
@@ -184,12 +188,18 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 				}
 			}
 		}
-		
+
+		int numberOfChanges = 0;
 		if (!Double.isNaN(xMin) && !Double.isNaN(xMax)) {
 			baseLocation.setX(xMin, xMax);
+			numberOfChanges++;
 		}
 		if (!Double.isNaN(yMin) && !Double.isNaN(yMax)) {
 			baseLocation.setY(yMin, yMax);
+			numberOfChanges++;
+		}
+		if (numberOfChanges > 0) {
+			baseLocation.setProbability((baseLocation.getProbability() + numberOfChanges) / (1+numberOfChanges));
 		}
 	}
 	

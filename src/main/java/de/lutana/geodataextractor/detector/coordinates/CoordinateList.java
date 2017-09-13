@@ -33,6 +33,7 @@ public class CoordinateList extends ArrayList<CoordinateFromText> {
 	public Location getLocation() {
 		List<Double> longitude = new ArrayList<>();
 		List<Double> latitude = new ArrayList<>();
+		double sum = 0;
 		for(CoordinateFromText c : this) {
 			Double lat = c.getLatitude();
 			if (lat != null) {
@@ -42,6 +43,7 @@ public class CoordinateList extends ArrayList<CoordinateFromText> {
 			if (lon != null) {
 				longitude.add(lon);
 			}
+			sum += c.getProbability();
 		}
 		
 		if (!longitude.isEmpty() && !latitude.isEmpty()) {
@@ -52,7 +54,9 @@ public class CoordinateList extends ArrayList<CoordinateFromText> {
 			Double maxLon = longitude.get(longitude.size() - 1);
 			Double minLat = latitude.get(0);
 			Double maxLat = latitude.get(latitude.size() - 1);
-			return new Location(minLon, maxLon, minLat, maxLat);
+			Location l = new Location(minLon, maxLon, minLat, maxLat);
+			l.setProbability(sum / this.size());
+			return l;
 		} else {
 			return null;
 		}

@@ -1,6 +1,7 @@
 package de.lutana.geodataextractor.detector.coordinates;
 
 import de.lutana.geodataextractor.util.GeoTools;
+import java.security.InvalidParameterException;
 import java.util.Objects;
 import uk.me.jstott.jcoord.LatLng;
 
@@ -13,20 +14,23 @@ public class CoordinateFromText {
 	private final int beginMatch;
 	private final int endMatch;
 	
+	private double probability;
+	
 	public CoordinateFromText(CoordinateFromText c) {
-		this(c.latitude, c.longitude, c.text, c.beginMatch, c.endMatch);
+		this(c.latitude, c.longitude, c.text, c.beginMatch, c.endMatch, c.probability);
 	}
 	
-	public CoordinateFromText(LatLng ll, String text, int beginMatch, int endMatch) {
-		this(ll.getLatitude(), ll.getLongitude(), text, beginMatch, endMatch);
+	public CoordinateFromText(LatLng ll, String text, int beginMatch, int endMatch, double probability) {
+		this(ll.getLatitude(), ll.getLongitude(), text, beginMatch, endMatch, probability);
 	}
 	
-	public CoordinateFromText(Double lat, Double lon, String text, int beginMatch, int endMatch) {
+	public CoordinateFromText(Double lat, Double lon, String text, int beginMatch, int endMatch, double probability) {
 		this.latitude = lat;
 		this.longitude = lon;
 		this.text = text;
 		this.beginMatch = beginMatch;
 		this.endMatch = endMatch;
+		this.setProbability(probability);
 	}
 	
 	public CoordinateFromText(Double lat, Double lon) {
@@ -35,6 +39,7 @@ public class CoordinateFromText {
 		this.text = null;
 		this.beginMatch = -1;
 		this.endMatch = -1;
+		this.probability = 0;
 	}
 	
 	public com.vividsolutions.jts.geom.Coordinate toJtsCoordinate() {
@@ -101,7 +106,23 @@ public class CoordinateFromText {
 	public int getEndMatch() {
 		return endMatch;
 	}
-	
+
+	/**
+	 * @return the probability
+	 */
+	public double getProbability() {
+		return probability;
+	}
+
+	/**
+	 * @param probability the probability to set
+	 */
+	public final void setProbability(double probability) {
+		if (probability < 0 || probability > 1.0) {
+			throw new InvalidParameterException("Probability needs to be between 0 and 1");
+		}
+		this.probability = probability;
+	}
 
 	@Override
 	public boolean equals(Object other) {
