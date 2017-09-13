@@ -27,19 +27,21 @@ public abstract class BasePublicationTest {
 	private static GeodataExtractor instance;
 
 	protected void runDocumentTest(String documentFile) {
-		Document document = getDocument(documentFile);
-		Location expected = this.getExpectedLocationForDocument(document);
-		this.assertLocation(documentFile, expected, document.getLocation(), null);
+		this.testDocument(getDocument(documentFile));
 	}
 
-	protected void runFigureTest(Figure figure) {
+	protected void runDocumentTest(String documentFile, Location expectedLocation) {
+		this.assertDocument(expectedLocation, getDocument(documentFile));
+	}
+
+	protected void testDocument(Document document) {
+		this.assertDocument(this.getExpectedLocationForDocument(document), document);
+	}
+
+	protected void testFigure(Figure figure) {
 		Document document = figure.getDocument();
 		Location expected = this.getExpectedLocationForFigure(figure);
 		this.assertLocation(document.getFile().getName() + "#" + figure.getGraphicFile().getName(), expected, figure.getLocation(), figure.getGraphicFile());
-	}
-
-	protected void runTest(String documentFile, Location location) {
-		this.assertDocument(location, getDocument(documentFile));
 	}
 
 	protected void assertDocument(Location expected, Document document) {

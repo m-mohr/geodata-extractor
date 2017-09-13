@@ -14,7 +14,7 @@ public class PdfSinglePublicationFigureTest extends BasePublicationTest {
 	private static final Integer page = 16;
 	
     @org.junit.runners.Parameterized.Parameter(0)
-    public Figure figureObj;
+    public Object obj;
 
     @org.junit.runners.Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -26,12 +26,18 @@ public class PdfSinglePublicationFigureTest extends BasePublicationTest {
 				list.add(new Object[]{figure});
 			}
 		}
+		list.add(new Object[]{document});
 		return list;
     }
 	
 	@org.junit.Test
     public void testDocument() {
-		runFigureTest(this.figureObj);
+		if (this.obj instanceof Figure) {
+			testFigure((Figure) this.obj);
+		}
+		else if (this.obj instanceof Document) {
+			testDocument((Document) this.obj);
+		}
     }
 	
 }

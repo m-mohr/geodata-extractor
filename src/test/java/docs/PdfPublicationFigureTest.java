@@ -31,7 +31,7 @@ public class PdfPublicationFigureTest extends BasePublicationTest {
 
 	@org.junit.Test
     public void testDocuments() {
-		runFigureTest(this.figureObj);
+		testFigure(this.figureObj);
     }
 	
 }
