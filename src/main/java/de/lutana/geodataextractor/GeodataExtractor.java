@@ -23,7 +23,6 @@ public class GeodataExtractor {
 	private Strategy strategy;
 	private ParserFactory parserFactory;
 	private boolean cachingEnabled;
-	private boolean fastOcrModeEnabled;
 	
 	/**
 	 * Creates an instance using the DefaultStrategy.

@@ -3,14 +3,20 @@ package de.lutana.geodataextractor.detector.cv;
 import de.lutana.geodataextractor.util.JImageFrame;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
 import java.awt.image.DataBufferByte;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.List;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfInt;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 public class OpenCV {
@@ -31,6 +37,13 @@ public class OpenCV {
 
 	public LineParser createLineParser(BufferedImage img) {
 		return new LineParser(img);
+	}
+	
+	public Mat sharpenGaussian(Mat source) {
+        Mat destination = new Mat(source.rows(), source.cols(), source.type());
+		Imgproc.GaussianBlur(source, destination, new Size(0,0), 10);
+		Core.addWeighted(source, 1.5, destination, -0.5, 0, destination);
+		return destination;
 	}
 
 	protected Mat toMonotoneCustom(BufferedImage img, boolean inverse) {
@@ -154,7 +167,11 @@ public class OpenCV {
 	}
 
 	public void showImage(BufferedImage bImage, String title) {
-		JImageFrame frame = new JImageFrame(bImage);
+		// Clone image
+		ColorModel cm = bImage.getColorModel();
+		BufferedImage bImage2 = new BufferedImage(cm, bImage.copyData(null), cm.isAlphaPremultiplied(), null);
+		// Open window
+		JImageFrame frame = new JImageFrame(bImage2);
 		if (title != null && !title.isEmpty()) {
 			frame.setTitle(title);
 		}
@@ -167,6 +184,18 @@ public class OpenCV {
 
 	public void showImage(Mat mImage, String title) {
 		this.showImage(this.toBufferedImage(mImage), title);
+	}
+	
+	public void showContours(List<MatOfPoint> contours, Mat hierarchy, Size srcImgSize) {
+		Mat drawing = Mat.zeros(srcImgSize, CvType.CV_8UC3);
+		for (int i = 0; i < contours.size(); i++) {
+			Imgproc.drawContours(drawing, contours, i, getRandomColor(), 2, 8, hierarchy, 0, new Point());
+		}
+		showImage(drawing, "Contours");
+	}
+	
+	public static Scalar getRandomColor() {
+		return new Scalar(Math.random() * 255, Math.random() * 255, Math.random() * 255);
 	}
 
 	/**

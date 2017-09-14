@@ -20,6 +20,11 @@ public class CoordinateParser {
 	 * First match is degree, second is minutes (might be empty), third is seconds (might be empty) and third is the cardinal point (N/S/E/W).
 	 */
 	public static final Pattern WGS84_PATTERN = Pattern.compile("(?<![\\w\\.°'\"-])(-?\\d+(?:\\.\\d+)?)°(?:\\s*(\\d+(?:\\.\\d+)?)')?(?:\\s*(\\d+(?:\\.\\d+)?)(?:\"|''))?\\s*(N|S|W|E)(?![\\w°'\"-])");
+	/**
+	 * Tries to detect invalid/simplified WGS84 coordinates, like 15N, 80°, 77.5E etc.
+	 * First match is the number in decimal degree, second is either ° or N/S/W/E.
+	 */
+	public static final Pattern WGS84_PATTERN_SIMPLIFIED = Pattern.compile("(?<![\\w\\.°'\"-])(-?\\d+(?:\\.\\d+)?)\\s*(°|N|S|W|E)(?![\\w°'\"-])");
 	
 	/**
 	 * Detects Ordnance Survey coordinates.
@@ -36,6 +41,20 @@ public class CoordinateParser {
 	public static final Pattern MGRS_PATTERN = Pattern.compile("(?<![\\w\\.°'\"-])(\\d{1,2}[C-X][A-HJ-NP-Z]{2})\\s?(\\d{1,5}\\s?\\d{1,5})(?![\\w°'\"-])");
 	
 	public CoordinateList parse(String text) {
+		return this.parse(text, false);
+	}
+	
+	/**
+	 * Parses a text against all available patterns.
+	 * 
+	 * Might be restricted by setting includeSimplifiedAndInvalidPatterns to false (default).
+	 * includeSimplifiedAndInvalidPatterns excludes the simplified Wgs84 pattern from being executed.
+	 * 
+	 * @param text
+	 * @param includeSimplifiedAndInvalidPatterns 
+	 * @return 
+	 */
+	public CoordinateList parse(String text, boolean includeSimplifiedAndInvalidPatterns) {
 		CoordinateList list = new CoordinateList();
 		if (text == null) {
 			return list;
@@ -44,6 +63,9 @@ public class CoordinateParser {
 		this.parseUtmCoordinates(text, list);
 		this.parseOsCoordinates(text, list);
 		this.parseMgrsCoordinates(text, list);
+		if (includeSimplifiedAndInvalidPatterns) {
+			this.parseSimplifiedWgs84Coordinates(text, list);
+		}
 		return list;
 	}
 
@@ -222,6 +244,64 @@ public class CoordinateParser {
 					continue;
 				}
 				c = new CoordinateFromText(null, coord, m.group(), m.start(), m.end(), 0.7);
+			}
+			clist.add(c);
+		}
+	}
+	
+	/**
+	 * See parseWgs84Coordinates(String text, CoordinatePairs clist) for details.
+	 * 
+	 * @param text
+	 * @return 
+	 */
+	public CoordinateList parseSimplifiedWgs84Coordinates(String text) {
+		CoordinateList clist = new CoordinateList();
+		this.parseSimplifiedWgs84Coordinates(text, clist);
+		return clist;
+	}
+
+	/**
+	 * Detect Latitude/Longitude (WGS84) coordinates from decimal degrees or DM or DMS.
+	 * 
+	 * This also detects single longitude or latitude values.
+	 * Returns the number of matches (which is NOT necessarily equal to ne number of full coordinates found).
+	 * 
+	 * @param text
+	 * @param clist
+	 */
+	protected void parseSimplifiedWgs84Coordinates(String text, CoordinateList clist) {
+		Matcher m = WGS84_PATTERN_SIMPLIFIED.matcher(text);
+		while (m.find()) {
+			Double coord;
+			try {
+				coord = Double.parseDouble(m.group(1));
+			} catch(NumberFormatException | NullPointerException e) {
+				continue;
+			}
+
+			long roundedCoord = Math.round(coord);
+			CoordinateFromText c;
+			String sigStr = m.group(2);
+			if (sigStr.equals("°")) {
+				c = new CoordinateFromText.UnknownOrientation(coord, m.group(), m.start(), m.end());
+			}
+			else { // N/S/W/E
+				if (sigStr.equalsIgnoreCase("S") || sigStr.equalsIgnoreCase("W")) {
+					coord = -1 * coord;
+				}
+
+				if (sigStr.equalsIgnoreCase("S") || sigStr.equalsIgnoreCase("N")) {
+					if (roundedCoord > 90 || roundedCoord < -90) {
+						continue;
+					}
+					c = new CoordinateFromText(coord, null, m.group(), m.start(), m.end(), 0.5);
+				} else {
+					if (roundedCoord > 180 || roundedCoord < -180) {
+						continue;
+					}
+					c = new CoordinateFromText(null, coord, m.group(), m.start(), m.end(), 0.5);
+				}
 			}
 			clist.add(c);
 		}

@@ -146,5 +146,13 @@ public class CoordinateFromText {
 	public String toString() {
 		return "("+ (this.latitude == null ? "?" : this.latitude)  +"," + (this.longitude == null ? "?" : this.longitude) + ")";
 	}
+	
+	public static class UnknownOrientation extends CoordinateFromText {
+	
+		public UnknownOrientation(Double coordinate, String text, int beginMatch, int endMatch) {
+			super(coordinate, coordinate, text, beginMatch, endMatch, 0.01);
+		}
+		
+	}
 
 }

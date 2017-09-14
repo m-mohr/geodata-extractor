@@ -63,7 +63,7 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 			LoggerFactory.getLogger(this.getClass()).debug(textBuilder.getText());
 
 			// Combine coordinates with OCR rectangles
-			CoordinateList coords = parser.parse(textBuilder.getText());
+			CoordinateList coords = parser.parse(textBuilder.getText(), true);
 			for (int i = 0; i < coords.size(); i++) {
 				CoordinateFromText coord = coords.get(i);
 				List<Word> textWords = textBuilder.getWordsBetween(coord.getBeginMatch(), coord.getEndMatch());
@@ -82,7 +82,13 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 				double avgConfidence = confidenceSum / textWords.size();
 				coord.setProbability((coord.getProbability() + avgConfidence) / 2);
 
-				CoordinateFromOcr newCoord = new CoordinateFromOcr(coord, rectangle);
+				CoordinateFromOcr newCoord;
+				if (coord instanceof CoordinateFromText.UnknownOrientation) {
+					newCoord = new CoordinateFromOcrWithUnknownOrientation((CoordinateFromText.UnknownOrientation) coord, rectangle);
+				}
+				else {
+					newCoord = new CoordinateFromOcr(coord, rectangle);
+				}
 				coords.set(i, newCoord);
 				LoggerFactory.getLogger(this.getClass()).debug(newCoord.toString());
 			}
@@ -153,6 +159,18 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 			}
 			Axis axis = ocrCoord.getNearestAxis();
 			if (axis != null) {
+				if (ocrCoord instanceof CoordinateFromOcrWithUnknownOrientation) {
+					if (axis.getLine().isHorizontal()) {
+						// Probably a longitude value, remove the latitude value
+						ocrCoord.setLatitude(null);
+						ocrCoord.setProbability(0.5);
+					}
+					else if (axis.getLine().isVertical()) {
+						// Probably a latitude value, remove the longitude value
+						ocrCoord.setLongitude(null);
+						ocrCoord.setProbability(0.5);
+					}
+				}
 				axis.addCoordinate(ocrCoord);
 			}
 		}
@@ -279,6 +297,14 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 
 		public void setNearestAxis(Axis nearest) {
 			this.nearestAxis = nearest;
+		}
+
+	}
+		
+	public class CoordinateFromOcrWithUnknownOrientation extends CoordinateFromOcr {
+
+		public CoordinateFromOcrWithUnknownOrientation(CoordinateFromOcr.UnknownOrientation coord, Rectangle rect) {
+			super(coord, rect);
 		}
 
 	}
