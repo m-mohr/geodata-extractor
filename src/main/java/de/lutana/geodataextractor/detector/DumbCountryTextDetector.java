@@ -5,6 +5,7 @@ import de.lutana.geodataextractor.entity.LocationCollection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import org.slf4j.LoggerFactory;
 
 /**
  * Just a dumb country detector for the captions.
@@ -203,6 +204,7 @@ public class DumbCountryTextDetector implements TextDetector {
 			if (text.contains(entry.getKey().toLowerCase())) {
 				Location l = entry.getValue();
 				l.setProbability(0.9);
+				LoggerFactory.getLogger(getClass()).debug("Parsed location " + l + " from DumbCountryDetector.");
 				locations.add(l);
 			}
 		}

@@ -1,28 +1,92 @@
 package de.lutana.geodataextractor.util;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 public class JImageFrame extends JFrame {
-
-	private final BufferedImage img;
 	
-	public JImageFrame(BufferedImage img) {
-		this.img = img;
+	private final List<BufferedImage> img;
+	private final List<String> title;
+	private int current;
+	
+	private JImagePanel panel;
+	private JButton backBtn;
+	private JButton forwardBtn;
+	
+	public JImageFrame(BufferedImage bImage, String title) {
+		this.current = 0;
+		this.img = new ArrayList<>();
+		this.title = new ArrayList<>();
+		
+		this.panel = new JImagePanel(this);
+		this.backBtn = new JButton("<<");
+		this.backBtn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int prev = current - 1;
+				if (prev < 0) {
+					JOptionPane.showMessageDialog((Component) e.getSource(), "No previous image available.");
+					return;
+				}
+				updateUI(prev);
+			}
+		});
+		this.forwardBtn = new JButton(">>");
+		this.forwardBtn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int next = current + 1;
+				if (next >= img.size()) {
+					JOptionPane.showMessageDialog((Component) e.getSource(), "No next image available at the moment.");
+					return;
+				}
+				updateUI(next);
+			}
+		});
+		
 		this.setLayout(new BorderLayout());
-		this.setSize(this.img.getWidth() + 10, this.img.getHeight() + 50);
+		this.setSize(640, 480);
 		this.setExtendedState(JFrame.MAXIMIZED_BOTH);
-		this.add(new JImagePanel(this), BorderLayout.CENTER);
+		this.add(this.panel, BorderLayout.CENTER);
+		this.add(this.backBtn, BorderLayout.WEST);
+		this.add(this.forwardBtn, BorderLayout.EAST);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+		// needs to be last
+		this.addImage(bImage, title);
 	}
 	
-	public BufferedImage getImage() {
-		return this.img;
+	public void addImage(BufferedImage bImage, String title) {
+		this.img.add(bImage);
+		if (title == null || title.isEmpty()) {
+			title = "Image #" + this.img.size();
+		}
+		this.title.add(title);
+		this.updateUI(current);
+	}
+	
+	private void updateUI(int num) {
+		current = num;
+		this.setTitle(this.title.get(current));
+		this.panel.validate();
+		this.backBtn.setEnabled(current > 0);
+		this.forwardBtn.setEnabled(current < this.img.size()-1);
+	}
+	
+	public BufferedImage getCurrentImage() {
+		return this.img.get(current);
 	}
 
 	private class JImagePanel extends JPanel {
@@ -61,7 +125,7 @@ public class JImageFrame extends JFrame {
 		protected void paintComponent(Graphics g) {
 			super.paintComponent(g);
 			
-			BufferedImage image = this.frame.getImage();
+			BufferedImage image = this.frame.getCurrentImage();
 
 			double scaleFactor = Math.min(1d, getScaleFactorToFit(new Dimension(image.getWidth(), image.getHeight()), getSize()));
 			int scaleWidth = (int) Math.round(image.getWidth() * scaleFactor);

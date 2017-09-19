@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.LoggerFactory;
 
 public class ClavinTextDetector implements TextDetector {
 
@@ -61,6 +62,7 @@ public class ClavinTextDetector implements TextDetector {
 				GeoName geoname = resolvedLocation.getGeoname();
 				Location l = new Location(geoname.getLongitude(), geoname.getLongitude(), geoname.getLatitude(), geoname.getLatitude());
 				l.setProbability(resolvedLocation.getConfidence());
+				LoggerFactory.getLogger(getClass()).debug("Parsed location " + l + " from CLAVIN.");
 				locations.add(l);
 			}
 		} catch (Exception ex) {

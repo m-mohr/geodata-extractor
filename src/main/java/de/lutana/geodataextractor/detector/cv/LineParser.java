@@ -2,10 +2,8 @@ package de.lutana.geodataextractor.detector.cv;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineSegment;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
-import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
@@ -15,22 +13,21 @@ import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 /**
- * Detects horizontal and vertical lines in images.
+ * Detects (only) horizontal and vertical lines in images.
  * 
  * @see http://answers.opencv.org/question/63847/how-to-extract-tables-from-an-image/
  * @see http://answers.opencv.org/question/56496/implementation-question-how-to-create-bounding-boxes-around-answers-on-worksheets/
  * @author Matthias Mohr
  */
-public class LineParser {
+public class LineParser extends CvLineDetector {
 	
 	private static final short DIRECTION_HORIZONTAL = 0;
 	private static final short DIRECTION_VERTICAL = 1;
 	
-	private final BufferedImage img;
 	private Integer scale;
 	
-	protected LineParser(BufferedImage img) {
-		this.img = img;
+	public LineParser(Mat img) {
+		super(img);
 		this.scale = 10;
 	}
 	
@@ -48,7 +45,7 @@ public class LineParser {
 	 * @return
 	 * @throws NullPointerException 
 	 */
-	public List<LineSegment> parse() throws NullPointerException {
+	public List<LineSegment> detect() throws NullPointerException {
 		List<LineSegment> lines = new ArrayList<>();
 		if (this.img == null) {
 			throw new NullPointerException();
@@ -57,7 +54,7 @@ public class LineParser {
 		OpenCV cv = OpenCV.getInstance();
 
 		// Convert to black and white image
-		Mat bw = cv.toMonotoneCustom(this.img, true);
+		Mat bw = cv.toMonotoneAdaptive(this.img, true);
 
 		Mat horizontal = this.createLineMask(bw, DIRECTION_HORIZONTAL);
 		this.extractLines(horizontal, DIRECTION_HORIZONTAL, lines);
@@ -133,5 +130,5 @@ public class LineParser {
 
 		return resultImg;
 	}
-			
+
 }

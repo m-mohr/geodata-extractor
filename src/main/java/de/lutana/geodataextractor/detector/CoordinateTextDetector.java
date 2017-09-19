@@ -3,6 +3,8 @@ package de.lutana.geodataextractor.detector;
 import de.lutana.geodataextractor.detector.coordinates.CoordinateList;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import de.lutana.geodataextractor.detector.coordinates.CoordinateParser;
+import de.lutana.geodataextractor.entity.Location;
+import org.slf4j.LoggerFactory;
 
 /**
  * Parses coordinates from text and converts them to decimal degree.
@@ -25,22 +27,38 @@ public class CoordinateTextDetector implements TextDetector {
 
 		CoordinateList wgsCP = p.parseWgs84Coordinates(text);
 		if (wgsCP.hasLocation()) {
-			locations.add(wgsCP.getLocation());
+			Location l = wgsCP.getLocation();
+			if (l != null) {
+				LoggerFactory.getLogger(getClass()).debug("Parsed location " + l + " from WGS84 text coordinates.");
+				locations.add(l);
+			}
 		}
 
 		CoordinateList utmCP = p.parseUtmCoordinates(text);
 		if (utmCP.hasLocation()) {
-			locations.add(utmCP.getLocation());
+			Location l = utmCP.getLocation();
+			if (l != null) {
+				LoggerFactory.getLogger(getClass()).debug("Parsed location " + l + " from UTM text coordinates.");
+				locations.add(l);
+			}
 		}
 
 		CoordinateList osCP = p.parseOsCoordinates(text);
 		if (osCP.hasLocation()) {
-			locations.add(osCP.getLocation());
+			Location l = osCP.getLocation();
+			if (l != null) {
+				LoggerFactory.getLogger(getClass()).debug("Parsed location " + l + " from OS text coordinates.");
+				locations.add(l);
+			}
 		}
 
 		CoordinateList mgrsCP = p.parseMgrsCoordinates(text);
 		if (mgrsCP.hasLocation()) {
-			locations.add(mgrsCP.getLocation());
+			Location l = mgrsCP.getLocation();
+			if (l != null) {
+				LoggerFactory.getLogger(getClass()).debug("Parsed location " + l + " from MGRS text coordinates.");
+				locations.add(l);
+			}
 		}
 	}
 

@@ -98,22 +98,23 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 			// Try to get location using axes and labels
 			Location location = coords.getLocation();
 			if (location != null) {
-				this.improveLocationUsingAxes(img, coords, location);
+				boolean improved = this.improveLocationUsingAxes(img, coords, location);
+				LoggerFactory.getLogger(getClass()).debug("Parsed location " + location + " from graphical coordinates." + (improved ? " Using CV imrprovements." : ""));
 				locations.add(location);
 			}
 
 		} catch (UnsatisfiedLinkError e) {
 			e.printStackTrace();
-			System.out.println("Tess4J not installed correctly, please visit http://tess4j.sourceforge.net/usage.html for instructions.");
+			LoggerFactory.getLogger(getClass()).error("Tess4J not installed correctly, please visit http://tess4j.sourceforge.net/usage.html for instructions.");
 		}
 	}
 	
-	public void improveLocationUsingAxes(BufferedImage img, CoordinateList coords, Location baseLocation) {
+	public boolean improveLocationUsingAxes(BufferedImage img, CoordinateList coords, Location baseLocation) {
 		// Do countour finding to get the axes
 		LineParser lp = OpenCV.getInstance().createLineParser(img);
-		List<LineSegment> lines = lp.parse();
+		List<LineSegment> lines = lp.detect();
 		if (lines.isEmpty()) {
-			return;
+			return false;
 		}
 		
 		List<Axis> axes = new ArrayList<>();
@@ -219,6 +220,8 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 		if (numberOfChanges > 0) {
 			baseLocation.setProbability((baseLocation.getProbability() + numberOfChanges) / (1+numberOfChanges));
 		}
+		
+		return (numberOfChanges > 0);
 	}
 	
 	public class Axis {

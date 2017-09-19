@@ -25,6 +25,11 @@
 			<name>ICM repository</name>
 			<url>http://maven.icm.edu.pl/artifactory/repo</url>
 		</repository>
+		<!-- Repo for OpenIMAJ -->
+		<repository>
+			<id>OpenIMAJ maven releases repository</id>
+			<url>http://maven.openimaj.org</url>
+		</repository>
 	</repositories>
 	<dependencies>
 		<!-- Used to extract figures from PDF files -->
@@ -111,6 +116,17 @@
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
 			<version>1.2.3</version>
+		</dependency>
+		<!-- Strokw-Width Transform for Text detection -->
+		<dependency>
+			<groupId>org.openimaj</groupId>
+			<artifactId>image-processing</artifactId>
+			<version>1.3.6</version>
+		</dependency>
+		<dependency>
+			<groupId>org.openimaj</groupId>
+			<artifactId>image-feature-extraction</artifactId>
+			<version>1.3.6</version>
 		</dependency>
 	</dependencies>
 	<build>

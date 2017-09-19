@@ -1,7 +1,6 @@
 package de.lutana.geodataextractor.detector.cv;
 
 import de.lutana.geodataextractor.util.JImageFrame;
-import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBufferByte;
@@ -18,10 +17,12 @@ import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
+import org.slf4j.LoggerFactory;
 
 public class OpenCV {
 
 	private static OpenCV instance = null;
+	private JImageFrame debugWindow;
 
 	public static OpenCV getInstance() {
 		if (instance == null) {
@@ -33,10 +34,23 @@ public class OpenCV {
 	private OpenCV() {
 		nu.pattern.OpenCV.loadShared();
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+		this.debugWindow = null;
 	}
 
 	public LineParser createLineParser(BufferedImage img) {
-		return new LineParser(img);
+		return new LineParser(toMat(img));
+	}
+	
+	public GradientTextDetector createGradientTextDetector(BufferedImage img) {
+		return new GradientTextDetector(toMat(img));
+	}
+	
+	public EdgeEnhancedTextDetector createEdgeEnhancedTextDetector(BufferedImage img) {
+		return new EdgeEnhancedTextDetector(toMat(img));
+	}
+	
+	public StrokeWidthTransformTextDetector createStrokeWidthTransformTextDetector(BufferedImage img) {
+		return new StrokeWidthTransformTextDetector(img);
 	}
 	
 	public Mat sharpenGaussian(Mat source) {
@@ -45,27 +59,40 @@ public class OpenCV {
 		Core.addWeighted(source, 1.5, destination, -0.5, 0, destination);
 		return destination;
 	}
+	
+	public Mat toMonotoneAdaptive(Mat source, boolean inverse) {
+		Mat dest = toGrayscale(source);
+		Imgproc.medianBlur(dest, dest, 5);
+		Imgproc.adaptiveThreshold(dest, dest, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, inverse ? Imgproc.THRESH_BINARY_INV : Imgproc.THRESH_BINARY, 9, 0);
+		return dest;
+	}
 
-	protected Mat toMonotoneCustom(BufferedImage img, boolean inverse) {
-		for (int y = 0; y < img.getHeight(); ++y) {
-			for (int x = 0; x < img.getWidth(); ++x) {
-				int argb = img.getRGB(x, y);
-				if ((argb & 0x00FFFFFF) != 0x00000000) {
-					Color c = new Color(argb);
-					int r = c.getRed() / 25;
-					int g = c.getGreen() / 25;
-					int b = c.getBlue() / 25;
-					if (r > 3 || g > 3 || b > 3) {
-						img.setRGB(x, y, 0x00FFFFFF);
-					} else if (r != g || g != b || b != r) {
-						img.setRGB(x, y, 0x00FFFFFF);
+	public Mat toMonotoneCustom(Mat source, boolean inverse) {
+		Mat img = source.clone();
+		
+		if (source.channels() >= 3) {
+			final double[] white = new double[] {255,255,255};
+
+			for (int y = 0; y < img.rows(); ++y) {
+				for (int x = 0; x < img.cols(); ++x) {
+					double[] bgr = img.get(y, x);
+					if (bgr[0] != 0 && bgr[1] != 0 && bgr[2] != 0) {
+						double r = bgr[2] / 25;
+						double g = bgr[1] / 25;
+						double b = bgr[0] / 25;
+						if (r > 3 || g > 3 || b > 3) {
+							img.put(y, x, white);
+						} else if (r != g || g != b || b != r) {
+							img.put(y, x, white);
+						}
 					}
 				}
 			}
 		}
-		Mat mat = toGrayscale(this.toMat(img));
-		Imgproc.threshold(mat, mat, 128, 255, inverse ? Imgproc.THRESH_BINARY_INV : Imgproc.THRESH_BINARY);
-		return mat;
+
+		img = toGrayscale(img);
+		Imgproc.threshold(img, img, 128, 255, inverse ? Imgproc.THRESH_BINARY_INV : Imgproc.THRESH_BINARY);
+		return img;
 	}
 
 	/**
@@ -122,7 +149,7 @@ public class OpenCV {
 			default:
 				// BufferedImage.TYPE_BYTE_INDEXED;
 				// BufferedImage.TYPE_CUSTOM;
-				System.out.println("Unsupported format:" + bi.getType());
+				LoggerFactory.getLogger(getClass()).warn("Unsupported format:" + bi.getType());
 				supportedType = false;
 		}
 
@@ -171,11 +198,13 @@ public class OpenCV {
 		ColorModel cm = bImage.getColorModel();
 		BufferedImage bImage2 = new BufferedImage(cm, bImage.copyData(null), cm.isAlphaPremultiplied(), null);
 		// Open window
-		JImageFrame frame = new JImageFrame(bImage2);
-		if (title != null && !title.isEmpty()) {
-			frame.setTitle(title);
+		if (this.debugWindow == null) {
+			this.debugWindow = new JImageFrame(bImage2, title);
+			this.debugWindow.setVisible(true);
 		}
-		frame.setVisible(true);
+		else {
+			this.debugWindow.addImage(bImage2, title);
+		}
 	}
 
 	public void showImage(Mat mImage) {
@@ -189,13 +218,17 @@ public class OpenCV {
 	public void showContours(List<MatOfPoint> contours, Mat hierarchy, Size srcImgSize) {
 		Mat drawing = Mat.zeros(srcImgSize, CvType.CV_8UC3);
 		for (int i = 0; i < contours.size(); i++) {
-			Imgproc.drawContours(drawing, contours, i, getRandomColor(), 2, 8, hierarchy, 0, new Point());
+			Imgproc.drawContours(drawing, contours, i, getRandomColorScalar(), 2, 8, hierarchy, 0, new Point());
 		}
 		showImage(drawing, "Contours");
 	}
 	
-	public static Scalar getRandomColor() {
-		return new Scalar(Math.random() * 255, Math.random() * 255, Math.random() * 255);
+	public static Scalar getRandomColorScalar() {
+		return new Scalar(getRandomColor());
+	}
+	
+	public static double[] getRandomColor() {
+		return new double[] {Math.random() * 255, Math.random() * 255, Math.random() * 255};
 	}
 
 	/**
@@ -211,26 +244,37 @@ public class OpenCV {
 	public BufferedImage toBufferedImage(Mat m) {
 		int mType = m.type();
 		int biType;
+		int convertTo = -1;
 		if (mType == CvType.CV_8UC3) {
 			biType = BufferedImage.TYPE_3BYTE_BGR;
 		}
 		else if (mType == CvType.CV_8UC1) {
 			biType = BufferedImage.TYPE_BYTE_GRAY;
 		}
+		else if (mType == CvType.CV_32F) {
+			biType = BufferedImage.TYPE_BYTE_GRAY;
+			convertTo = CvType.CV_8UC1;
+		}
+		else if (mType == CvType.CV_32SC1) {
+			biType = BufferedImage.TYPE_BYTE_GRAY;
+			convertTo = CvType.CV_8UC1;
+		}
 		else if (mType == CvType.CV_32SC3) {
-			biType = BufferedImage.TYPE_INT_BGR; // or RGB?
+			biType = BufferedImage.TYPE_INT_RGB;
+			convertTo = CvType.CV_8UC3;
 		}
 		else if (mType == CvType.CV_32SC4) {
 			biType = BufferedImage.TYPE_INT_ARGB;
-		}
-		else if (mType == CvType.CV_16UC1) {
-			biType = BufferedImage.TYPE_USHORT_GRAY;
-		}
-		else if (mType == CvType.CV_8UC4) {
-			biType = BufferedImage.TYPE_4BYTE_ABGR;
+			convertTo = CvType.CV_8UC3;
 		}
 		else {
-			biType = BufferedImage.TYPE_CUSTOM;
+			throw new UnsupportedOperationException(String.format("Unsupported Mat type %d, channels %d, depth %d", m.type(), m.channels(), m.depth()));
+		}
+		
+		if (convertTo != -1) {
+			Mat temp = new Mat();
+			m.convertTo(temp, convertTo, 255);
+			m = temp;
 		}
 
 		int bufferSize = m.channels() * m.cols() * m.rows();
