@@ -10,6 +10,11 @@ import de.lutana.geodataextractor.entity.FigureCollection;
 import de.lutana.geodataextractor.entity.Graphic;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
+import de.lutana.geodataextractor.util.TensorFlowMapRecognizer;
+import de.lutana.geodataextractor.util.TensorFlowMapRecognizer.Match;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -19,12 +24,17 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultStrategy implements Strategy {
 	
+	private static final float MIN_MAP_PROBABILITY = 0.75f;
+	
+	private TensorFlowMapRecognizer mapRecognizer;
+	
 	private DumbCountryTextDetector dumbCountryTextDetector;
 	private ClavinTextDetector clavinTextDetector;
 	private CoordinateGraphicDetector coordinateGraphicDetector;
 	private CoordinateTextDetector coordinateTextDetector;
 	
 	public DefaultStrategy() {
+		this.mapRecognizer = null;
 		this.dumbCountryTextDetector = new DumbCountryTextDetector();
 		this.clavinTextDetector = new ClavinTextDetector();
 		this.coordinateGraphicDetector = new CoordinateGraphicDetector();
@@ -44,6 +54,15 @@ public class DefaultStrategy implements Strategy {
 	 */
 	@Override
 	public boolean execute(Document document, Integer page) {
+		try {
+			if (this.mapRecognizer == null) {
+				this.mapRecognizer = TensorFlowMapRecognizer.getInstance();
+			}
+		} catch(URISyntaxException ex) {
+			ex.printStackTrace();
+			return false;
+		}
+
 		LocationCollection globalLocations = new LocationCollection();
 
 		LoggerFactory.getLogger(this.getClass()).info("## Document: " + document);
@@ -55,7 +74,20 @@ public class DefaultStrategy implements Strategy {
 			if (page != null && !figure.getPage().equals(page)) {
 				continue;
 			}
-			LoggerFactory.getLogger(this.getClass()).info("# " + figure);
+			Logger logger = LoggerFactory.getLogger(this.getClass());
+			logger.info("# " + figure);
+			
+			// Detect whether it's a map or not
+			try {
+				Match m = this.mapRecognizer.recognize(figure.getGraphic());
+				logger.info("Tensorflow result: " + m.getClassName() + " (" + m.getProbability() * 100 + "%)");
+				if (!m.isMap(MIN_MAP_PROBABILITY)) {
+					continue; // Skip it if it is probably not a map
+				}
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+			
 			LocationCollection figureLocations = new LocationCollection(globalLocations);
 			this.getLocationsFromText(figure.getCaption(), figureLocations, 0.75);
 			this.getLocationsFromGraphic(figure.getGraphic(), figureLocations, 1);
@@ -71,17 +103,21 @@ public class DefaultStrategy implements Strategy {
 	
 	protected void getLocationsFromText(String text, LocationCollection locations, double weight) {
 		locations.setWeight(weight);
+
 		this.dumbCountryTextDetector.detect(text, locations);
 		this.clavinTextDetector.detect(text, locations);
 		this.coordinateTextDetector.detect(text, locations);
 		// ToDo: ...
+
 		locations.resetWeight();
 	}
 	
 	protected void getLocationsFromGraphic(Graphic graphic, LocationCollection locations, double weight) {
 		locations.setWeight(weight);
+
 		this.coordinateGraphicDetector.detect(graphic, locations);
 		// ToDo: ...
+
 		locations.resetWeight();
 	}
 	
