@@ -21,8 +21,8 @@ import static org.junit.Assert.assertTrue;
 
 public abstract class BasePublicationTest {
 
-	private static final Double JACCARD_INDEX_THRESHOLD = 0.5;
-	protected static final File DOC_FOLDER = new File("./test-docs/");
+	public static final Double JACCARD_INDEX_THRESHOLD = 0.5;
+	public static final File DOC_FOLDER = new File("./test-docs/");
 
 	private static GeodataExtractor instance;
 
@@ -68,11 +68,11 @@ public abstract class BasePublicationTest {
 		}
 	}
 
-	private Location getExpectedLocationForDocument(Document document) {
+	public static Location getExpectedLocationForDocument(Document document) {
 		FigureCollection figures = document.getFigures();
 		LocationCollection locations = new LocationCollection();
 		for (Figure figure : figures) {
-			Location location = this.getExpectedLocationForFigure(figure);
+			Location location = getExpectedLocationForFigure(figure);
 			if (location != null) {
 				locations.add(location);
 			}
@@ -81,7 +81,7 @@ public abstract class BasePublicationTest {
 		return locations.getLocation();
 	}
 
-	private Location getExpectedLocationForFigure(Figure figure) {
+	public static Location getExpectedLocationForFigure(Figure figure) {
 		File metaFile = getFigureMetaFile(figure);
 		if (!metaFile.exists()) {
 			// This is not a map that's why there is no meta data

@@ -11,7 +11,6 @@ import de.lutana.geodataextractor.entity.Graphic;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import de.lutana.geodataextractor.util.TensorFlowMapRecognizer;
-import de.lutana.geodataextractor.util.TensorFlowMapRecognizer.Match;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import org.slf4j.Logger;
@@ -23,8 +22,6 @@ import org.slf4j.LoggerFactory;
  * @author Matthias Mohr
  */
 public class DefaultStrategy implements Strategy {
-	
-	private static final float MIN_MAP_PROBABILITY = 0.75f;
 	
 	private TensorFlowMapRecognizer mapRecognizer;
 	
@@ -77,20 +74,21 @@ public class DefaultStrategy implements Strategy {
 			Logger logger = LoggerFactory.getLogger(this.getClass());
 			logger.info("# " + figure);
 			
+			boolean isMap = true;
 			// Detect whether it's a map or not
 			try {
-				Match m = this.mapRecognizer.recognize(figure.getGraphic());
-				logger.info("Tensorflow result: " + m.getClassName() + " (" + m.getProbability() * 100 + "%)");
-				if (!m.isMap(MIN_MAP_PROBABILITY)) {
-					continue; // Skip it if it is probably not a map
-				}
+				float result = this.mapRecognizer.recognize(figure.getGraphic());
+				isMap = (result >= 0.5);
+				logger.debug((isMap ? "Map detected" : "NOT a map") + " (" + result * 100 + "%)");
 			} catch (IOException ex) {
 				ex.printStackTrace();
 			}
 			
 			LocationCollection figureLocations = new LocationCollection(globalLocations);
 			this.getLocationsFromText(figure.getCaption(), figureLocations, 0.75);
-			this.getLocationsFromGraphic(figure.getGraphic(), figureLocations, 1);
+			if (isMap) {
+				this.getLocationsFromGraphic(figure.getGraphic(), figureLocations, 1);
+			}
 
 			// TODO: Improve this - for now we only add the location to the figure in case we detected something from the figure itself
 			if (figureLocations.size() > globalLocations.size()) {
@@ -117,7 +115,7 @@ public class DefaultStrategy implements Strategy {
 
 		this.coordinateGraphicDetector.detect(graphic, locations);
 		// ToDo: ...
-
+		
 		locations.resetWeight();
 	}
 	

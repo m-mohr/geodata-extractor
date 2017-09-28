@@ -68,20 +68,21 @@ public class TensorFlowMapRecognizer {
 		}
 	}
 	
-	public Match recognize(Graphic g) throws IOException {
+	public float recognize(Graphic g) throws IOException {
 		byte[] imgData = Files.readAllBytes(g.getFile().toPath());
 		return this.recognize(imgData);
 	}
 	
-	public Match recognize(byte[] imgData) throws IOException {
+	public float recognize(byte[] imgData) throws IOException {
 		this.lazyLoad();
-		Match m = null;
 		try (Tensor image = Tensor.create(imgData)) {
 			float[] labelProbabilities = this.executeInceptionGraph(graph, image);
-			int bestLabelIdx = this.getMaxIndex(labelProbabilities);
-			m = new Match(labels.get(bestLabelIdx), labelProbabilities[bestLabelIdx]);
+			int indexMap = labels.indexOf("map");
+			if (indexMap != -1) {
+				return labelProbabilities[indexMap];
+			}
 		}
-		return m;
+		return 0;
 	}
 
 	private float[] executeInceptionGraph(byte[] graphDef, Tensor image) {
@@ -96,16 +97,6 @@ public class TensorFlowMapRecognizer {
 				return result.copyTo(new float[1][nlabels])[0];
 			}
 		}
-	}
-
-	private int getMaxIndex(float[] probabilities) {
-		int best = 0;
-		for (int i = 1; i < probabilities.length; ++i) {
-			if (probabilities[i] > probabilities[best]) {
-				best = i;
-			}
-		}
-		return best;
 	}
 
 	/**
@@ -141,36 +132,6 @@ public class TensorFlowMapRecognizer {
 	 */
 	public byte[] getGraph() {
 		return graph;
-	}
-
-	public static class Match {
-
-		protected String className;
-		protected float probability;
-
-		public Match(String className, float probability) {
-			this.className = className;
-			this.probability = probability;
-		}
-
-		/**
-		 * @return the className
-		 */
-		public String getClassName() {
-			return className;
-		}
-		
-		public boolean isMap(float minProbability) {
-			return (className.equals(MAP_CLASS) && probability >= minProbability);
-		}
-
-		/**
-		 * @return the probability
-		 */
-		public float getProbability() {
-			return probability;
-		}
-
 	}
 
 }
