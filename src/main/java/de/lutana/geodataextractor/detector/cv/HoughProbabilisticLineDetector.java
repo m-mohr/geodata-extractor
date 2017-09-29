@@ -4,6 +4,8 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.LineSegment;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
@@ -44,9 +46,10 @@ public class HoughProbabilisticLineDetector extends CvLineDetector {
 		}
 		return list;
 	}
-
 	
 	public static void mergeSimilarLines(List<LineSegment> lines, double angleTolerance, int distanceTolerance) {
+		// Sort by length in descending order to avoid gaps being introduced between lines
+		Collections.sort(lines, new LengthComparator());
 		// ToDo: Improve merging of non-vertical and non-horizontal lines
 		for(int i = 0; i < lines.size();) {
 			LineSegment ls1 = lines.get(i);
@@ -157,6 +160,22 @@ public class HoughProbabilisticLineDetector extends CvLineDetector {
 	 */
 	public void setMaxLineGap(double maxLineGap) {
 		this.maxLineGap = maxLineGap;
+	}
+	
+	public static class LengthComparator implements Comparator<LineSegment> {
+
+		/**
+		 * Sorts the given line segments by length in descending order.
+		 * 
+		 * @param o1
+		 * @param o2
+		 * @return 
+		 */
+		@Override
+		public int compare(LineSegment o1, LineSegment o2) {
+			return Double.compare(o1.getLength(), o2.getLength()) * -1;
+		}
+		
 	}
 
 }
