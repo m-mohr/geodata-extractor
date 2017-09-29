@@ -1,12 +1,14 @@
 package de.lutana.geodataextractor.util;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,24 +37,31 @@ public class JImageFrame extends JFrame {
 		this.backBtn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				int prev = current - 1;
-				if (prev < 0) {
-					JOptionPane.showMessageDialog((Component) e.getSource(), "No previous image available.");
-					return;
-				}
-				updateUI(prev);
+				prev();
 			}
 		});
 		this.forwardBtn = new JButton(">>");
 		this.forwardBtn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				int next = current + 1;
-				if (next >= img.size()) {
-					JOptionPane.showMessageDialog((Component) e.getSource(), "No next image available at the moment.");
-					return;
+				next();
+			}
+		});
+
+        KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+        manager.addKeyEventDispatcher(new KeyEventDispatcher() {
+			@Override
+			public boolean dispatchKeyEvent(KeyEvent e) {
+				if (e.getID() != KeyEvent.KEY_PRESSED) {
+					return false;
 				}
-				updateUI(next);
+				if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+					return next();
+				}
+				else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+					return prev();
+				}
+				return false;
 			}
 		});
 		
@@ -66,6 +75,24 @@ public class JImageFrame extends JFrame {
 
 		// needs to be last
 		this.addImage(bImage, title);
+	}
+	
+	public boolean prev() {
+		int prev = current - 1;
+		if (prev < 0) {
+			return false;
+		}
+		updateUI(prev);
+		return true;
+	}
+	
+	public boolean next() {
+		int next = current + 1;
+		if (next >= img.size()) {
+			return false;
+		}
+		updateUI(next);
+		return true;
 	}
 	
 	public void addImage(BufferedImage bImage, String title) {
