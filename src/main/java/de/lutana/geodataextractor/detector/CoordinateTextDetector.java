@@ -25,7 +25,7 @@ public class CoordinateTextDetector implements TextDetector {
 	public void detect(String text, LocationCollection locations) {
 		CoordinateParser p = new CoordinateParser();
 
-		CoordinateList wgsCP = p.parseWgs84Coordinates(text);
+		CoordinateList wgsCP = p.parseWgs84Coordinates(text, false);
 		if (wgsCP.hasLocation()) {
 			Location l = wgsCP.getLocation();
 			if (l != null) {

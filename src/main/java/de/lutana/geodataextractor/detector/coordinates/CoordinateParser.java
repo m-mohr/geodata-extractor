@@ -1,5 +1,6 @@
 package de.lutana.geodataextractor.detector.coordinates;
 
+import de.lutana.geodataextractor.util.Util;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import uk.me.jstott.jcoord.MGRSRef;
@@ -19,12 +20,12 @@ public class CoordinateParser {
 	 * Detects: Dezimalgrad, Grad Minuten and Grad Minuten Sekunden
 	 * First match is degree, second is minutes (might be empty), third is seconds (might be empty) and third is the cardinal point (N/S/E/W).
 	 */
-	public static final Pattern WGS84_PATTERN = Pattern.compile("(?<![\\w\\.°'\"-])(-?\\d+(?:\\.\\d+)?)°(?:\\s*(\\d+(?:\\.\\d+)?)')?(?:\\s*(\\d+(?:\\.\\d+)?)(?:\"|''))?\\s*(N|S|W|E)(?![\\w°'\"-])");
+	public static final Pattern WGS84_PATTERN = Pattern.compile("(?<![\\w\\.°'\"-])(-?\\d+(?:\\.\\d+)?)°(?:\\s*(\\d+(?:\\.\\d+)?)')?(?:\\s*(\\d+(?:\\.\\d+)?)(?:\"|''))?\\s*([NSWE])(?![\\w°'\"-])");
 	/**
 	 * Tries to detect invalid/simplified WGS84 coordinates, like 15N, 80°, 77.5E etc.
 	 * First match is the number in decimal degree, second is either ° or N/S/W/E.
 	 */
-	public static final Pattern WGS84_PATTERN_SIMPLIFIED = Pattern.compile("(?<![\\w\\.°'\"-])(-?\\d+(?:\\.\\d+)?)\\s*(°|N|S|W|E)(?![\\w°'\"-])");
+	public static final Pattern WGS84_PATTERN_SIMPLIFIED = Pattern.compile("(?<![\\w\\.°'\"-])(-?\\d+(?:\\.\\d+)?)(?:°\\s*(\\d+(?:\\.\\d+)?)(?:'\\s*(?:(\\d+(?:\\\\.\\d+)?)(?:\"|''))?)?|([NSWE])|°)(?![\\w°'\"-])");
 	
 	/**
 	 * Detects Ordnance Survey coordinates.
@@ -59,13 +60,12 @@ public class CoordinateParser {
 		if (text == null) {
 			return list;
 		}
-		this.parseWgs84Coordinates(text, list);
-		this.parseUtmCoordinates(text, list);
-		this.parseOsCoordinates(text, list);
-		this.parseMgrsCoordinates(text, list);
-		if (includeSimplifiedAndInvalidPatterns) {
-			this.parseSimplifiedWgs84Coordinates(text, list);
-		}
+		StringBuilder mutString = new StringBuilder(text);
+		this.parseUtmCoordinates(mutString, list);
+		this.parseOsCoordinates(mutString, list);
+		this.parseMgrsCoordinates(mutString, list);
+		// Must be last as simplified WGS84 parser might match parts of the previous coordinate types
+		this.parseWgs84Coordinates(mutString, list, includeSimplifiedAndInvalidPatterns);
 		return list;
 	}
 
@@ -75,7 +75,7 @@ public class CoordinateParser {
 	 * @param text
 	 * @return 
 	 */
-	public CoordinateList parseMgrsCoordinates(String text) {
+	public CoordinateList parseMgrsCoordinates(CharSequence text) {
 		CoordinateList clist = new CoordinateList();
 		this.parseMgrsCoordinates(text, clist);
 		return clist;
@@ -90,7 +90,7 @@ public class CoordinateParser {
 	 * @param text
 	 * @param clist
 	 */
-	protected void parseMgrsCoordinates(String text, CoordinateList clist) {
+	protected void parseMgrsCoordinates(CharSequence text, CoordinateList clist) {
 		Matcher m = MGRS_PATTERN.matcher(text);
 		while (m.find()) {
 			String ref = m.group().replaceAll("\\s", "");
@@ -98,6 +98,7 @@ public class CoordinateParser {
 				MGRSRef mgrs = new MGRSRef(ref); // We assume it's not Bessel based as we can't really know.
 				CoordinateFromText c = new CoordinateFromText(mgrs.toLatLng(), m.group(), m.start(), m.end(), 0.9);
 				clist.add(c);
+				this.markRecognized(text, m.start(), m.end());
 			} catch(IllegalArgumentException | NotDefinedOnUTMGridException e) {
 			}
 		}
@@ -109,7 +110,7 @@ public class CoordinateParser {
 	 * @param text
 	 * @return 
 	 */
-	public CoordinateList parseUtmCoordinates(String text) {
+	public CoordinateList parseUtmCoordinates(CharSequence text) {
 		CoordinateList clist = new CoordinateList();
 		this.parseUtmCoordinates(text, clist);
 		return clist;
@@ -123,7 +124,7 @@ public class CoordinateParser {
 	 * @param text
 	 * @param clist
 	 */
-	protected void parseUtmCoordinates(String text, CoordinateList clist) {
+	protected void parseUtmCoordinates(CharSequence text, CoordinateList clist) {
 		Matcher m = UTM_PATTERN.matcher(text);
 		while (m.find()) {
 			try {
@@ -134,6 +135,7 @@ public class CoordinateParser {
 				UTMRef utm = new UTMRef(lngZone, latZone, easting, northing);
 				CoordinateFromText c = new CoordinateFromText(utm.toLatLng(), m.group(), m.start(), m.end(), 0.9);
 				clist.add(c);
+				this.markRecognized(text, m.start(), m.end());
 			} catch(NotDefinedOnUTMGridException | NumberFormatException e) {
 			}
 		}
@@ -145,7 +147,7 @@ public class CoordinateParser {
 	 * @param text
 	 * @return 
 	 */
-	public CoordinateList parseOsCoordinates(String text) {
+	public CoordinateList parseOsCoordinates(CharSequence text) {
 		CoordinateList clist = new CoordinateList();
 		this.parseOsCoordinates(text, clist);
 		return clist;
@@ -160,7 +162,7 @@ public class CoordinateParser {
 	 * @param text
 	 * @param clist
 	 */
-	protected void parseOsCoordinates(String text, CoordinateList clist) {
+	protected void parseOsCoordinates(CharSequence text, CoordinateList clist) {
 		Matcher m = OS_PATTERN.matcher(text);
 		while (m.find()) {
 			String zone = m.group(1);
@@ -181,6 +183,7 @@ public class CoordinateParser {
 			OSRef os = new OSRef(zone, easting, northing);
 			CoordinateFromText c = new CoordinateFromText(os.toLatLng(), m.group(), m.start(), m.end(), 1);
 			clist.add(c);
+			this.markRecognized(text, m.start(), m.end());
 		}
 	}
 
@@ -188,11 +191,12 @@ public class CoordinateParser {
 	 * See parseWgs84Coordinates(String text, CoordinatePairs clist) for details.
 	 * 
 	 * @param text
+	 * @param simplified 
 	 * @return 
 	 */
-	public CoordinateList parseWgs84Coordinates(String text) {
+	public CoordinateList parseWgs84Coordinates(CharSequence text, boolean simplified) {
 		CoordinateList clist = new CoordinateList();
-		this.parseWgs84Coordinates(text, clist);
+		this.parseWgs84Coordinates(text, clist, simplified);
 		return clist;
 	}
 
@@ -204,106 +208,91 @@ public class CoordinateParser {
 	 * 
 	 * @param text
 	 * @param clist
+	 * @param simplified 
 	 */
-	protected void parseWgs84Coordinates(String text, CoordinateList clist) {
+	protected void parseWgs84Coordinates(CharSequence text, CoordinateList clist, boolean simplified) {
 		Matcher m = WGS84_PATTERN.matcher(text);
 		while (m.find()) {
-			Double deg;
-			try {
-				deg = Double.parseDouble(m.group(1));
-			} catch(NumberFormatException | NullPointerException e) {
-				continue;
-			}
+			this.parseSimplifiedWgs84Coordinates(text, clist, m);
+		}
+		if (simplified) {
+			this.parseSimplifiedWgs84Coordinates(text, clist);
+		}
+	}
 
-			Double min = 0d;
-			try {
-				min = Double.parseDouble(m.group(2));
-			} catch(NumberFormatException | NullPointerException e) {}
+	/**
+	 * Detect Latitude/Longitude (WGS84) coordinates from decimal degrees or DM or DMS.
+	 * 
+	 * This also detects single longitude or latitude values.
+	 * Returns the number of matches (which is NOT necessarily equal to ne number of full coordinates found).
+	 * 
+	 * @param text
+	 * @param clist
+	 */
+	private void parseSimplifiedWgs84Coordinates(CharSequence text, CoordinateList clist) {
+		Matcher m = WGS84_PATTERN_SIMPLIFIED.matcher(text);
+		while (m.find()) {
+			this.parseSimplifiedWgs84Coordinates(text, clist, m);
+		}
+	}
+	
+	private void parseSimplifiedWgs84Coordinates(CharSequence text, CoordinateList clist, Matcher m) {
+		Double deg;
+		try {
+			deg = Double.parseDouble(m.group(1));
+		} catch(NumberFormatException | NullPointerException e) {
+			return;
+		}
 
-			Double sec = 0d;
-			try {
-				sec = Double.parseDouble(m.group(3));
-			} catch(NumberFormatException | NullPointerException e) {}
+		Double min = 0d;
+		try {
+			min = Double.parseDouble(m.group(2));
+		} catch(NumberFormatException | NullPointerException e) {}
 
-			Double coord = deg + (min / 60d) + (sec / 3600d);
+		Double sec = 0d;
+		try {
+			sec = Double.parseDouble(m.group(3));
+		} catch(NumberFormatException | NullPointerException e) {}
 
-			String sigStr = m.group(4);
+		Double coord;
+		if (deg < 0) {
+			coord = deg - (min / 60d) - (sec / 3600d);
+		}
+		else {
+			coord = deg + (min / 60d) + (sec / 3600d);
+		}
+
+		String sigStr = m.group(4);
+
+		CoordinateFromText c;
+		if (sigStr == null || (!sigStr.equalsIgnoreCase("N") && !sigStr.equalsIgnoreCase("S") && !sigStr.equalsIgnoreCase("W") && !sigStr.equalsIgnoreCase("E"))) {
+			c = new CoordinateFromText.UnknownOrientation(coord, m.group(), m.start(), m.end());
+		}
+		else { // N/S/W/E
 			if (sigStr.equalsIgnoreCase("S") || sigStr.equalsIgnoreCase("W")) {
 				coord = -1 * coord;
 			}
 
-			CoordinateFromText c;
 			long roundedCoord = Math.round(coord);
 			if (sigStr.equalsIgnoreCase("S") || sigStr.equalsIgnoreCase("N")) {
 				if (roundedCoord > 90 || roundedCoord < -90) {
-					continue;
+					return;
 				}
-				c = new CoordinateFromText(coord, null, m.group(), m.start(), m.end(), 0.7);
+				c = new CoordinateFromText(coord, null, m.group(), m.start(), m.end(), 0.5);
 			} else {
 				if (roundedCoord > 180 || roundedCoord < -180) {
-					continue;
+					return;
 				}
-				c = new CoordinateFromText(null, coord, m.group(), m.start(), m.end(), 0.7);
+				c = new CoordinateFromText(null, coord, m.group(), m.start(), m.end(), 0.5);
 			}
-			clist.add(c);
 		}
+		clist.add(c);
+		this.markRecognized(text, m.start(), m.end());
 	}
 	
-	/**
-	 * See parseWgs84Coordinates(String text, CoordinatePairs clist) for details.
-	 * 
-	 * @param text
-	 * @return 
-	 */
-	public CoordinateList parseSimplifiedWgs84Coordinates(String text) {
-		CoordinateList clist = new CoordinateList();
-		this.parseSimplifiedWgs84Coordinates(text, clist);
-		return clist;
-	}
-
-	/**
-	 * Detect Latitude/Longitude (WGS84) coordinates from decimal degrees or DM or DMS.
-	 * 
-	 * This also detects single longitude or latitude values.
-	 * Returns the number of matches (which is NOT necessarily equal to ne number of full coordinates found).
-	 * 
-	 * @param text
-	 * @param clist
-	 */
-	protected void parseSimplifiedWgs84Coordinates(String text, CoordinateList clist) {
-		Matcher m = WGS84_PATTERN_SIMPLIFIED.matcher(text);
-		while (m.find()) {
-			Double coord;
-			try {
-				coord = Double.parseDouble(m.group(1));
-			} catch(NumberFormatException | NullPointerException e) {
-				continue;
-			}
-
-			long roundedCoord = Math.round(coord);
-			CoordinateFromText c;
-			String sigStr = m.group(2);
-			if (sigStr.equals("°")) {
-				c = new CoordinateFromText.UnknownOrientation(coord, m.group(), m.start(), m.end());
-			}
-			else { // N/S/W/E
-				if (sigStr.equalsIgnoreCase("S") || sigStr.equalsIgnoreCase("W")) {
-					coord = -1 * coord;
-				}
-
-				if (sigStr.equalsIgnoreCase("S") || sigStr.equalsIgnoreCase("N")) {
-					if (roundedCoord > 90 || roundedCoord < -90) {
-						continue;
-					}
-					c = new CoordinateFromText(coord, null, m.group(), m.start(), m.end(), 0.5);
-				} else {
-					if (roundedCoord > 180 || roundedCoord < -180) {
-						continue;
-					}
-					c = new CoordinateFromText(null, coord, m.group(), m.start(), m.end(), 0.5);
-				}
-			}
-			clist.add(c);
+	private void markRecognized(CharSequence text, int start, int end) {
+		if (text instanceof StringBuilder) {
+			((StringBuilder) text).replace(start, end, Util.strRepeat(" ", end-start));
 		}
 	}
 	
