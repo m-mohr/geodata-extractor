@@ -17,7 +17,7 @@ public abstract class CvLineDetector {
 		this.img = img;
 	}
 	
-	public abstract List<LineSegment> detect();
+	public abstract List<LineSegment> detect() throws CvException;
 	
 	public Mat paint(Mat mat, List<LineSegment> lines, Scalar color) {
 		Mat drawing = Mat.zeros(mat.size(), CvType.CV_8UC3);

@@ -9,10 +9,10 @@ import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import de.lutana.geodataextractor.detector.coordinates.CoordinateList;
 import de.lutana.geodataextractor.detector.coordinates.CoordinateParser;
+import de.lutana.geodataextractor.detector.cv.CvException;
 import de.lutana.geodataextractor.detector.cv.CvGraphic;
 import de.lutana.geodataextractor.detector.cv.CvLineDetector;
 import de.lutana.geodataextractor.detector.cv.MapAxesLineDetector;
-import de.lutana.geodataextractor.detector.cv.OpenCV;
 import de.lutana.geodataextractor.util.GeoTools;
 import de.lutana.geodataextractor.util.TesseractOCR;
 import java.awt.Rectangle;
@@ -26,10 +26,8 @@ import net.sourceforge.tess4j.ITessAPI.TessPageIteratorLevel;
 import net.sourceforge.tess4j.TessAPI;
 import net.sourceforge.tess4j.Word;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
-import org.apache.log4j.Logger;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
 import org.opencv.core.Rect;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CoordinateGraphicDetector implements GraphicDetector {
@@ -53,16 +51,19 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 
 	@Override
 	public void detect(CvGraphic graphic, LocationCollection locations) {
-		try {
-			BufferedImage img = graphic.getBufferedImage();
-			int width = img.getWidth();
-			int height = img.getHeight();
+		Logger logger = LoggerFactory.getLogger(this.getClass());
+		
+		BufferedImage img = graphic.getBufferedImage();
+		int width = img.getWidth();
+		int height = img.getHeight();
 
-			List<Rect> rects = graphic.getTextBoxes();
-			if (rects.size() > 100) {
-				return; // TODO
-			}
-			List<Word> words = new ArrayList<>();
+		List<Rect> rects = graphic.getTextBoxes();
+		if (rects.size() > 100) {
+			return; // TODO
+		}
+
+		List<Word> words = new ArrayList<>();
+		try {
 			for(Rect rect : rects) {
 				rect = GeoTools.addMargin(rect, Math.round(rect.height / 4), width, height);
 				BufferedImage subImg = img.getSubimage(rect.x, rect.y, rect.width, rect.height);
@@ -76,66 +77,70 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 					words.add(new Word(w.getText(), w.getConfidence(), r));
 				}
 			}
-
-			// Add a text with a directory of words
-			Text textBuilder = new Text();
-			for (Word word : words) {
-				String text = word.getText();
-				if (text.length() < MIN_WORD_LENGTH || word.getConfidence() < MIN_CONFIDENCE) {
-					continue;
-				}
-				textBuilder.add(word);
-			}
-			LoggerFactory.getLogger(this.getClass()).debug(textBuilder.getText());
-
-			// Combine coordinates with OCR rectangles
-			CoordinateList coords = parser.parse(textBuilder.getText(), true);
-			for (int i = 0; i < coords.size(); i++) {
-				CoordinateFromText coord = coords.get(i);
-				List<Word> textWords = textBuilder.getWordsBetween(coord.getBeginMatch(), coord.getEndMatch());
-
-				// Combine bounding boxes if a coordinate was built from multiple words
-				double confidenceSum = 0;
-				Rectangle rectangle = null;
-				for (Word word : textWords) {
-					if (rectangle == null) {
-						rectangle = word.getBoundingBox();
-					} else {
-						rectangle.add(word.getBoundingBox());
-					}
-					confidenceSum += word.getConfidence() / 100;
-				}
-				if (rectangle == null) {
-					Logger.getLogger(getClass()).debug("Combine coordinates with OCR rectangles failed. No words found.");
-					continue;
-				}
-				double avgConfidence = confidenceSum / textWords.size();
-				coord.setProbability((coord.getProbability() + avgConfidence) / 2);
-
-				CoordinateFromOcr newCoord;
-				if (coord instanceof CoordinateFromText.UnknownOrientation) {
-					newCoord = new CoordinateFromOcrWithUnknownOrientation((CoordinateFromText.UnknownOrientation) coord, rectangle);
-				}
-				else {
-					newCoord = new CoordinateFromOcr(coord, rectangle);
-				}
-				coords.set(i, newCoord);
-				LoggerFactory.getLogger(this.getClass()).debug(newCoord.toString());
-			}
-
-			// Remove obvious outliers
-			coords.removeOutliers();
-			// Try to get location using axes and labels
-			Location location = coords.getLocation();
-			if (location != null) {
-				boolean improved = this.improveLocationUsingAxes(graphic, coords, location);
-				LoggerFactory.getLogger(getClass()).debug("Parsed location " + location + " from graphical coordinates." + (improved ? " Using CV imrprovements." : ""));
-				locations.add(location);
-			}
-
 		} catch (UnsatisfiedLinkError e) {
 			e.printStackTrace();
-			LoggerFactory.getLogger(getClass()).error("Tess4J not installed correctly, please visit http://tess4j.sourceforge.net/usage.html for instructions.");
+			logger.error("Tess4J not installed correctly, please visit http://tess4j.sourceforge.net/usage.html for instructions.");
+			return;
+		}
+
+		// Add a text with a directory of words
+		Text textBuilder = new Text();
+		for (Word word : words) {
+			String text = word.getText();
+			if (text.length() < MIN_WORD_LENGTH || word.getConfidence() < MIN_CONFIDENCE) {
+				continue;
+			}
+			textBuilder.add(word);
+		}
+		logger.debug(textBuilder.getText());
+
+		// Combine coordinates with OCR rectangles
+		CoordinateList coords = parser.parse(textBuilder.getText(), true);
+		for (int i = 0; i < coords.size(); i++) {
+			CoordinateFromText coord = coords.get(i);
+			List<Word> textWords = textBuilder.getWordsBetween(coord.getBeginMatch(), coord.getEndMatch());
+
+			// Combine bounding boxes if a coordinate was built from multiple words
+			double confidenceSum = 0;
+			Rectangle rectangle = null;
+			for (Word word : textWords) {
+				if (rectangle == null) {
+					rectangle = word.getBoundingBox();
+				} else {
+					rectangle.add(word.getBoundingBox());
+				}
+				confidenceSum += word.getConfidence() / 100;
+			}
+			if (rectangle == null) {
+				logger.debug("Combine coordinates with OCR rectangles failed. No words found.");
+				continue;
+			}
+			double avgConfidence = confidenceSum / textWords.size();
+			coord.setProbability((coord.getProbability() + avgConfidence) / 2);
+
+			CoordinateFromOcr newCoord;
+			if (coord instanceof CoordinateFromText.UnknownOrientation) {
+				newCoord = new CoordinateFromOcrWithUnknownOrientation((CoordinateFromText.UnknownOrientation) coord, rectangle);
+			}
+			else {
+				newCoord = new CoordinateFromOcr(coord, rectangle);
+			}
+			coords.set(i, newCoord);
+		}
+
+		// Remove obvious outliers
+		coords.removeOutliers();
+		// Try to get location using axes and labels
+		Location location = coords.getLocation();
+		if (location != null) {
+			boolean improved = false;
+			try {
+				improved = this.improveLocationUsingAxes(graphic, coords, location);
+			} catch (CvException e) {
+				e.printStackTrace();
+			}
+			logger.debug("Parsed location " + location + " from graphical coordinates." + (improved ? " Using CV imrprovements." : ""));
+			locations.add(location);
 		}
 	}
 	

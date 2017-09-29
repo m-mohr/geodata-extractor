@@ -15,7 +15,7 @@ public abstract class CvTextDetector {
 		this.img = img;
 	}
 	
-	public abstract List<Rect> detect();
+	public abstract List<Rect> detect() throws CvException;
 	
 	public Mat paint(Mat source, List<Rect> rects, Scalar color) {
 		Mat dest = source.clone();

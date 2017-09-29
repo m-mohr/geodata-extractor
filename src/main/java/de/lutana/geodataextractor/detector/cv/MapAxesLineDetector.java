@@ -1,8 +1,6 @@
 package de.lutana.geodataextractor.detector.cv;
 
-import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineSegment;
-import de.lutana.geodataextractor.util.GeoTools;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,7 +8,6 @@ import java.util.Map;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
@@ -36,40 +33,48 @@ public class MapAxesLineDetector extends CvLineDetector {
 	 * @return
 	 */
 	@Override
-	public List<LineSegment> detect() {
-		Mat dest = this.img.getMat().clone();
-		
-		OpenCV cv = OpenCV.getInstance();
+	public List<LineSegment> detect() throws CvException {
+			Mat src = this.img.getMat();
+			Mat dest;
+			if (src.channels() == 4) {
+				dest = new Mat();
+				Imgproc.cvtColor(src, dest, Imgproc.COLOR_BGRA2BGR);
+			}
+			else {
+				dest = src.clone();
+			}
 
-		// Remove text to avoid being detected as (part of the) line
-		this.removeText(dest);
+			OpenCV cv = OpenCV.getInstance();
 
-		// Use colour clustering to get b/w image that groups big chunks together
-		dest = this.cluster(dest, 3).get(0); // ToDo: Speed up?
+			// Remove text to avoid being detected as (part of the) line
+			this.removeText(dest);
 
-		// Invert image for morph. ops.
-		cv.invertMonotone(dest);
+			// Use colour clustering to get b/w image that groups big chunks together
+			dest = this.cluster(dest, 3).get(0); // ToDo: Speed up?
 
-		// Morph. ops. to remove noise and gaps in image
-		dest = cv.closeGaps(dest, dim);
-		
-		// Get edges using Canny
-		dest = cv.cannyAdaptive(dest);
+			// Invert image for morph. ops.
+			cv.invertMonotone(dest);
 
-		// Merge nearby edges
-		Mat structure = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
-		Imgproc.dilate(dest, dest, structure, new Point(-1, -1), 1);
+			// Morph. ops. to remove noise and gaps in image
+			dest = cv.closeGaps(dest, dim);
 
-		// Detect lines using HoughP Transform
-		List<LineSegment> lines = HoughProbabilisticLineDetector.detect(dest, 1, Math.PI / 180, dim * 20, dim * 30, dim * 2.5);
-		if (lines.size() > 200) {
-			return new ArrayList<>(); // Too many results. Something went wrong and good results are unlikely.
-		}
+			// Get edges using Canny
+			dest = cv.cannyAdaptive(dest);
 
-		// Merge similar lines detected by HoughP Transform
-		HoughProbabilisticLineDetector.mergeSimilarLines(lines, Math.PI / 36, dim); // PI / 36 = five degrees
+			// Merge nearby edges
+			Mat structure = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
+			Imgproc.dilate(dest, dest, structure, new Point(-1, -1), 1);
 
-		return lines;
+			// Detect lines using HoughP Transform
+			List<LineSegment> lines = HoughProbabilisticLineDetector.detect(dest, 1, Math.PI / 180, dim * 20, dim * 30, dim * 2.5);
+			if (lines.size() > 200) {
+				return new ArrayList<>(); // Too many results. Something went wrong and good results are unlikely.
+			}
+
+			// Merge similar lines detected by HoughP Transform
+			HoughProbabilisticLineDetector.mergeSimilarLines(lines, Math.PI / 36, dim); // PI / 36 = five degrees
+
+			return lines;
 	}
 	
 	public void removeText(Mat source) {
