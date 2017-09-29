@@ -4,6 +4,7 @@ import de.lutana.geodataextractor.detector.ClavinTextDetector;
 import de.lutana.geodataextractor.detector.DumbCountryTextDetector;
 import de.lutana.geodataextractor.detector.CoordinateGraphicDetector;
 import de.lutana.geodataextractor.detector.CoordinateTextDetector;
+import de.lutana.geodataextractor.detector.WorldMapDetector;
 import de.lutana.geodataextractor.detector.cv.CvGraphic;
 import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.entity.Figure;
@@ -12,7 +13,6 @@ import de.lutana.geodataextractor.entity.Graphic;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import de.lutana.geodataextractor.recognizor.TensorFlowMapRecognizer;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,10 +26,11 @@ public class DefaultStrategy implements Strategy {
 	
 	private TensorFlowMapRecognizer mapRecognizer;
 	
-	private DumbCountryTextDetector dumbCountryTextDetector;
-	private ClavinTextDetector clavinTextDetector;
-	private CoordinateGraphicDetector coordinateGraphicDetector;
-	private CoordinateTextDetector coordinateTextDetector;
+	private final DumbCountryTextDetector dumbCountryTextDetector;
+	private final ClavinTextDetector clavinTextDetector;
+	private final CoordinateGraphicDetector coordinateGraphicDetector;
+	private final CoordinateTextDetector coordinateTextDetector;
+	private final WorldMapDetector worldMapDetector;
 	
 	public DefaultStrategy() {
 		this.mapRecognizer = null;
@@ -37,6 +38,7 @@ public class DefaultStrategy implements Strategy {
 		this.clavinTextDetector = new ClavinTextDetector();
 		this.coordinateGraphicDetector = new CoordinateGraphicDetector();
 		this.coordinateTextDetector = new CoordinateTextDetector();
+		this.worldMapDetector = new WorldMapDetector();
 	}
 
 	/**
@@ -112,6 +114,7 @@ public class DefaultStrategy implements Strategy {
 		locations.setWeight(weight);
 		CvGraphic cvGraphic = new CvGraphic(graphic);
 
+		this.worldMapDetector.detect(cvGraphic, locations);
 		this.coordinateGraphicDetector.detect(cvGraphic, locations);
 		// ToDo: ...
 		
