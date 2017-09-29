@@ -15,7 +15,7 @@ import java.net.URLEncoder;
  */
 public class Config {
 	
-	private static boolean fastOcrModeEnabled = false;
+	private static boolean fastOcrModeEnabled = true; // ToDo: Re-enable cube mode, but currently it leads to an InvalidMemoryException
 	
 	public static boolean isOcrFastModeEnabled() {
 		return fastOcrModeEnabled;
