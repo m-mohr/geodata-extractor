@@ -1,6 +1,5 @@
 package de.lutana.geodataextractor.detector.cv;
 
-import de.lutana.geodataextractor.util.JImageFrame;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBufferByte;

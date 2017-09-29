@@ -1,4 +1,4 @@
-package de.lutana.geodataextractor.util;
+package de.lutana.geodataextractor.detector.cv;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;

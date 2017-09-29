@@ -14,7 +14,7 @@ import de.lutana.geodataextractor.detector.cv.CvGraphic;
 import de.lutana.geodataextractor.detector.cv.CvLineDetector;
 import de.lutana.geodataextractor.detector.cv.MapAxesLineDetector;
 import de.lutana.geodataextractor.util.GeoTools;
-import de.lutana.geodataextractor.util.TesseractOCR;
+import de.lutana.geodataextractor.detector.cv.TesseractOCR;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;

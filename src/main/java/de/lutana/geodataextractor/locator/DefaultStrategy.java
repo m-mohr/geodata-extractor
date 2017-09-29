@@ -11,7 +11,7 @@ import de.lutana.geodataextractor.entity.FigureCollection;
 import de.lutana.geodataextractor.entity.Graphic;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
-import de.lutana.geodataextractor.util.TensorFlowMapRecognizer;
+import de.lutana.geodataextractor.recognizor.TensorFlowMapRecognizer;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import org.slf4j.Logger;
@@ -77,13 +77,10 @@ public class DefaultStrategy implements Strategy {
 			
 			boolean isMap = true;
 			// Detect whether it's a map or not
-			try {
-				float result = this.mapRecognizer.recognize(figure.getGraphic());
-				isMap = (result >= 0.4); // 0.1 (10%) tolerance
-				logger.debug((isMap ? "Map detected" : "NOT a map") + " (" + result * 100 + "%)");
-			} catch (IOException ex) {
-				ex.printStackTrace();
-			}
+			float result = this.mapRecognizer.recognize(figure);
+			isMap = (result >= 0.4); // 0.1 (10%) tolerance
+			logger.debug((isMap ? "Map detected" : "NOT a map") + " (" + result * 100 + "%)");
+
 			
 			LocationCollection figureLocations = new LocationCollection(globalLocations);
 			this.getLocationsFromText(figure.getCaption(), figureLocations, 0.75);

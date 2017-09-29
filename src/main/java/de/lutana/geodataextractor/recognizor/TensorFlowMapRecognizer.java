@@ -1,5 +1,6 @@
-package de.lutana.geodataextractor.util;
+package de.lutana.geodataextractor.recognizor;
 
+import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.Graphic;
 import java.io.File;
 import java.io.IOException;
@@ -20,7 +21,7 @@ import org.tensorflow.Tensor;
  * @author Matthias Mohr
  * @see https://github.com/emara-geek/object-recognition-tensorflow
  */
-public class TensorFlowMapRecognizer {
+public class TensorFlowMapRecognizer implements Recognizor {
 
 	private static final String MAP_CLASS = "map";
 	private static final String LABEL_FILE = "map_labels.txt";
@@ -65,6 +66,16 @@ public class TensorFlowMapRecognizer {
 		if (labels == null || graph == null) {
 			labels = Files.readAllLines(labelFile, Charset.forName("UTF-8"));
 			graph = Files.readAllBytes(graphFile);
+		}
+	}
+
+	@Override
+	public float recognize(Figure f) {
+		try {
+			return this.recognize(f.getGraphic());
+		} catch (IOException ex) {
+			ex.printStackTrace();
+			return -1;
 		}
 	}
 	

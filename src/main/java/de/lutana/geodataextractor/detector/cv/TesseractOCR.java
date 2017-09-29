@@ -1,4 +1,4 @@
-package de.lutana.geodataextractor.util;
+package de.lutana.geodataextractor.detector.cv;
 
 import de.lutana.geodataextractor.Config;
 import java.io.File;

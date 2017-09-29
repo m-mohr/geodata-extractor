@@ -1,4 +1,4 @@
-package de.lutana.geodataextractor.util;
+package de.lutana.geodataextractor.detector;
 
 import static com.bericotech.clavin.index.IndexField.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;

@@ -7,7 +7,6 @@ import com.bericotech.clavin.gazetteer.GeoName;
 import com.bericotech.clavin.resolver.ResolvedLocation;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
-import de.lutana.geodataextractor.util.ClavinIndexDirectoryBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;

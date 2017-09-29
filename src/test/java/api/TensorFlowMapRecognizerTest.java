@@ -12,7 +12,7 @@ import de.lutana.geodataextractor.entity.FigureCollection;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.locator.NullStrategy;
 import de.lutana.geodataextractor.util.FileExtension;
-import de.lutana.geodataextractor.util.TensorFlowMapRecognizer;
+import de.lutana.geodataextractor.recognizor.TensorFlowMapRecognizer;
 import docs.BasePublicationTest;
 import java.io.File;
 import java.io.IOException;
