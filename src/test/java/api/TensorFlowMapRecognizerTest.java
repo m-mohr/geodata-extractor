@@ -25,22 +25,11 @@ public class TensorFlowMapRecognizerTest {
 
     @org.junit.runners.Parameterized.Parameters
     public static Collection<Object[]> data() {
-		GeodataExtractor instance = new GeodataExtractor(new NullStrategy());
-		instance.enableCaching(true);
-		Collection<Object[]> list = new ArrayList<>();
-		File[] files = BasePublicationTest.DOC_FOLDER.listFiles(new FileExtension.Filter("pdf"));
-		for (File file : files) {
-			Document document = instance.runSingle(file);
-			FigureCollection figures = document.getFigures();
-			for (Figure figure : figures) {
-				list.add(new Object[]{figure});
-			}
-		}
-		return list;
+		return BasePublicationTest.getAllFiguresWithStrategy(new NullStrategy());
     }
 
 	@org.junit.Test
-    public void testDocuments() throws IOException, URISyntaxException {
+    public void testFigures() throws IOException, URISyntaxException {
 		Boolean expected = null;
 		float result = TensorFlowMapRecognizer.getInstance().recognize(figureObj.getGraphic());
 		Boolean isMap = (result >= 0.5);

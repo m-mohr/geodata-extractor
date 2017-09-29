@@ -111,11 +111,11 @@ public class GeoTools {
 		return Precision.round(deg, LAT_LON_PRECISION);
 	}
 	
-	public static Rect addMargin(Rect r, int margin, int maxWidth, int maxHeight) {
-		int x = r.x - margin;
-		int y = r.y - margin;
-		int w = r.width + 2 * margin;
-		int h = r.height + 2 * margin;
+	public static Rect addMargin(Rect r, int lrMargin, int tbMargin, int maxWidth, int maxHeight) {
+		int x = r.x - lrMargin;
+		int y = r.y - tbMargin;
+		int w = r.width + 2 * lrMargin;
+		int h = r.height + 2 * tbMargin;
 		x = x < 0 ? 0 : x;
 		y = y < 0 ? 0 : y;
 		w = (x + w) > maxWidth ? (maxWidth - x) : w;

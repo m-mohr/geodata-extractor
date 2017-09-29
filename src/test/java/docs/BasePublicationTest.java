@@ -11,11 +11,14 @@ import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.FigureCollection;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
+import de.lutana.geodataextractor.locator.Strategy;
 import de.lutana.geodataextractor.util.FileExtension;
 import de.lutana.geodataextractor.util.GeoTools;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import static org.junit.Assert.assertTrue;
 
@@ -128,6 +131,21 @@ public abstract class BasePublicationTest {
 	public static File getFigureMetaFile(Figure figure) {
 		File metaFolder = getFigureMetaFolder(figure.getDocument().getFile().getName());
 		return new File(metaFolder, FileExtension.replace(figure.getGraphicFile().getName(), "json"));
+	}
+	
+	public static Collection<Object[]> getAllFiguresWithStrategy(Strategy strategy) {
+		GeodataExtractor instance = new GeodataExtractor(strategy);
+		instance.enableCaching(true);
+		Collection<Object[]> list = new ArrayList<>();
+		File[] files = BasePublicationTest.DOC_FOLDER.listFiles(new FileExtension.Filter("pdf"));
+		for (File file : files) {
+			Document document = instance.runSingle(file);
+			FigureCollection figures = document.getFigures();
+			for (Figure figure : figures) {
+				list.add(new Object[]{figure});
+			}
+		}
+		return list;
 	}
 	
 	@JsonIgnoreProperties(ignoreUnknown = true)
