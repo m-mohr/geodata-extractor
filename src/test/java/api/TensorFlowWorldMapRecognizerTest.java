@@ -39,7 +39,7 @@ public class TensorFlowWorldMapRecognizerTest {
 		return expected;
 	}
 
-/*	@org.junit.Test
+	@org.junit.Test
 	public void testFiguresWorldOnly() throws IOException, URISyntaxException {
 		Boolean expected = this.getExpectedResult(figureObj);
 		Assert.assertNotNull(expected);
@@ -48,7 +48,7 @@ public class TensorFlowWorldMapRecognizerTest {
 		Boolean isWorldMap = (result >= 0.5);
 		System.out.println((isWorldMap.equals(expected) ? "" : "!! ") + figureObj.getDocument().getFile().getName() + "#" + figureObj.toString() + ": " + (expected ? "WORLD" : "OTHER") + " == " + (isWorldMap ? "WORLD" : "OTHER") + "(" + Math.round(result * 100) + "%)");
 		Assert.assertEquals(expected, isWorldMap);
-    } */
+    }
 
 	@org.junit.Test
     public void testFiguresWorldWithMapRecognition() throws IOException, URISyntaxException {
