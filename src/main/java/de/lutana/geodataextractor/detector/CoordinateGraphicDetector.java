@@ -5,13 +5,15 @@ import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.LineSegment;
 import de.lutana.geodataextractor.Config;
 import de.lutana.geodataextractor.detector.coordinates.CoordinateFromText;
-import de.lutana.geodataextractor.entity.Graphic;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import de.lutana.geodataextractor.detector.coordinates.CoordinateList;
 import de.lutana.geodataextractor.detector.coordinates.CoordinateParser;
-import de.lutana.geodataextractor.detector.cv.LineParser;
+import de.lutana.geodataextractor.detector.cv.CvGraphic;
+import de.lutana.geodataextractor.detector.cv.CvLineDetector;
+import de.lutana.geodataextractor.detector.cv.MapAxesLineDetector;
 import de.lutana.geodataextractor.detector.cv.OpenCV;
+import de.lutana.geodataextractor.util.GeoTools;
 import de.lutana.geodataextractor.util.TesseractOCR;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -24,6 +26,10 @@ import net.sourceforge.tess4j.ITessAPI.TessPageIteratorLevel;
 import net.sourceforge.tess4j.TessAPI;
 import net.sourceforge.tess4j.Word;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
+import org.apache.log4j.Logger;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Rect;
 import org.slf4j.LoggerFactory;
 
 public class CoordinateGraphicDetector implements GraphicDetector {
@@ -35,7 +41,7 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 	public CoordinateGraphicDetector() {
 		TesseractOCR instance = TesseractOCR.getInstance();
 		// Sparse is more accurate for randomly located text parts than automatic detection as it assumes bigger text paragraphs.
-		instance.setPageSegMode(TessAPI.TessPageSegMode.PSM_SPARSE_TEXT_OSD);
+		instance.setPageSegMode(TessAPI.TessPageSegMode.PSM_SINGLE_LINE);
 		// Set the OCR mode (slow and more accurate = Cube and Tesseract / fast and more inaccurate = Tesseract only)
 		instance.setOcrEngineMode(Config.isOcrFastModeEnabled() ? TessAPI.TessOcrEngineMode.OEM_TESSERACT_ONLY : TessAPI.TessOcrEngineMode.OEM_TESSERACT_CUBE_COMBINED);
 		// Avoid word list/dictionaries as geonaames and coordinates are not in those lists
@@ -46,10 +52,30 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 	}
 
 	@Override
-	public void detect(Graphic graphic, LocationCollection locations) {
+	public void detect(CvGraphic graphic, LocationCollection locations) {
 		try {
 			BufferedImage img = graphic.getBufferedImage();
-			List<Word> words = TesseractOCR.getInstance().getWords(img, TessPageIteratorLevel.RIL_WORD);
+			int width = img.getWidth();
+			int height = img.getHeight();
+
+			List<Rect> rects = graphic.getTextBoxes();
+			if (rects.size() > 100) {
+				return; // TODO
+			}
+			List<Word> words = new ArrayList<>();
+			for(Rect rect : rects) {
+				rect = GeoTools.addMargin(rect, Math.round(rect.height / 4), width, height);
+				BufferedImage subImg = img.getSubimage(rect.x, rect.y, rect.width, rect.height);
+				List<Word> subWords = TesseractOCR.getInstance().getWords(subImg, TessPageIteratorLevel.RIL_WORD);
+				// The bbox from Tesseract relates to the sub image(!).
+				// To get the bbox for the whole image add the offset/position of the sub image to the detected bbox.
+				for(Word w : subWords) {
+					Rectangle r = w.getBoundingBox();
+					r.x = rect.x + r.x;
+					r.y = rect.y + r.y;
+					words.add(new Word(w.getText(), w.getConfidence(), r));
+				}
+			}
 
 			// Add a text with a directory of words
 			Text textBuilder = new Text();
@@ -79,6 +105,10 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 					}
 					confidenceSum += word.getConfidence() / 100;
 				}
+				if (rectangle == null) {
+					Logger.getLogger(getClass()).debug("Combine coordinates with OCR rectangles failed. No words found.");
+					continue;
+				}
 				double avgConfidence = confidenceSum / textWords.size();
 				coord.setProbability((coord.getProbability() + avgConfidence) / 2);
 
@@ -98,7 +128,7 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 			// Try to get location using axes and labels
 			Location location = coords.getLocation();
 			if (location != null) {
-				boolean improved = this.improveLocationUsingAxes(img, coords, location);
+				boolean improved = this.improveLocationUsingAxes(graphic, coords, location);
 				LoggerFactory.getLogger(getClass()).debug("Parsed location " + location + " from graphical coordinates." + (improved ? " Using CV imrprovements." : ""));
 				locations.add(location);
 			}
@@ -109,9 +139,9 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 		}
 	}
 	
-	public boolean improveLocationUsingAxes(BufferedImage img, CoordinateList coords, Location baseLocation) {
+	public boolean improveLocationUsingAxes(CvGraphic img, CoordinateList coords, Location baseLocation) {
 		// Do countour finding to get the axes
-		LineParser lp = OpenCV.getInstance().createLineParser(img);
+		CvLineDetector lp = new MapAxesLineDetector(img);
 		List<LineSegment> lines = lp.detect();
 		if (lines.isEmpty()) {
 			return false;
@@ -123,11 +153,10 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 		}
 
 		for (CoordinateFromText coord : coords) {
-			CoordinateFromOcr ocrCoord = (CoordinateFromOcr) coord;
-			if (ocrCoord == null) {
+			if (!(coord instanceof CoordinateFromOcr)) {
 				continue;
 			}
-
+			CoordinateFromOcr ocrCoord = (CoordinateFromOcr) coord;
 			Coordinate c = ocrCoord.getBoundingBoxCenter();
 
 			Axis nearestAxis = null;
@@ -135,10 +164,10 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 			for(Axis axis : axes) {
 				LineSegment l = axis.getLine();
 				// Check whether the text is not inside the line bounds => reject it
-				if (l.isHorizontal() && (c.x < l.minX() || c.x > l.maxX())) {
+				if (axis.isMostlyHorizontal() && (c.x < l.minX() || c.x > l.maxX())) {
 					continue;
 				}
-				else if (l.isVertical() && (c.y < l.minY() || c.y > l.maxY())) {
+				else if (axis.isMostlyVertical() && (c.y < l.minY() || c.y > l.maxY())) {
 					continue;
 				}
 				
@@ -154,26 +183,27 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 		}
 		
 		for (CoordinateFromText coord : coords) {
-			CoordinateFromOcr ocrCoord = (CoordinateFromOcr) coord;
-			if (ocrCoord == null) {
+			if (!(coord instanceof CoordinateFromOcr)) {
 				continue;
 			}
+			CoordinateFromOcr ocrCoord = (CoordinateFromOcr) coord;
 			Axis axis = ocrCoord.getNearestAxis();
-			if (axis != null) {
-				if (ocrCoord instanceof CoordinateFromOcrWithUnknownOrientation) {
-					if (axis.getLine().isHorizontal()) {
-						// Probably a longitude value, remove the latitude value
-						ocrCoord.setLatitude(null);
-						ocrCoord.setProbability(0.5);
-					}
-					else if (axis.getLine().isVertical()) {
-						// Probably a latitude value, remove the longitude value
-						ocrCoord.setLongitude(null);
-						ocrCoord.setProbability(0.5);
-					}
-				}
-				axis.addCoordinate(ocrCoord);
+			if (axis == null) {
+				continue;
 			}
+			if (ocrCoord instanceof CoordinateFromOcrWithUnknownOrientation) {
+				if (axis.isMostlyHorizontal()) {
+					// Probably a longitude value, remove the latitude value
+					ocrCoord.setLatitude(null);
+					ocrCoord.setProbability(0.5);
+				}
+				else if (axis.isMostlyVertical()) {
+					// Probably a latitude value, remove the longitude value
+					ocrCoord.setLongitude(null);
+					ocrCoord.setProbability(0.5);
+				}
+			}
+			axis.addCoordinate(ocrCoord);
 		}
 		
 		double xMin = Double.NaN;
@@ -186,22 +216,40 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 			}
 			LoggerFactory.getLogger(this.getClass()).debug(axis.toString());
 			double length = axis.getLine().getLength();
-			if (axis.getLine().isHorizontal()) {
+			if (axis.isMostlyHorizontal()) {
 				Double xMinPred = axis.predictValue(0);
+				Double xMaxPred = axis.predictValue(length);
+				if (xMinPred < -200 || xMaxPred > 200) {
+					continue; // Completely wrong, ignore it
+				}
+				if (xMinPred < -180) {
+					xMinPred = -180d; // Correct to min. value if slightly over
+				}
+				if (xMaxPred > 180) {
+					xMaxPred = 180d; // Correct to max. value if slightly over
+				}
 				if (Double.isNaN(xMin) || xMin > xMinPred) {
 					xMin = xMinPred;
 				}
-				Double xMaxPred = axis.predictValue(length);
 				if (Double.isNaN(xMax) || xMax < xMaxPred) {
 					xMax = xMaxPred;
 				}
 			}
 			else {
 				Double yMinPred = axis.predictValue(0);
+				Double yMaxPred = axis.predictValue(length);
+				if (yMinPred < -100 || yMaxPred > 100) {
+					continue; // Completely wrong, ignore it
+				}
+				if (yMinPred < -90) {
+					yMinPred = -90d; // Correct to min. value if slightly over
+				}
+				if (yMaxPred > 90) {
+					yMaxPred = 90d; // Correct to max. value if slightly over
+				}
 				if (Double.isNaN(yMin) || yMin > yMinPred) {
 					yMin = yMinPred;
 				}
-				Double yMaxPred = axis.predictValue(length);
 				if (Double.isNaN(yMax) || yMax < yMaxPred) {
 					yMax = yMaxPred;
 				}
@@ -244,13 +292,21 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 			return (this.data.size() >= 2);
 		}
 		
+		public boolean isMostlyHorizontal() {
+			return GeoTools.isMostlyHorizontal(this.line.angle(), true);
+		}
+		
+		public boolean isMostlyVertical() {
+			return GeoTools.isMostlyVertical(this.line.angle(), true);
+		}
+		
 		public void addCoordinate(CoordinateFromOcr coord) {
-			if (this.line.isHorizontal() && coord.getLongitude() != null) {
+			if (this.isMostlyHorizontal() && coord.getLongitude() != null) {
 				this.data.add(coord);
 				double x = coord.getBoundingBoxCenter().x - this.line.minX();
 				this.regression.addData(x, coord.getLongitude());
 			}
-			else if (this.line.isVertical() && coord.getLatitude() != null) {
+			else if (this.isMostlyVertical() && coord.getLatitude() != null) {
 				this.data.add(coord);
 				double x = coord.getBoundingBoxCenter().y - this.line.minY();
 				this.regression.addData(x, coord.getLatitude());

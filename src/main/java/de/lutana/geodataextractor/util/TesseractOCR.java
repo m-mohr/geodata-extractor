@@ -1,7 +1,6 @@
 package de.lutana.geodataextractor.util;
 
 import de.lutana.geodataextractor.Config;
-import de.lutana.geodataextractor.detector.CoordinateGraphicDetector;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;

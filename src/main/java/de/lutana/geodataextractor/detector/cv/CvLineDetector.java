@@ -11,20 +11,20 @@ import org.opencv.imgproc.Imgproc;
 
 public abstract class CvLineDetector {
 		
-	protected final Mat img;
+	protected final CvGraphic img;
 	
-	public CvLineDetector(Mat img) {
+	public CvLineDetector(CvGraphic img) {
 		this.img = img;
 	}
 	
 	public abstract List<LineSegment> detect();
 	
-	public Mat paint(Mat mat, List<LineSegment> lines) {
+	public Mat paint(Mat mat, List<LineSegment> lines, Scalar color) {
 		Mat drawing = Mat.zeros(mat.size(), CvType.CV_8UC3);
 		for (LineSegment line : lines) {
 			Point tl = new Point(line.p0.x, line.p0.y);
 			Point br = new Point(line.p1.x, line.p1.y);
-			Imgproc.line(drawing, tl, br, OpenCV.getRandomColorScalar(), 2);
+			Imgproc.line(drawing, tl, br, (color == null ? OpenCV.getRandomColorScalar() : color), 1);
 		}
 		return drawing;
 	}
@@ -32,7 +32,7 @@ public abstract class CvLineDetector {
 	public Mat paint(Mat mat, List<MatOfPoint> contours, Mat hierarchy, Scalar color) {
 		Mat drawing = Mat.zeros(mat.size(), CvType.CV_8UC3);
 		for (int i = 0; i < contours.size(); i++) {
-			Imgproc.drawContours(drawing, contours, i, (color == null ? OpenCV.getRandomColorScalar() : color), 2, 8, hierarchy, 0, new Point());
+			Imgproc.drawContours(drawing, contours, i, (color == null ? OpenCV.getRandomColorScalar() : color), 1, 8, hierarchy, 0, new Point());
 		}
 		return drawing;
 	}

@@ -22,7 +22,7 @@ public class GradientTextDetector extends CvTextDetector {
 	private float threshold;
 	private Size sizeConstraint;
 	
-	public GradientTextDetector(Mat img) {
+	public GradientTextDetector(CvGraphic img) {
 		super(img);
 		this.threshold = 0.45f;
 		this.sizeConstraint = new Size(8, 8);
@@ -64,7 +64,7 @@ public class GradientTextDetector extends CvTextDetector {
 	public List<Rect> detect() {
 		List<Rect> rectangles = new ArrayList<>();
 		
-		Mat gray = OpenCV.getInstance().toGrayscale(this.img);
+		Mat gray = OpenCV.getInstance().toGrayscale(this.img.getMat());
 		// morphological gradient
 		Mat grad = new Mat();
 		Mat morphKernel = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(3, 3));

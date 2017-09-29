@@ -1,64 +1,93 @@
 package de.lutana.geodataextractor.detector.cv;
 
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import org.opencv.core.Rect;
 import org.openimaj.image.FImage;
-import org.openimaj.image.ImageUtilities;
-import org.openimaj.image.pixel.statistics.HistogramModel;
 import org.openimaj.image.text.extraction.swt.LineCandidate;
 import org.openimaj.image.text.extraction.swt.SWTTextDetector;
 import org.openimaj.math.geometry.shape.Rectangle;
-import org.openimaj.math.statistics.distribution.MultidimensionalHistogram;
 
 public class StrokeWidthTransformTextDetector extends CvTextDetector {
 
-	protected FImage img;
 	protected SWTTextDetector.Options options;
 
-	public StrokeWidthTransformTextDetector(BufferedImage img) {
-		super(null);
-		this.img = ImageUtilities.createFImage(img);
+	public StrokeWidthTransformTextDetector(CvGraphic img) {
+		super(img);
 		this.options = new SWTTextDetector.Options();
 		this.options.direction = null;
-	}
+		// Set default values we found to deliver good results
 
-	@Override
-	public List<Rect> detect() {
+		// Letter related
+//		this.setMinArea(38); // default: 38
+		this.setLetterVarianceMean(1); // default: 0.93
+//		this.setMaxAspectRatio(10); // default: 10
+		this.setMaxDiameterStrokeRatio(25); // default: 10
+		this.setMaxNumOverlappingBoxes(2); // default: 10
+		this.setMinHeight(9); // default: 10
+		this.setMaxHeight(img.getHeight() / 20); // default: 300
+
+		// Word related
+//		this.setWordBreakdownRatio(1); // default: 1
+
+		// Line related
+		this.setMedianStrokeWidthRatio(4); // default: 2
+		this.setLetterHeightRatio(3); // default: 2
+		this.setIntensityThreshold(0.25f); // default: 0.12
+//		this.setWidthMultiplier(3); // default: 3
+		this.setIntersectRatio(1.3f); // default: 1.3
+//		this.setMinLettersPerLine(3); // default: 3
+
+		// SWT related
+		this.setStrokeWidthRatio(5); // default: 3.0
+		this.setMaxStrokeWidth(50); // default: 70
+	}
+	
+	public List<LineCandidate> detectLines() {
+		FImage fimage = this.img.getFImage();
+		
 		if (this.options.direction == null) {
 			this.options.direction = this.detectBestDirection();
 		}
 
 		SWTTextDetector swt = new SWTTextDetector(options);
-		swt.analyseImage(img);
-		List<LineCandidate> lines = swt.getLines();
-
+		swt.analyseImage(fimage);
+		List<LineCandidate> list = swt.getLines();
+		// ToDo: Merge overlapping lines/bounds.
+		return list;
+	}
+	
+	public static Rect toRect(LineCandidate line) {
+		Rectangle r = line.getRegularBoundingBox();
+		return new Rect(Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height));
+	}
+	
+	public static List<Rect> toRectList(List<LineCandidate> lines) {
 		List<Rect> list = new ArrayList<>();
 		for (LineCandidate line : lines) {
-			Rectangle r = line.getRegularBoundingBox();
-			Rect rect = new Rect(Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height));
-			list.add(rect);
+			list.add(toRect(line));
 		}
-
 		return list;
 	}
 
+	@Override
+	public List<Rect> detect() {
+		List<LineCandidate> lines = this.detectLines();
+		return toRectList(lines);
+	}
+
 	protected SWTTextDetector.Direction detectBestDirection() {
-		HistogramModel model = new HistogramModel(5);
-		model.estimateModel(img);
-		double[] hist = model.histogram.values;
-		System.out.println(Arrays.toString(hist));
-		if (hist[4] > 0.5) { // probably white background
-			return SWTTextDetector.Direction.DarkOnLight;
-		}
-		else if (hist[0] > 0.5) { // probably black background
-			return SWTTextDetector.Direction.LightOnDark;
-		}
-		else {
-			// Can't decide, do both
-			return SWTTextDetector.Direction.Both;
+		int brightness = img.getBackgroundBrightness();
+		switch (brightness) {
+			case 1:
+				// probably white background
+				return SWTTextDetector.Direction.DarkOnLight;
+			case 0:
+				// probably black background
+				return SWTTextDetector.Direction.LightOnDark;
+			default:
+				// Can't decide, do both
+				return SWTTextDetector.Direction.Both;
 		}
 	}
 
@@ -90,7 +119,7 @@ public class StrokeWidthTransformTextDetector extends CvTextDetector {
 	 *
 	 * @param strokeWidthRatio the strokeWidthRatio to set
 	 */
-	public void setStrokeWidthRatio(float strokeWidthRatio) {
+	public final void setStrokeWidthRatio(float strokeWidthRatio) {
 		options.strokeWidthRatio = strokeWidthRatio;
 	}
 
@@ -110,7 +139,7 @@ public class StrokeWidthTransformTextDetector extends CvTextDetector {
 	 *
 	 * @param letterVarianceMean the letterVarianceMean to set
 	 */
-	public void setLetterVarianceMean(double letterVarianceMean) {
+	public final void setLetterVarianceMean(double letterVarianceMean) {
 		options.letterVarianceMean = letterVarianceMean;
 	}
 
@@ -128,7 +157,7 @@ public class StrokeWidthTransformTextDetector extends CvTextDetector {
 	 *
 	 * @param maxAspectRatio the maxAspectRatio to set
 	 */
-	public void setMaxAspectRatio(double maxAspectRatio) {
+	public final void setMaxAspectRatio(double maxAspectRatio) {
 		options.maxAspectRatio = maxAspectRatio;
 	}
 
@@ -146,7 +175,7 @@ public class StrokeWidthTransformTextDetector extends CvTextDetector {
 	 *
 	 * @param maxDiameterStrokeRatio the maxDiameterStrokeRatio to set
 	 */
-	public void setMaxDiameterStrokeRatio(double maxDiameterStrokeRatio) {
+	public final void setMaxDiameterStrokeRatio(double maxDiameterStrokeRatio) {
 		options.maxDiameterStrokeRatio = maxDiameterStrokeRatio;
 	}
 
@@ -166,7 +195,7 @@ public class StrokeWidthTransformTextDetector extends CvTextDetector {
 	 *
 	 * @param minArea the minArea to set
 	 */
-	public void setMinArea(int minArea) {
+	public final void setMinArea(int minArea) {
 		options.minArea = minArea;
 	}
 
@@ -184,7 +213,7 @@ public class StrokeWidthTransformTextDetector extends CvTextDetector {
 	 *
 	 * @param minHeight the minHeight to set
 	 */
-	public void setMinHeight(float minHeight) {
+	public final void setMinHeight(float minHeight) {
 		options.minHeight = minHeight;
 	}
 
@@ -202,7 +231,7 @@ public class StrokeWidthTransformTextDetector extends CvTextDetector {
 	 *
 	 * @param maxHeight the maxHeight to set
 	 */
-	public void setMaxHeight(float maxHeight) {
+	public final void setMaxHeight(float maxHeight) {
 		options.maxHeight = maxHeight;
 	}
 
@@ -220,7 +249,7 @@ public class StrokeWidthTransformTextDetector extends CvTextDetector {
 	 *
 	 * @param maxNumOverlappingBoxes the maxNumOverlappingBoxes to set
 	 */
-	public void setMaxNumOverlappingBoxes(int maxNumOverlappingBoxes) {
+	public final void setMaxNumOverlappingBoxes(int maxNumOverlappingBoxes) {
 		options.maxNumOverlappingBoxes = maxNumOverlappingBoxes;
 	}
 
@@ -238,7 +267,7 @@ public class StrokeWidthTransformTextDetector extends CvTextDetector {
 	 *
 	 * @param maxStrokeWidth the maxStrokeWidth to set
 	 */
-	public void setMaxStrokeWidth(int maxStrokeWidth) {
+	public final void setMaxStrokeWidth(int maxStrokeWidth) {
 		options.maxStrokeWidth = maxStrokeWidth;
 	}
 
@@ -258,7 +287,7 @@ public class StrokeWidthTransformTextDetector extends CvTextDetector {
 	 *
 	 * @param medianStrokeWidthRatio the medianStrokeWidthRatio to set
 	 */
-	public void setMedianStrokeWidthRatio(float medianStrokeWidthRatio) {
+	public final void setMedianStrokeWidthRatio(float medianStrokeWidthRatio) {
 		options.medianStrokeWidthRatio = medianStrokeWidthRatio;
 	}
 
@@ -276,7 +305,7 @@ public class StrokeWidthTransformTextDetector extends CvTextDetector {
 	 *
 	 * @param letterHeightRatio the letterHeightRatio to set
 	 */
-	public void setLetterHeightRatio(float letterHeightRatio) {
+	public final void setLetterHeightRatio(float letterHeightRatio) {
 		options.letterHeightRatio = letterHeightRatio;
 	}
 
@@ -296,7 +325,7 @@ public class StrokeWidthTransformTextDetector extends CvTextDetector {
 	 *
 	 * @param intensityThreshold the intensityThreshold to set
 	 */
-	public void setIntensityThreshold(float intensityThreshold) {
+	public final void setIntensityThreshold(float intensityThreshold) {
 		options.intensityThreshold = intensityThreshold;
 	}
 
@@ -318,7 +347,7 @@ public class StrokeWidthTransformTextDetector extends CvTextDetector {
 	 *
 	 * @param widthMultiplier the widthMultiplier to set
 	 */
-	public void setWidthMultiplier(float widthMultiplier) {
+	public final void setWidthMultiplier(float widthMultiplier) {
 		options.widthMultiplier = widthMultiplier;
 	}
 
@@ -336,7 +365,7 @@ public class StrokeWidthTransformTextDetector extends CvTextDetector {
 	 *
 	 * @param minLettersPerLine the minLettersPerLine to set
 	 */
-	public void setMinLettersPerLine(int minLettersPerLine) {
+	public final void setMinLettersPerLine(int minLettersPerLine) {
 		options.minLettersPerLine = minLettersPerLine;
 	}
 
@@ -356,7 +385,7 @@ public class StrokeWidthTransformTextDetector extends CvTextDetector {
 	 *
 	 * @param intersectRatio the intersectRatio to set
 	 */
-	public void setIntersectRatio(float intersectRatio) {
+	public final void setIntersectRatio(float intersectRatio) {
 		options.intersectRatio = intersectRatio;
 	}
 
@@ -376,7 +405,7 @@ public class StrokeWidthTransformTextDetector extends CvTextDetector {
 	 *
 	 * @param wordBreakdownRatio the wordBreakdownRatio to set
 	 */
-	public void setWordBreakdownRatio(float wordBreakdownRatio) {
+	public final void setWordBreakdownRatio(float wordBreakdownRatio) {
 		options.wordBreakdownRatio = wordBreakdownRatio;
 	}
 

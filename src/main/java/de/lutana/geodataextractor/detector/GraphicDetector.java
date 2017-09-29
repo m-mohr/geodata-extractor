@@ -1,6 +1,6 @@
 package de.lutana.geodataextractor.detector;
 
-import de.lutana.geodataextractor.entity.Graphic;
+import de.lutana.geodataextractor.detector.cv.CvGraphic;
 import de.lutana.geodataextractor.entity.LocationCollection;
 
 /**
@@ -16,6 +16,6 @@ public interface GraphicDetector {
 	 * @param graphic
 	 * @param locations
 	 */
-	public void detect(Graphic graphic, LocationCollection locations);
+	public void detect(CvGraphic graphic, LocationCollection locations);
 	
 }

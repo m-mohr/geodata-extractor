@@ -36,21 +36,9 @@ public class OpenCV {
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 		this.debugWindow = null;
 	}
-
-	public LineParser createLineParser(BufferedImage img) {
-		return new LineParser(toMat(img));
-	}
 	
-	public GradientTextDetector createGradientTextDetector(BufferedImage img) {
-		return new GradientTextDetector(toMat(img));
-	}
-	
-	public EdgeEnhancedTextDetector createEdgeEnhancedTextDetector(BufferedImage img) {
-		return new EdgeEnhancedTextDetector(toMat(img));
-	}
-	
-	public StrokeWidthTransformTextDetector createStrokeWidthTransformTextDetector(BufferedImage img) {
-		return new StrokeWidthTransformTextDetector(img);
+	public void invertMonotone(Mat mat) {
+		Core.bitwise_not(mat, mat);
 	}
 	
 	public Mat sharpenGaussian(Mat source) {
@@ -58,6 +46,37 @@ public class OpenCV {
 		Imgproc.GaussianBlur(source, destination, new Size(0,0), 10);
 		Core.addWeighted(source, 1.5, destination, -0.5, 0, destination);
 		return destination;
+	}
+	
+	public Mat closeGaps(Mat source, Size size, int shape) {
+		Mat dest = new Mat(source.rows(), source.cols(), source.type());
+		Mat structure = Imgproc.getStructuringElement(shape, size);
+		Imgproc.dilate(source, dest, structure, new Point(-1, -1), 1);
+		Imgproc.erode(dest, dest, structure, new Point(-1, -1), 1);
+		return dest;
+	}
+	
+	public Mat closeGaps(Mat source, int size, int shape) {
+		return this.closeGaps(source, new Size(size, size), shape);
+	}
+	
+	public Mat closeGaps(Mat source, int size) {
+		return this.closeGaps(source, size, Imgproc.MORPH_ELLIPSE);
+	}
+	
+	/**
+	 * 
+	 * @param source
+	 * @return 
+	 * @see https://stackoverflow.com/questions/24672414/adaptive-parameter-for-canny-edge
+	 */
+	public Mat cannyAdaptive(Mat source) {
+		Mat gray = toGrayscale(source);
+		Imgproc.blur(gray, gray, new Size(5,5));
+		double CannyAccThresh = Imgproc.threshold(gray, new Mat(), 0, 255, Imgproc.THRESH_OTSU);
+		Mat edges = new Mat();
+		Imgproc.Canny(gray, edges, 0.1*CannyAccThresh, CannyAccThresh);
+		return edges;
 	}
 	
 	public Mat toMonotoneAdaptive(Mat source, boolean inverse) {

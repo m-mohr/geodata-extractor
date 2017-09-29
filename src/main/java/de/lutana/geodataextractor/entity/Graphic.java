@@ -27,16 +27,6 @@ public class Graphic {
 		this.file = file;
 	}
 	
-	public BufferedImage getBufferedImage() {
-		BufferedImage image = null;
-		try {
-			image = ImageIO.read(this.file);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return image;
-	}
-	
 	@Override
 	public String toString() {
 		return this.file.getName();

@@ -40,6 +40,53 @@ public class GeoToolsTest {
 
 		Assert.assertEquals(expected, result);
 	}
+
+	@org.junit.Test
+	public void testIsMostlyHorizontal1() throws IOException {
+		boolean result = GeoTools.isMostlyHorizontal(Math.toRadians(10), false);
+		Assert.assertTrue(result);
+	}
+
+	@org.junit.Test
+	public void testIsMostlyHorizontal2() throws IOException {
+		boolean result = GeoTools.isMostlyHorizontal(Math.toRadians(46), true);
+		Assert.assertFalse(result);
+	}
+
+	@org.junit.Test
+	public void testIsMostlyHorizontal3() throws IOException {
+		boolean result = GeoTools.isMostlyHorizontal(Math.toRadians(44), true);
+		Assert.assertTrue(result);
+	}
+
+	@org.junit.Test
+	public void testIsMostlyDiagonal() throws IOException {
+		boolean result = GeoTools.isMostlyDiagonal(Math.toRadians(315));
+		Assert.assertTrue(result);
+	}
+
+	public void testIsMostlyDiagonal1() throws IOException {
+		boolean result = GeoTools.isMostlyDiagonal(Math.toRadians(-45));
+		Assert.assertTrue(result);
+	}
+
+	@org.junit.Test
+	public void testIsMostlyVertical1() throws IOException {
+		boolean result = GeoTools.isMostlyVertical(Math.toRadians(-90), false);
+		Assert.assertTrue(result);
+	}
+
+	@org.junit.Test
+	public void testIsMostlyVertical2() throws IOException {
+		boolean result = GeoTools.isMostlyVertical(Math.toRadians(50), true);
+		Assert.assertTrue(result);
+	}
+
+	@org.junit.Test
+	public void testIsMostlyVertical3() throws IOException {
+		boolean result = GeoTools.isMostlyVertical(Math.toRadians(0), true);
+		Assert.assertFalse(result);
+	}
 	
 	
 }

@@ -4,6 +4,7 @@ import de.lutana.geodataextractor.detector.ClavinTextDetector;
 import de.lutana.geodataextractor.detector.DumbCountryTextDetector;
 import de.lutana.geodataextractor.detector.CoordinateGraphicDetector;
 import de.lutana.geodataextractor.detector.CoordinateTextDetector;
+import de.lutana.geodataextractor.detector.cv.CvGraphic;
 import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.FigureCollection;
@@ -78,7 +79,7 @@ public class DefaultStrategy implements Strategy {
 			// Detect whether it's a map or not
 			try {
 				float result = this.mapRecognizer.recognize(figure.getGraphic());
-				isMap = (result >= 0.5);
+				isMap = (result >= 0.4); // 0.1 (10%) tolerance
 				logger.debug((isMap ? "Map detected" : "NOT a map") + " (" + result * 100 + "%)");
 			} catch (IOException ex) {
 				ex.printStackTrace();
@@ -112,10 +113,12 @@ public class DefaultStrategy implements Strategy {
 	
 	protected void getLocationsFromGraphic(Graphic graphic, LocationCollection locations, double weight) {
 		locations.setWeight(weight);
+		CvGraphic cvGraphic = new CvGraphic(graphic);
 
-		this.coordinateGraphicDetector.detect(graphic, locations);
+		this.coordinateGraphicDetector.detect(cvGraphic, locations);
 		// ToDo: ...
 		
+		cvGraphic.dispose();
 		locations.resetWeight();
 	}
 	

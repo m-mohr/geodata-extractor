@@ -8,6 +8,7 @@ import org.gavaghan.geodesy.Ellipsoid;
 import org.gavaghan.geodesy.GeodeticCalculator;
 import org.gavaghan.geodesy.GeodeticCurve;
 import org.gavaghan.geodesy.GlobalCoordinates;
+import org.opencv.core.Rect;
 
 public class GeoTools {
 
@@ -108,6 +109,46 @@ public class GeoTools {
 	 */
 	public static double roundLatLon(double deg) {
 		return Precision.round(deg, LAT_LON_PRECISION);
+	}
+	
+	public static Rect addMargin(Rect r, int margin, int maxWidth, int maxHeight) {
+		int x = r.x - margin;
+		int y = r.y - margin;
+		int w = r.width + 2 * margin;
+		int h = r.height + 2 * margin;
+		x = x < 0 ? 0 : x;
+		y = y < 0 ? 0 : y;
+		w = (x + w) > maxWidth ? (maxWidth - x) : w;
+		h = (y + h) > maxHeight ? (maxHeight - y) : h;
+		return new Rect(x, y, w, h);
+	}
+
+	public static boolean isMostlyHorizontal(double rad, boolean includeDiagonal) {
+		double deg = normalizeAngle(rad);
+		double range = (includeDiagonal ? 45 : 30);
+		return (deg >= 0 && deg < range);
+	}
+	
+	public static boolean isMostlyDiagonal(double rad) {
+		double deg = normalizeAngle(rad);
+		return (deg >= 30 && deg < 60);
+	}
+	
+	public static boolean isMostlyVertical(double rad, boolean includeDiagonal) {
+		double deg = normalizeAngle(rad);
+		double range = (includeDiagonal ? 45 : 30);
+		return (deg >= range && deg <= 90);
+	}
+	
+	private static double normalizeAngle(double rad) {
+		double deg = Math.toDegrees(rad) % 180;
+		if (deg < 0) {
+			deg += 180;
+		}
+		if (deg > 90) {
+			deg -= 90;
+		}
+		return deg;
 	}
 	
 }

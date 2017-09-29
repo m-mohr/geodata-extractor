@@ -9,9 +9,9 @@ import org.opencv.imgproc.Imgproc;
 
 public abstract class CvTextDetector {
 
-	protected final Mat img;
+	protected final CvGraphic img;
 	
-	protected CvTextDetector(Mat img) {
+	protected CvTextDetector(CvGraphic img) {
 		this.img = img;
 	}
 	
@@ -20,7 +20,7 @@ public abstract class CvTextDetector {
 	public Mat paint(Mat source, List<Rect> rects, Scalar color) {
 		Mat dest = source.clone();
 		for (Rect rect : rects) {
-			Imgproc.rectangle(dest, rect.tl(), rect.br(), (color == null ? OpenCV.getRandomColorScalar() : color), 2);
+			Imgproc.rectangle(dest, rect.tl(), rect.br(), (color == null ? OpenCV.getRandomColorScalar() : color), 1);
 		}
 		return dest;
 	}

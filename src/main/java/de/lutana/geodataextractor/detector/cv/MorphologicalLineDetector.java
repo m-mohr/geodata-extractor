@@ -19,14 +19,14 @@ import org.opencv.imgproc.Imgproc;
  * @see http://answers.opencv.org/question/56496/implementation-question-how-to-create-bounding-boxes-around-answers-on-worksheets/
  * @author Matthias Mohr
  */
-public class LineParser extends CvLineDetector {
+public class MorphologicalLineDetector extends CvLineDetector {
 	
 	private static final short DIRECTION_HORIZONTAL = 0;
 	private static final short DIRECTION_VERTICAL = 1;
 	
 	private Integer scale;
 	
-	public LineParser(Mat img) {
+	public MorphologicalLineDetector(CvGraphic img) {
 		super(img);
 		this.scale = 10;
 	}
@@ -43,18 +43,15 @@ public class LineParser extends CvLineDetector {
 	/**
 	 * 
 	 * @return
-	 * @throws NullPointerException 
 	 */
-	public List<LineSegment> detect() throws NullPointerException {
+	@Override
+	public List<LineSegment> detect() {
 		List<LineSegment> lines = new ArrayList<>();
-		if (this.img == null) {
-			throw new NullPointerException();
-		}
 		
 		OpenCV cv = OpenCV.getInstance();
 
 		// Convert to black and white image
-		Mat bw = cv.toMonotoneAdaptive(this.img, true);
+		Mat bw = cv.toMonotoneAdaptive(this.img.getMat(), true);
 
 		Mat horizontal = this.createLineMask(bw, DIRECTION_HORIZONTAL);
 		this.extractLines(horizontal, DIRECTION_HORIZONTAL, lines);
@@ -89,6 +86,10 @@ public class LineParser extends CvLineDetector {
 			
 			// Get bounding rectangle for each polygon
 			Rect rect = Imgproc.boundingRect(new MatOfPoint(contour_poly.toArray()));
+			// The found contour is too large to be a useful line
+			if (rect.area() > srcImg.size().area() / 100) {
+				continue;
+			}
 			
 			// Add the line to the list
 			// TODO: Calculate the "middle" line
