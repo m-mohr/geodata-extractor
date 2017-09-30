@@ -65,7 +65,8 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 		List<Word> words = new ArrayList<>();
 		try {
 			for(Rect rect : rects) {
-				rect = GeoTools.addMargin(rect, rect.height, Math.round(rect.height / 4), width, height);
+				int margin = Math.round(rect.height / 4);
+				rect = GeoTools.addMargin(rect, margin, margin, width, height);
 				BufferedImage subImg = img.getSubimage(rect.x, rect.y, rect.width, rect.height);
 				List<Word> subWords = TesseractOCR.getInstance().getWords(subImg, TessPageIteratorLevel.RIL_WORD);
 				// The bbox from Tesseract relates to the sub image(!).
