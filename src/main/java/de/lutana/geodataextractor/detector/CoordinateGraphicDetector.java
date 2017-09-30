@@ -41,7 +41,7 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 		// Sparse is more accurate for randomly located text parts than automatic detection as it assumes bigger text paragraphs.
 		instance.setPageSegMode(TessAPI.TessPageSegMode.PSM_SINGLE_LINE);
 		// Set the OCR mode (slow and more accurate = Cube and Tesseract / fast and more inaccurate = Tesseract only)
-		instance.setOcrEngineMode(Config.isOcrFastModeEnabled() ? TessAPI.TessOcrEngineMode.OEM_TESSERACT_ONLY : TessAPI.TessOcrEngineMode.OEM_TESSERACT_CUBE_COMBINED);
+		instance.setOcrEngineMode(Config.isOcrFastModeEnabled());
 		// Avoid word list/dictionaries as geonaames and coordinates are not in those lists
 		instance.setTessVariable("load_system_dawg", "false");
 		instance.setTessVariable("load_freq_dawg", "false");
