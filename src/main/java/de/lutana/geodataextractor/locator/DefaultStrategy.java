@@ -1,9 +1,10 @@
 package de.lutana.geodataextractor.locator;
 
-import de.lutana.geodataextractor.detector.ClavinTextDetector;
 import de.lutana.geodataextractor.detector.DumbCountryTextDetector;
 import de.lutana.geodataextractor.detector.CoordinateGraphicDetector;
 import de.lutana.geodataextractor.detector.CoordinateTextDetector;
+import de.lutana.geodataextractor.detector.GeoNamesTextDetector;
+import de.lutana.geodataextractor.detector.TextDetector;
 import de.lutana.geodataextractor.detector.WorldMapDetector;
 import de.lutana.geodataextractor.detector.cv.CvGraphic;
 import de.lutana.geodataextractor.entity.Document;
@@ -13,6 +14,7 @@ import de.lutana.geodataextractor.entity.Graphic;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import de.lutana.geodataextractor.recognizor.TensorFlowMapRecognizer;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,20 +27,30 @@ import org.slf4j.LoggerFactory;
 public class DefaultStrategy implements Strategy {
 	
 	private TensorFlowMapRecognizer mapRecognizer;
-	
-	private final DumbCountryTextDetector dumbCountryTextDetector;
-	private final ClavinTextDetector clavinTextDetector;
+	private TextDetector geonamesTextDetector;
 	private final CoordinateGraphicDetector coordinateGraphicDetector;
 	private final CoordinateTextDetector coordinateTextDetector;
 	private final WorldMapDetector worldMapDetector;
 	
 	public DefaultStrategy() {
+		Logger logger = LoggerFactory.getLogger(getClass());
+		try {
+			this.mapRecognizer = TensorFlowMapRecognizer.getInstance();
+		} catch(URISyntaxException ex) {
+			logger.error("Loading TensorFlowMapRecognizer failed. Continuing without map detection.");
+			ex.printStackTrace();
+		}
 		this.mapRecognizer = null;
-		this.dumbCountryTextDetector = new DumbCountryTextDetector();
-		this.clavinTextDetector = new ClavinTextDetector();
 		this.coordinateGraphicDetector = new CoordinateGraphicDetector();
 		this.coordinateTextDetector = new CoordinateTextDetector();
 		this.worldMapDetector = new WorldMapDetector();
+		try {
+			this.geonamesTextDetector = new GeoNamesTextDetector();
+		} catch (IOException | ClassNotFoundException ex) {
+			logger.error("Loading GeoNamesTextDetector failed. Continuing with the DumbCountryTextDetector.");
+			this.geonamesTextDetector = new DumbCountryTextDetector();
+			ex.printStackTrace();
+		}
 	}
 
 	/**
@@ -54,15 +66,6 @@ public class DefaultStrategy implements Strategy {
 	 */
 	@Override
 	public boolean execute(Document document, Integer page) {
-		try {
-			if (this.mapRecognizer == null) {
-				this.mapRecognizer = TensorFlowMapRecognizer.getInstance();
-			}
-		} catch(URISyntaxException ex) {
-			ex.printStackTrace();
-			return false;
-		}
-
 		LocationCollection globalLocations = new LocationCollection();
 
 		LoggerFactory.getLogger(this.getClass()).info("## Document: " + document);
@@ -78,11 +81,12 @@ public class DefaultStrategy implements Strategy {
 			logger.info("# " + figure);
 			
 			boolean isMap = true;
-			// Detect whether it's a map or not
-			float result = this.mapRecognizer.recognize(figure);
-			isMap = (result >= 0.4); // 0.1 (10%) tolerance
-			logger.debug((isMap ? "Map detected" : "NOT a map") + " (" + result * 100 + "%)");
-
+			if (this.mapRecognizer != null) {
+				// Detect whether it's a map or not
+				float result = this.mapRecognizer.recognize(figure);
+				isMap = (result >= 0.4); // 0.1 (10%) tolerance
+				logger.debug((isMap ? "Map detected" : "NOT a map") + " (" + result * 100 + "%)");
+			}
 			
 			LocationCollection figureLocations = new LocationCollection(globalLocations);
 			this.getLocationsFromText(figure.getCaption(), figureLocations, 0.75);
@@ -98,12 +102,18 @@ public class DefaultStrategy implements Strategy {
 		}
 		return true;
 	}
+
+	@Override
+	public void shutdown() {
+		if (this.geonamesTextDetector instanceof GeoNamesTextDetector) {
+			((GeoNamesTextDetector) this.geonamesTextDetector).close();
+		}
+	}
 	
 	protected void getLocationsFromText(String text, LocationCollection locations, double weight) {
 		locations.setWeight(weight);
 
-		this.dumbCountryTextDetector.detect(text, locations);
-		this.clavinTextDetector.detect(text, locations);
+		this.geonamesTextDetector.detect(text, locations);
 		this.coordinateTextDetector.detect(text, locations);
 		// ToDo: ...
 

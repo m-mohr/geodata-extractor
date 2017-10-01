@@ -56,7 +56,6 @@ public class GeodataExtractor {
 		}
 		
 		this.documents.forEach((doc) -> {
-			// ToDo: Put this in a thread?
 			this.runDocument(doc);
 		});
 
@@ -108,6 +107,10 @@ public class GeodataExtractor {
 			e.printStackTrace();
 			return false;
 		}
+	}
+	
+	public void shutdown() {
+		this.strategy.shutdown();
 	}
 	
 	/**

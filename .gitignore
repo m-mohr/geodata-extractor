@@ -15,4 +15,5 @@ hs_err_pid*
 /test-docs/*.pdf
 nb-configuration.xml
 allCountries.*
-/IndexDirectory/
+/planet-latest_geonames.tsv.gz
+/OsmNamesIndex/

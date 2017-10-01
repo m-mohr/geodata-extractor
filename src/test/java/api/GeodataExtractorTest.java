@@ -29,6 +29,7 @@ public class GeodataExtractorTest {
 		GeodataExtractor instance = new GeodataExtractor();
 		instance.addDocument(documentFile);
 		Set<Document> result = instance.run();
+		instance.shutdown();
 
 		assertEquals(expResult, result);
 	}

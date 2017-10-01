@@ -49,6 +49,7 @@ public class Cli {
 			gde.enableFastOcrMode(true);
 		}
 		gde.run();
+		gde.shutdown();
 	}
 
 	class FolderConverter implements IStringConverter<File> {

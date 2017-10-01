@@ -1,6 +1,5 @@
 package api;
 
-import de.lutana.geodataextractor.detector.CoordinateGraphicDetector;
 import de.lutana.geodataextractor.detector.coordinates.CoordinateFromText;
 import de.lutana.geodataextractor.detector.coordinates.CoordinateList;
 import de.lutana.geodataextractor.detector.coordinates.CoordinateParser;

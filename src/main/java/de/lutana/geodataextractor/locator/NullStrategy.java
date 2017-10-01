@@ -17,5 +17,8 @@ public class NullStrategy implements Strategy {
 	public boolean execute(Document document, Integer page) {
 		return true;
 	}
+
+	@Override
+	public void shutdown() {}
 	
 }
