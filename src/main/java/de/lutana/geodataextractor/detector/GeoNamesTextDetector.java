@@ -46,13 +46,19 @@ public class GeoNamesTextDetector implements TextDetector {
 		List<GeoName> bestCandidates = this.resolveLocations(occurrences);
 		logger.debug("resolved: {}", bestCandidates);
 
+		int i = 1;
 		for (GeoName geoname : bestCandidates) {
 			Location l = geoname.getLocation();
 			if (l != null) {
-				l.setProbability(0.5 + 0.25 / bestCandidates.size() + geoname.getImportance() / 4);
+				// 0.25 base probability,
+				// added by a max. of 0.25 depending on the amount of candidates, 
+				// added by a max. of 0.25 depending on the list position of the search result
+				// added by a max. of 0.25 depending on the importance (from the database)
+				l.setProbability(0.25 + 0.25 / bestCandidates.size() + 0.25 / i + geoname.getImportance() / 4);
 				LoggerFactory.getLogger(getClass()).debug("Parsed location " + l + " from GeoNamesTextDetector.");
 				locations.add(l);
 			}
+			i++;
 		}
 	}
 

@@ -1,8 +1,6 @@
 package docs;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.lutana.geodataextractor.Config;
 import de.lutana.geodataextractor.GeodataExtractor;
@@ -38,12 +36,12 @@ public abstract class BasePublicationTest {
 	}
 
 	protected void testDocument(Document document) {
-		this.assertDocument(this.getExpectedLocationForDocument(document), document);
+		this.assertDocument(getExpectedLocationForDocument(document), document);
 	}
 
 	protected void testFigure(Figure figure) {
 		Document document = figure.getDocument();
-		Location expected = this.getExpectedLocationForFigure(figure);
+		Location expected = getExpectedLocationForFigure(figure);
 		this.assertLocation(document.getFile().getName() + "#" + figure.getGraphicFile().getName(), expected, figure.getLocation(), figure.getGraphicFile());
 	}
 
@@ -96,10 +94,6 @@ public abstract class BasePublicationTest {
 			BBoxContainer c = mapper.readValue(metaFile, BBoxContainer.class);
 			// ToDo: Is the union of all locations really the wanted behaviour?
 			return c.toLocationCollection().getLocation();
-		} catch (JsonGenerationException e) {
-			e.printStackTrace();
-		} catch (JsonMappingException e) {
-			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -134,12 +128,12 @@ public abstract class BasePublicationTest {
 	}
 	
 	public static Collection<Object[]> getAllFiguresWithStrategy(Strategy strategy) {
-		GeodataExtractor instance = new GeodataExtractor(strategy);
-		instance.enableCaching(true);
+		GeodataExtractor extractor = new GeodataExtractor(strategy);
+		extractor.enableCaching(true);
 		Collection<Object[]> list = new ArrayList<>();
 		File[] files = BasePublicationTest.DOC_FOLDER.listFiles(new FileExtension.Filter("pdf"));
 		for (File file : files) {
-			Document document = instance.runSingle(file);
+			Document document = extractor.runSingle(file);
 			FigureCollection figures = document.getFigures();
 			for (Figure figure : figures) {
 				list.add(new Object[]{figure});

@@ -4,6 +4,7 @@ import com.vividsolutions.jts.geom.Envelope;
 import de.lutana.geodataextractor.util.GeoTools;
 import java.security.InvalidParameterException;
 import java.util.Comparator;
+import org.apache.commons.math3.util.Precision;
 
 /**
  * Represents a bounding box.
@@ -100,6 +101,11 @@ public class Location extends Envelope {
 				&& GeoTools.roundLatLon(getMaxY()) == GeoTools.roundLatLon(otherEnvelope.getMaxY())
 				&& GeoTools.roundLatLon(getMinX()) == GeoTools.roundLatLon(otherEnvelope.getMinX())
 				&& GeoTools.roundLatLon(getMinY()) == GeoTools.roundLatLon(otherEnvelope.getMinY());
+	}
+
+	@Override
+	public String toString() {
+		return super.toString() + "{" + Precision.round(this.getScoreWithPenalty(), 2) + "/" + Precision.round(this.getProbability(), 2) + "}";
 	}
 
 	@Override
