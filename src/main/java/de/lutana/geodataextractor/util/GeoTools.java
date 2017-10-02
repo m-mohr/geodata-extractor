@@ -96,7 +96,12 @@ public class GeoTools {
 
 		Envelope union = new Envelope(expected);
 		union.expandToInclude(result);
-
+		if (expected.equals(intersection)) {
+			return 1; // Mostly to return a useful value when two matching points are given (jackard would return 0).
+		}
+		else if (union.getArea() == 0) {
+			return 0; // Point don't have an area, therefore division by zero problems occur.
+		}
 		return intersection.getArea() / union.getArea();
 	}
 	
