@@ -40,15 +40,28 @@ public class LocationCollection implements Located, Collection<Location> {
 	}
 	
 	public Location getMostLikelyLocation() {
-		if (this.isEmpty()) {
-			return null;
-		}
-		else if (this.size() < 3) {
-			return this.getLocation();
+		int count = this.data.size();
+		switch (count) {
+			case 0:
+				return null;
+			case 1:
+				return this.data.get(0);
+			case 2:
+				Location l1 = this.data.get(0);
+				double l1Score = l1.getScoreWithPenalty();
+				Location l2 = this.data.get(1);
+				double l2Score = l2.getScoreWithPenalty();
+				if (Math.abs(l1Score - l2Score) > 0.2) {
+					// Decide to use only the higher scored location if score is somehow far different
+					return l1Score > l2Score ? l1 : l2;
+				}
+				else {
+					// Return union - we can't decide
+					return this.getLocation();
+				}
 		}
 
 		// ToDo: Pretty slow O(n²) - is there a more elegant solution?
-		int count = this.data.size();
 		double[] scores = new double[count];
 		for(int i = 0; i < count; i++) {
 			Location l = this.data.get(i);

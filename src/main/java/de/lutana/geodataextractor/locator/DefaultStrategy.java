@@ -94,9 +94,12 @@ public class DefaultStrategy implements Strategy {
 				this.getLocationsFromGraphic(figure.getGraphic(), figureLocations, 1);
 			}
 
-			// TODO: Improve this - for now we only add the location to the figure in case we detected something from the figure itself
 			if (figureLocations.size() > globalLocations.size()) {
 				Location location = figureLocations.getMostLikelyLocation();
+				figure.setLocation(location);
+			}
+			else if (isMap && globalLocations.size() > 0) {
+				Location location = globalLocations.getMostLikelyLocation();
 				figure.setLocation(location);
 			}
 		}
