@@ -22,7 +22,10 @@ public class GeoNamesTextDetectorTest {
     @org.junit.runners.Parameterized.Parameters
     public static Collection<Object[]> data() {
 		Object[][] list = new Object[][] {
-			{"I live in Austria.", new Location(9.5307487, 17.1607759, 46.372276, 49.0205263)}
+			{"I live in Austria.", new Location(9.5307487, 17.1607759, 46.372276, 49.0205263)},
+			{"Photo taken in York.", new Location(-1.0815361, -1.0815361, 53.9590554, 53.9590554)}, // York in the UK
+			{"Photo taken in York, US.", new Location(-76.7627, -76.6994481, 39.942753, 39.991176)}, // York in Pennsylvania, US
+//			{"Photo taken in York, WA.", new Location(116.76915, 116.76915, -31.888903, -31.888903)} // York in Western Australia (not in dataset 2.0.1?)
 		};
 		return Arrays.asList(list);
     }

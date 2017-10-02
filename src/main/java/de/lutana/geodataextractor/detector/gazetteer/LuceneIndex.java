@@ -1,6 +1,7 @@
 package de.lutana.geodataextractor.detector.gazetteer;
 
 import de.lutana.geodataextractor.entity.Location;
+import de.lutana.geodataextractor.util.GeoAbbrev;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -104,11 +105,11 @@ public class LuceneIndex {
 				doc.add(new NumericDocValuesField("placeRank_sort", NumericUtils.floatToSortableInt(gn.getPlaceRank())));
 				doc.add(new StoredField("importance", gn.getImportance()));
 				doc.add(new NumericDocValuesField("importance_sort", NumericUtils.floatToSortableInt(gn.getImportance())));
-				doc.add(new StoredField("city", gn.getCity()));
-				doc.add(new StoredField("county", gn.getCounty()));
-				doc.add(new StoredField("state", gn.getState()));
-				doc.add(new StoredField("country", gn.getCountry()));
-				doc.add(new StoredField("countryCode", gn.getCountryCode()));
+				doc.add(new TextField("city", gn.getCity(), Field.Store.YES));
+				doc.add(new TextField("county", gn.getCounty(), Field.Store.YES));
+				doc.add(new TextField("state", gn.getState(), Field.Store.YES));
+				doc.add(new TextField("country", gn.getCountry(), Field.Store.YES));
+				doc.add(new TextField("countryCode", gn.getCountryCode(), Field.Store.YES));
 				Location location = gn.getLocation();
 				doc.add(new StoredField("south", location.getMinY()));
 				doc.add(new StoredField("north", location.getMaxY()));
@@ -180,16 +181,27 @@ public class LuceneIndex {
 			return collection;
 		}
 		
-		Query nameQuery = this.getLocationQuery(locationName, "name", fuzzy);
-		Query altNamesQuery = this.getLocationQuery(locationName, "alternativeNames", fuzzy);
-		BooleanQuery.Builder bqBuilder = new BooleanQuery.Builder();
-		bqBuilder.add(nameQuery, BooleanClause.Occur.SHOULD);
-		bqBuilder.add(altNamesQuery, BooleanClause.Occur.SHOULD);
-		BooleanQuery booleanQuery = bqBuilder.build();
-		Query query = new ImportanceScoreQuery(booleanQuery);
+		Query query = null;
+
+		// Handle possible (uppercase) country codes specially
+		if (locationName.length() == 2 && locationName.toUpperCase().equals(locationName)) {
+			Term term = new Term("countryCode", locationName.toLowerCase());
+			query = new TermQuery(term);
+		}
+		
+		// If no specialized query kicks in...
+		if (query == null) {
+			Query nameQuery = this.getLocationQuery(locationName, "name", fuzzy);
+			Query altNamesQuery = this.getLocationQuery(locationName, "alternativeNames", fuzzy);
+			BooleanQuery.Builder bqBuilder = new BooleanQuery.Builder();
+			bqBuilder.add(nameQuery, BooleanClause.Occur.SHOULD);
+			bqBuilder.add(altNamesQuery, BooleanClause.Occur.SHOULD);
+			BooleanQuery booleanQuery = bqBuilder.build();
+			query = new ImportanceScoreQuery(booleanQuery);
+		}
 
 		try {
-			TopFieldDocs docs = indexSearcher.search(query, 10, SORT, true, false);
+			TopFieldDocs docs = indexSearcher.search(query, 25, SORT, true, false);
 			for (ScoreDoc entry : docs.scoreDocs) {
 				GeoName geoname = this.get(entry.doc);
 				if (geoname != null) {

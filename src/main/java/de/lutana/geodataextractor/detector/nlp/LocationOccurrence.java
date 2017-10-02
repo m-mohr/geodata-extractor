@@ -55,6 +55,10 @@ public class LocationOccurrence {
         this.text = text;
         this.position = position;
     }
+	
+	public LocationOccurrence clone(String text) {
+		return new LocationOccurrence(text, position);
+	}
 
     /**
      * Get the text of the location name.
