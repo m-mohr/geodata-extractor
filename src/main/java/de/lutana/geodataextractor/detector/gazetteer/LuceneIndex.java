@@ -151,6 +151,7 @@ public class LuceneIndex {
 		List<String> names = this.analyzer.parse(locationName);
 		Query query;
 		if (names.size() == 1) {
+			locationName = names.get(0);
 			Term nameTerm = new Term(field, locationName);
 			if (fuzzy) {
 				query = new FuzzyQuery(nameTerm, locationName.length() >= 10 ? 2 : 1);
