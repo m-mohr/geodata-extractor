@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
+import org.slf4j.LoggerFactory;
 
 public class OsmNamesReader implements Iterator<GeoName> {
 	
@@ -58,6 +59,9 @@ public class OsmNamesReader implements Iterator<GeoName> {
 		try {
 			String currentLine;
 			while ((currentLine = this.reader.readLine()) != null) {
+				if (currentLine.contains("Port Curtis")) {
+					System.out.println(currentLine);
+				}
 				current = this.parseLine(currentLine);
 				if (current != null) {
 					return true;
@@ -79,7 +83,8 @@ public class OsmNamesReader implements Iterator<GeoName> {
 			return null;
 		}
 		String[] data = line.split("\\t");
-		if (data.length < 23) {
+		if (data.length < 21) {
+			LoggerFactory.getLogger(getClass()).debug("Skipped line: " + line);
 			return null;
 		}
 		

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import org.apache.commons.math3.util.Precision;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -87,7 +88,7 @@ public class LocationCollection implements Located, Collection<Location> {
 			// simple points or lines get a penalty
 			scores[i] = (l.getScoreWithPenalty() + otherScores) / 2;
 
-			LoggerFactory.getLogger(getClass()).debug("[score: " + scores[i] + "/" + otherScores + "] " + l);
+			LoggerFactory.getLogger(getClass()).debug("[score: " + Precision.round(scores[i], 2) + "/" + Precision.round(otherScores, 2) + "] " + l);
 		}
 		
 		double maxValue = -1;
