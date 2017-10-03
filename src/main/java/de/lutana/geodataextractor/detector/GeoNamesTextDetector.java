@@ -26,9 +26,8 @@ public class GeoNamesTextDetector implements TextDetector {
 	private boolean fuzzyIfNoResultsMode;
 	private int maxContextWindow;
 
-	public GeoNamesTextDetector() throws IOException, ClassNotFoundException {
-		this.index = new LuceneIndex();
-		this.index.load();
+	public GeoNamesTextDetector(LuceneIndex index) throws IOException, ClassNotFoundException {
+		this.index = index;
 		this.geoAbbrev = new GeoAbbrev();
 		this.extractor = new StanfordExtractor();
 		this.fuzzyIfNoResultsMode = true;
@@ -98,7 +97,7 @@ public class GeoNamesTextDetector implements TextDetector {
 		// loop through all the location names
 		for (LocationOccurrence location : filteredLocations) {
 			// get all possible matches
-			List<GeoName> candidates = index.find(location.getText(), fuzzyIfNoResultsMode);
+			List<GeoName> candidates = index.find(location.getText(), fuzzyIfNoResultsMode, 20);
 
 			// if we found some possible matches, save them
 			if (candidates.size() > 0) {
@@ -296,10 +295,6 @@ public class GeoNamesTextDetector implements TextDetector {
 		}
 
 		return result;
-	}
-
-	public void close() {
-		this.index.close();
 	}
 
 	public void enableFuzzyMode(boolean enable) {

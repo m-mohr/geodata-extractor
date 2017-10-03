@@ -202,14 +202,14 @@ public class LuceneIndex {
 	}
 
 	public List<GeoName> find(String locationName) {
-		return this.find(locationName, false);
+		return this.find(locationName, false, 10);
 	}
 
-	public List<GeoName> find(String locationName, boolean fuzzyIfNoResults) {
-		return this.find(locationName, fuzzyIfNoResults, false);
+	public List<GeoName> find(String locationName, boolean fuzzyIfNoResults, int limitResults) {
+		return this.find(locationName, fuzzyIfNoResults, limitResults, false);
 	}
 
-	private List<GeoName> find(String locationName, boolean fuzzyIfNoResults, boolean fuzzy) {
+	private List<GeoName> find(String locationName, boolean fuzzyIfNoResults, int limitResults, boolean fuzzy) {
 		List<GeoName> collection = new ArrayList<>();
 		if (indexSearcher == null) {
 			LoggerFactory.getLogger(getClass()).warn("Index not initialized. Call LuceneIndex::load() and LuceneIndex::close() manually.");
@@ -239,7 +239,7 @@ public class LuceneIndex {
 		}
 
 		try {
-			TopFieldDocs docs = indexSearcher.search(query, 25, SORT, true, false);
+			TopFieldDocs docs = indexSearcher.search(query, limitResults, SORT, true, false);
 			for (ScoreDoc entry : docs.scoreDocs) {
 				GeoName geoname = this.get(entry.doc);
 				if (geoname != null) {
@@ -252,7 +252,7 @@ public class LuceneIndex {
 		}
 
 		if (fuzzyIfNoResults && collection.isEmpty() && !fuzzy) {
-			collection = this.find(locationName, fuzzyIfNoResults, true);
+			collection = this.find(locationName, fuzzyIfNoResults, limitResults, true);
 		}
 
 		return collection;

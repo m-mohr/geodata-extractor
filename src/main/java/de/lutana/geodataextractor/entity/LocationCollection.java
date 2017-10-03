@@ -37,7 +37,14 @@ public class LocationCollection implements Located, Collection<Location> {
 	
 	@Override
 	public Location getLocation() {
-		return GeoTools.union(this.data);
+		Location union = GeoTools.union(this.data);
+		union.setWeight(1);
+		double scoreSum = 0;
+		for(Location l : this.data) {
+			scoreSum += l.getScore();
+		}
+		union.setProbability(scoreSum / this.data.size());
+		return union;
 	}
 	
 	public Location getMostLikelyLocation() {

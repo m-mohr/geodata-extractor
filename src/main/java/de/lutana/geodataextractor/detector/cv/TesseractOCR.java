@@ -36,8 +36,27 @@ public class TesseractOCR extends Tesseract {
 			dataFolder = LoadLibs.extractTessResources("tessdata"); // Maven build bundles English data
 			extractCustomTessResources(dataFolder);
 			instance.setDatapath(dataFolder.getAbsolutePath());
+			instance.setOcrEngineMode(Config.isOcrFastModeEnabled());
 		}
 		return instance;
+	}
+	
+	private void setDefaults() {
+		instance.setPageSegMode(TessAPI.TessPageSegMode.PSM_SINGLE_LINE);
+		// Avoid word list/dictionaries as geonaames and coordinates are not in those lists
+		instance.setTessVariable("load_system_dawg", "false");
+		instance.setTessVariable("load_freq_dawg", "false");
+		instance.setTessVariable("tessedit_char_whitelist", "");
+	}
+	
+	public void optimizeForGeoNames() {
+		this.setDefaults();
+	}
+	
+	public void optimizeForCoordinates() {
+		this.setDefaults();
+		// Limit characters to the ones used for coordinates, especially to avoid confusion between - and _, dot and comma, ° and o etc.
+		instance.setTessVariable("tessedit_char_whitelist", "-.°'\"1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 	}
 
 	private static void extractCustomTessResources(File tessDataFolder) {
@@ -57,6 +76,14 @@ public class TesseractOCR extends Tesseract {
 		}
 	}
 	
+	/**
+	 * Sets the OCR mode.
+	 * 
+	 * Slow and more accurate = Cube and Tesseract (false).
+	 * Fast and more inaccurate = Tesseract only (true).
+	 * 
+	 * @param fastOcrMode 
+	 */
 	public void setOcrEngineMode(boolean fastOcrMode) {
 		Logger l = LoggerFactory.getLogger(getClass());
 		int mode = TessAPI.TessOcrEngineMode.OEM_TESSERACT_ONLY;

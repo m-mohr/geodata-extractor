@@ -3,10 +3,12 @@ package de.lutana.geodataextractor.locator;
 import de.lutana.geodataextractor.detector.DumbCountryTextDetector;
 import de.lutana.geodataextractor.detector.CoordinateGraphicDetector;
 import de.lutana.geodataextractor.detector.CoordinateTextDetector;
+import de.lutana.geodataextractor.detector.GeoNamesGraphicDetector;
 import de.lutana.geodataextractor.detector.GeoNamesTextDetector;
 import de.lutana.geodataextractor.detector.TextDetector;
 import de.lutana.geodataextractor.detector.WorldMapDetector;
 import de.lutana.geodataextractor.detector.cv.CvGraphic;
+import de.lutana.geodataextractor.detector.gazetteer.LuceneIndex;
 import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.FigureCollection;
@@ -26,14 +28,18 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultStrategy implements Strategy {
 	
+	private LuceneIndex geoNamesIndex;
 	private TensorFlowMapRecognizer mapRecognizer;
 	private TextDetector geonamesTextDetector;
+	private GeoNamesGraphicDetector geonamesGraphicDetector;
 	private final CoordinateGraphicDetector coordinateGraphicDetector;
 	private final CoordinateTextDetector coordinateTextDetector;
 	private final WorldMapDetector worldMapDetector;
 	
 	public DefaultStrategy() {
 		Logger logger = LoggerFactory.getLogger(getClass());
+		this.geoNamesIndex = new LuceneIndex();
+		this.geoNamesIndex.load();
 		try {
 			this.mapRecognizer = TensorFlowMapRecognizer.getInstance();
 		} catch(URISyntaxException ex) {
@@ -44,8 +50,9 @@ public class DefaultStrategy implements Strategy {
 		this.coordinateGraphicDetector = new CoordinateGraphicDetector();
 		this.coordinateTextDetector = new CoordinateTextDetector();
 		this.worldMapDetector = new WorldMapDetector();
+		this.geonamesGraphicDetector = new GeoNamesGraphicDetector(this.geoNamesIndex);
 		try {
-			this.geonamesTextDetector = new GeoNamesTextDetector();
+			this.geonamesTextDetector = new GeoNamesTextDetector(this.geoNamesIndex);
 		} catch (IOException | ClassNotFoundException ex) {
 			logger.error("Loading GeoNamesTextDetector failed. Continuing with the DumbCountryTextDetector.");
 			this.geonamesTextDetector = new DumbCountryTextDetector();
@@ -108,17 +115,16 @@ public class DefaultStrategy implements Strategy {
 
 	@Override
 	public void shutdown() {
-		if (this.geonamesTextDetector instanceof GeoNamesTextDetector) {
-			((GeoNamesTextDetector) this.geonamesTextDetector).close();
+		if (this.geoNamesIndex != null) {
+			this.geoNamesIndex.close();
 		}
 	}
 	
 	protected void getLocationsFromText(String text, LocationCollection locations, double weight) {
 		locations.setWeight(weight);
 
-		this.geonamesTextDetector.detect(text, locations);
 		this.coordinateTextDetector.detect(text, locations);
-		// ToDo: ...
+		this.geonamesTextDetector.detect(text, locations);
 
 		locations.resetWeight();
 	}
@@ -129,7 +135,10 @@ public class DefaultStrategy implements Strategy {
 
 		this.worldMapDetector.detect(cvGraphic, locations);
 		this.coordinateGraphicDetector.detect(cvGraphic, locations);
-		// ToDo: ...
+		if (this.geonamesGraphicDetector != null) {
+			// should be executed last as it uses previous results for outlier detection
+			this.geonamesGraphicDetector.detect(cvGraphic, locations);
+		}
 		
 		cvGraphic.dispose();
 		locations.resetWeight();

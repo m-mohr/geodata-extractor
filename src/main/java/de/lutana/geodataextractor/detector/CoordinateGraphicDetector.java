@@ -3,7 +3,6 @@ package de.lutana.geodataextractor.detector;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.LineSegment;
-import de.lutana.geodataextractor.Config;
 import de.lutana.geodataextractor.detector.coordinates.CoordinateFromText;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
@@ -23,7 +22,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import net.sourceforge.tess4j.ITessAPI.TessPageIteratorLevel;
-import net.sourceforge.tess4j.TessAPI;
 import net.sourceforge.tess4j.Word;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.opencv.core.Rect;
@@ -36,22 +34,12 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 	private static final float MIN_CONFIDENCE = 25f; // in percent
 	private static final int MIN_WORD_LENGTH = 3;
 
-	public CoordinateGraphicDetector() {
-		TesseractOCR instance = TesseractOCR.getInstance();
-		// Sparse is more accurate for randomly located text parts than automatic detection as it assumes bigger text paragraphs.
-		instance.setPageSegMode(TessAPI.TessPageSegMode.PSM_SINGLE_LINE);
-		// Set the OCR mode (slow and more accurate = Cube and Tesseract / fast and more inaccurate = Tesseract only)
-		instance.setOcrEngineMode(Config.isOcrFastModeEnabled());
-		// Avoid word list/dictionaries as geonaames and coordinates are not in those lists
-		instance.setTessVariable("load_system_dawg", "false");
-		instance.setTessVariable("load_freq_dawg", "false");
-		// Limit characters to the ones used for coordinates, especially to avoid confusion between - and _, dot and comma, ° and o etc.
-		instance.setTessVariable("tessedit_char_whitelist", "-.°'\"1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-	}
-
 	@Override
 	public void detect(CvGraphic graphic, LocationCollection locations) {
 		Logger logger = LoggerFactory.getLogger(this.getClass());
+	
+		// ToDo: Settings are affected globally, this might have side-effects when used in threads, ...
+		TesseractOCR.getInstance().optimizeForCoordinates();
 		
 		BufferedImage img = graphic.getBufferedImage();
 		int width = img.getWidth();

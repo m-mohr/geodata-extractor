@@ -1,6 +1,7 @@
 package api;
 
 import de.lutana.geodataextractor.detector.GeoNamesTextDetector;
+import de.lutana.geodataextractor.detector.gazetteer.LuceneIndex;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import de.lutana.geodataextractor.util.GeoTools;
@@ -18,6 +19,7 @@ public class GeoNamesTextDetectorTest {
     public Location expectedLocation;
 	
 	private GeoNamesTextDetector parser;
+	private LuceneIndex index;
 
     @org.junit.runners.Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -32,12 +34,16 @@ public class GeoNamesTextDetectorTest {
 	
 	@org.junit.Before
 	public void setUp() throws IOException, ClassNotFoundException {
-		parser = new GeoNamesTextDetector();
+		index = new LuceneIndex();
+		index.load();
+		parser = new GeoNamesTextDetector(index);
 	}
 	
 	@org.junit.After
 	public void tearDown() {
-		parser.close();
+		if (index != null) {
+			index.close();
+		}
 	}
 
 	@org.junit.Test

@@ -48,7 +48,7 @@ public class LuceneIndexTest {
 
 	@org.junit.Test
     public void testFind() {
-		List<GeoName> result = index.find(this.text, fuzzyIfNoResultsMode);
+		List<GeoName> result = index.find(this.text, fuzzyIfNoResultsMode, 1);
 		if (this.osmId != null) {
 			Assert.assertFalse(result.isEmpty());
 			Assert.assertEquals(this.osmId, result.get(0).getOsmId());
