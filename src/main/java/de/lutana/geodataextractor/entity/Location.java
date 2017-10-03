@@ -42,7 +42,7 @@ public class Location extends Envelope {
 
 	public void setProbability(double probability) {
 		if (probability < 0 || probability > 1.0) {
-			throw new InvalidParameterException("Probability needs to be between 0 and 1");
+			throw new InvalidParameterException("Probability (" + probability + ") needs to be between 0 and 1");
 		}
 		this.probability = probability;
 	}
@@ -82,6 +82,10 @@ public class Location extends Envelope {
 		}
 		
 		return score;
+	}
+	
+	public boolean isValid() {
+		return (this.getMinX() >= -180 && this.getMaxX() <= 180 && this.getMinY() >= -90 && this.getMaxY() <= 90);
 	}
 	
 	public static ScoreComparator getScoreComparator() {

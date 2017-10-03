@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopFieldDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.automaton.TooComplexToDeterminizeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,35 +98,21 @@ public class LuceneIndex {
 		Directory index = FSDirectory.open(indexPath.toPath());
 		IndexWriterConfig config = new IndexWriterConfig(analyzer);
 		try (IndexWriter writer = new IndexWriter(index, config)) {
+			l.debug("Indexing custom geonames...");
+			InputStream stream = LuceneIndex.class.getClassLoader().getResourceAsStream("clavin/additional_data.tsv");
+			OsmNamesReader readerCustom = new OsmNamesReader(stream);
+			while(readerCustom.hasNext()) {
+				writer.addDocument(this.makeDocument(readerCustom.next()));
+			}
+			readerCustom.close();
+
 			OsmNamesReader reader = new OsmNamesReader();
 			for (int i = 0; reader.hasNext(); i++) {
 				if ((i % 100000) == 0) {
 					l.debug("Indexed " + i + " geonames...");
 				}
 
-				GeoName gn = reader.next();
-
-				Document doc = new Document();
-				doc.add(new TextField("name", gn.getName(), Field.Store.YES));
-				doc.add(new TextField("displayName", gn.getDisplayName(), Field.Store.YES));
-				doc.add(new TextField("alternativeNames", String.join(",", gn.getAlternativeNames()), Field.Store.YES));
-				doc.add(new StringField("osmId", gn.getOsmId(), Field.Store.YES));
-				doc.add(new StoredField("featureClass", gn.getFeatureClass()));
-				doc.add(new StoredField("type", gn.getType()));
-				doc.add(new StoredField("placeRank", gn.getPlaceRank()));
-				doc.add(new StoredField("importance", gn.getImportance()));
-				doc.add(new TextField("city", gn.getCity(), Field.Store.YES));
-				doc.add(new TextField("county", gn.getCounty(), Field.Store.YES));
-				doc.add(new TextField("state", gn.getState(), Field.Store.YES));
-				doc.add(new TextField("country", gn.getCountry(), Field.Store.YES));
-				doc.add(new StringField("countryCode", gn.getCountryCode(), Field.Store.YES));
-				Location location = gn.getLocation();
-				doc.add(new StoredField("south", location.getMinY()));
-				doc.add(new StoredField("north", location.getMaxY()));
-				doc.add(new StoredField("west", location.getMinX()));
-				doc.add(new StoredField("east", location.getMaxX()));
-
-				writer.addDocument(doc);
+				writer.addDocument(this.makeDocument(reader.next()));
 			}
 			reader.close();
 
@@ -135,6 +123,29 @@ public class LuceneIndex {
 			this.writeCountryCodeMapping(reader);
 		}
 		l.debug("Indexing completed.");
+	}
+	
+	protected Document makeDocument(GeoName gn) {
+		Document doc = new Document();
+		doc.add(new TextField("name", gn.getName(), Field.Store.YES));
+		doc.add(new TextField("displayName", gn.getDisplayName(), Field.Store.YES));
+		doc.add(new TextField("alternativeNames", String.join(",", gn.getAlternativeNames()), Field.Store.YES));
+		doc.add(new StringField("osmId", gn.getOsmId(), Field.Store.YES));
+		doc.add(new StoredField("featureClass", gn.getFeatureClass()));
+		doc.add(new StoredField("type", gn.getType()));
+		doc.add(new StoredField("placeRank", gn.getPlaceRank()));
+		doc.add(new StoredField("importance", gn.getImportance()));
+		doc.add(new TextField("city", gn.getCity(), Field.Store.YES));
+		doc.add(new TextField("county", gn.getCounty(), Field.Store.YES));
+		doc.add(new TextField("state", gn.getState(), Field.Store.YES));
+		doc.add(new TextField("country", gn.getCountry(), Field.Store.YES));
+		doc.add(new StringField("countryCode", gn.getCountryCode(), Field.Store.YES));
+		Location location = gn.getLocation();
+		doc.add(new StoredField("south", location.getMinY()));
+		doc.add(new StoredField("north", location.getMaxY()));
+		doc.add(new StoredField("west", location.getMinX()));
+		doc.add(new StoredField("east", location.getMaxX()));
+		return doc;
 	}
 
 	protected void writeCountryCodeMapping(OsmNamesReader reader) {
@@ -196,7 +207,7 @@ public class LuceneIndex {
 				query = new TermQuery(nameTerm);
 			}
 		} else {
-			query = new PhraseQuery(field, (String[]) names.toArray());
+			query = new PhraseQuery(field, names.toArray(new String[0]));
 		}
 		return query;
 	}
@@ -247,7 +258,7 @@ public class LuceneIndex {
 					collection.add(geoname);
 				}
 			}
-		} catch (IOException ex) {
+		} catch (IOException | TooComplexToDeterminizeException ex) {
 			ex.printStackTrace();
 		}
 

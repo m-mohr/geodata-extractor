@@ -84,13 +84,9 @@ public class GeoTools {
 	 * @see https://en.wikipedia.org/wiki/Jaccard_index
 	 */
 	public static double calcJaccardIndex(Location expected, Location result) {
-		if ((expected == null || result == null) && expected != result) {
+		if (expected == null || result == null) {
 			return 0;
 		}
-		else if (expected == null && result == null) {
-			return 1;
-		}
-		
 
 		Envelope intersection = expected.intersection(result);
 
@@ -100,7 +96,7 @@ public class GeoTools {
 			return 1; // Mostly to return a useful value when two matching points are given (jackard would return 0).
 		}
 		else if (union.getArea() == 0) {
-			return 0; // Point don't have an area, therefore division by zero problems occur.
+			return 0; // Points/Lines don't have an area, therefore division by zero problems occur.
 		}
 		return intersection.getArea() / union.getArea();
 	}

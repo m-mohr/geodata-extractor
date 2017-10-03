@@ -38,12 +38,14 @@ public class LocationCollection implements Located, Collection<Location> {
 	@Override
 	public Location getLocation() {
 		Location union = GeoTools.union(this.data);
-		union.setWeight(1);
-		double scoreSum = 0;
-		for(Location l : this.data) {
-			scoreSum += l.getScore();
+		if (union != null) {
+			union.setWeight(1);
+			double scoreSum = 0;
+			for(Location l : this.data) {
+				scoreSum += l.getScore();
+			}
+			union.setProbability(scoreSum / this.data.size());
 		}
-		union.setProbability(scoreSum / this.data.size());
 		return union;
 	}
 	
@@ -152,6 +154,10 @@ public class LocationCollection implements Located, Collection<Location> {
 	public boolean add(Location o) {
 		if (o == null) {
 			throw new NullPointerException();
+		}
+		if (!o.isValid()) {
+			LoggerFactory.getLogger(getClass()).debug("Ignored invalid location " + o);
+			return false;
 		}
 		o.setWeight(this.weight);
 		return this.data.add(o);

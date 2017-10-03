@@ -5,6 +5,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -22,11 +23,15 @@ public class OsmNamesReader implements Iterator<GeoName> {
 	private Map<String, Integer> countryCodeRankMapping;
 	
 	public OsmNamesReader() throws IOException {
-		this(DATA_FILE);
+		this(DATA_FILE, true);
 	}
 	
-	public OsmNamesReader(File file) throws IOException {
-		this.reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file)), "UTF8"));
+	public OsmNamesReader(File file, boolean gzipped) throws IOException {
+		this(gzipped ? new GZIPInputStream(new FileInputStream(file)) : new FileInputStream(file));
+	}
+	
+	public OsmNamesReader(InputStream is) throws IOException {
+		this.reader = new BufferedReader(new InputStreamReader(is, "UTF8"));
 		this.reader.readLine(); // Skip header
 		this.countryCodeIdMapping = new HashMap<>();
 		this.countryCodeRankMapping = new HashMap<>();
@@ -59,9 +64,6 @@ public class OsmNamesReader implements Iterator<GeoName> {
 		try {
 			String currentLine;
 			while ((currentLine = this.reader.readLine()) != null) {
-				if (currentLine.contains("Port Curtis")) {
-					System.out.println(currentLine);
-				}
 				current = this.parseLine(currentLine);
 				if (current != null) {
 					return true;

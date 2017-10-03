@@ -68,22 +68,35 @@ public class GeoNamesGraphicDetector implements GraphicDetector {
 			String text = w.getText().trim();
 			// We find much garbage that leads to unuseful results from the Gazetteer
 			// and need ideas to filter some garbage, e.g. ... (see following comments)
-			// - ignore all entries that don't start with an uppercase letter followed by a small letter
-			if (text.length() < 3 || !Character.isUpperCase(text.charAt(0)) || !Character.isLowerCase(text.charAt(1))) {
+			// - Ignore all words too short
+			if (text.length() < 3) {
+				continue;
+			}
+			// - ignore all entries that don't start with an uppercase letter
+			else if (!Character.isUpperCase(text.charAt(0))) {
 				continue;
 			}
 			// - Remove all entries containing more than one digit
 			int numDigits = 0;
-			for(int i = 0; (i < text.length() && numDigits < 2); i++) {
-				if (Character.isDigit(text.charAt(i))) {
+			// - Remove all entries containing more than one non letter per space or hyphen divided word
+			int numNonWhiteLetter = 0;
+			for(int i = 0; (i < text.length() && numDigits < 2 && numNonWhiteLetter < 2); i++) {
+				char c = text.charAt(i);
+				if (Character.isDigit(c)) {
 					numDigits++;
 				}
+				if (Character.isSpaceChar(c) || c == '-') {
+					numNonWhiteLetter = 0;
+				}
+				if (!Character.isLetter(c)) {
+					numNonWhiteLetter++;
+				}
 			}
-			if (numDigits >= 2) {
+			if (numDigits >= 2 || numNonWhiteLetter >= 2) {
 				continue;
 			}
 			
-			List<GeoName> results = index.find(text, fuzzyIfNoResultsMode, 10);
+			List<GeoName> results = index.find(text, fuzzyIfNoResultsMode, 3);
 			int i = 1;
 			for (GeoName geoname : results) {
 				Location l = geoname.getLocation();
@@ -118,10 +131,12 @@ public class GeoNamesGraphicDetector implements GraphicDetector {
 		
 			// Merge remaining candidates
 			Location union = candidates.getLocation();
-			// Give this probability a bump if it was created using many locations.
-			union.setProbability(0.1 * Math.max(candidates.size(), 5) + union.getProbability() / 2);
-			locations.add(union);
-			logger.debug("Merged to final location " + union + " in GeoNamesGraphicDetector.");
+			if (union != null) {
+				// Give this probability a bump if it was created using many locations.
+				union.setProbability(0.1 * Math.min(candidates.size(), 5) + union.getProbability() / 2);
+				locations.add(union);
+				logger.debug("Merged to final location " + union + " in GeoNamesGraphicDetector.");
+			}
 		}
 	}
 
