@@ -6,7 +6,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 public class OsmNamesReader implements Iterator<GeoName> {
@@ -15,6 +17,8 @@ public class OsmNamesReader implements Iterator<GeoName> {
 
 	private BufferedReader reader;
 	private GeoName current;
+	private Map<String, String> countryCodeIdMapping;
+	private Map<String, Integer> countryCodeRankMapping;
 	
 	public OsmNamesReader() throws IOException {
 		this(DATA_FILE);
@@ -23,6 +27,30 @@ public class OsmNamesReader implements Iterator<GeoName> {
 	public OsmNamesReader(File file) throws IOException {
 		this.reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file)), "UTF8"));
 		this.reader.readLine(); // Skip header
+		this.countryCodeIdMapping = new HashMap<>();
+		this.countryCodeRankMapping = new HashMap<>();
+	}
+	
+	public Map<String, String> getCountryCodeMapping() {
+		return countryCodeIdMapping;
+	}
+	
+	public void makeCountryCodeMapping(GeoName gn) {
+		String cc = gn.getCountryCode();
+		if (cc == null || cc.isEmpty()) {
+			return;
+		}
+		
+		Integer smallestRank = countryCodeRankMapping.get(cc);
+		int rank = gn.getPlaceRank();
+		String type = gn.getType();
+		String featureClass = gn.getFeatureClass();
+		if ((smallestRank == null || (rank > 0 && rank < smallestRank)) && 
+				(type != null && type.equalsIgnoreCase("administrative") &&
+				(featureClass != null && featureClass.equalsIgnoreCase("boundary")))) {
+			countryCodeRankMapping.put(cc.toUpperCase(), gn.getPlaceRank());
+			countryCodeIdMapping.put(cc.toUpperCase(), gn.getOsmId());
+		}
 	}
 
 	@Override
@@ -93,6 +121,8 @@ public class OsmNamesReader implements Iterator<GeoName> {
 				e.printStackTrace();
 			}
 		}
+		
+		this.makeCountryCodeMapping(gn);
 		
 		return gn;
 	}

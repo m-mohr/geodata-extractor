@@ -139,6 +139,17 @@ public class GeoName {
 	 * @return the osmType
 	 */
 	public String getOsmType() {
+		if (osmType == null && osmId != null) {
+			char c = osmId.charAt(0);
+			switch(c) {
+				case 'n':
+					return "node";
+				case 'w':
+					return "way";
+				case 'r':
+					return "relation";
+			}
+		}
 		return osmType;
 	}
 

@@ -118,10 +118,11 @@ public class GeoNamesTextDetector implements TextDetector {
 		return bestCandidates;
 	}
 
+	// Handle possible (uppercase) country and state codes specially
 	private List<LocationOccurrence> handleGeoCodes(LocationOccurrence location) {
 		List<LocationOccurrence> locations = new ArrayList<>();
-		String locationName = location.getText();
-		// Handle possible (uppercase) country codes specially
+		// Replace dots, like in U.S.
+		String locationName = location.getText().replaceAll("\\.", "");
 		if (locationName.length() <= 3 && locationName.toUpperCase().equals(locationName)) {
 			if (locationName.length() == 3) {
 				// Convert ISO3 to ISO2
@@ -136,15 +137,20 @@ public class GeoNamesTextDetector implements TextDetector {
 					}
 				}
 			}
-
-			// Australian and US state codes
-			// ToDo: Add more, like India
-			if (locationName.length() == 2) {
+			else if (locationName.length() == 2) {
+				if (geoAbbrev.existsIso2Code(locationName)) {
+					locations.add(location.clone(locationName));
+				}
+				
+				// US state codes
 				String usState = geoAbbrev.convertUsStateToName(locationName);
 				if (usState != null) {
 					locations.add(location.clone(usState));
 				}
 			}
+
+			// Australian state codes
+			// ToDo: Add more, like India
 			String australienState = geoAbbrev.convertAustraliaStateToName(locationName);
 			if (australienState != null) {
 				locations.add(location.clone(australienState));

@@ -1,15 +1,20 @@
 package de.lutana.geodataextractor.detector.gazetteer;
 
 import de.lutana.geodataextractor.entity.Location;
-import de.lutana.geodataextractor.util.GeoAbbrev;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.StoredField;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
@@ -31,7 +36,6 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopFieldDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.NumericUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +45,8 @@ public class LuceneIndex {
 	private File indexPath;
 	private DirectoryReader indexReader;
 	private IndexSearcher indexSearcher;
+	private File countryCodeMappingPath;
+	private Map<String,String> countryCodeMapping;
 
 	/**
 	 * Custom Lucene sorting based on Lucene match score and the importance of
@@ -54,7 +60,9 @@ public class LuceneIndex {
 
 	public LuceneIndex(File indexFolder) {
 		this.indexPath = indexFolder;
+		this.countryCodeMappingPath = new File(indexFolder, "__countryCodeMapping.ser");
 		this.analyzer = new LuceneAnalyzer();
+		this.countryCodeMapping = null;
 	}
 
 	public boolean load() {
@@ -64,6 +72,9 @@ public class LuceneIndex {
 		try {
 			if (!this.exists()) {
 				this.create();
+			}
+			else {
+				this.readCountryCodeMapping();
 			}
 			Directory index = FSDirectory.open(indexPath.toPath());
 			indexReader = DirectoryReader.open(index);
@@ -97,19 +108,16 @@ public class LuceneIndex {
 				doc.add(new TextField("name", gn.getName(), Field.Store.YES));
 				doc.add(new TextField("displayName", gn.getDisplayName(), Field.Store.YES));
 				doc.add(new TextField("alternativeNames", String.join(",", gn.getAlternativeNames()), Field.Store.YES));
-				doc.add(new StoredField("osmType", gn.getOsmType()));
-				doc.add(new StoredField("osmId", gn.getOsmId()));
+				doc.add(new StringField("osmId", gn.getOsmId(), Field.Store.YES));
 				doc.add(new StoredField("featureClass", gn.getFeatureClass()));
 				doc.add(new StoredField("type", gn.getType()));
 				doc.add(new StoredField("placeRank", gn.getPlaceRank()));
-				doc.add(new NumericDocValuesField("placeRank_sort", NumericUtils.floatToSortableInt(gn.getPlaceRank())));
 				doc.add(new StoredField("importance", gn.getImportance()));
-				doc.add(new NumericDocValuesField("importance_sort", NumericUtils.floatToSortableInt(gn.getImportance())));
 				doc.add(new TextField("city", gn.getCity(), Field.Store.YES));
 				doc.add(new TextField("county", gn.getCounty(), Field.Store.YES));
 				doc.add(new TextField("state", gn.getState(), Field.Store.YES));
 				doc.add(new TextField("country", gn.getCountry(), Field.Store.YES));
-				doc.add(new TextField("countryCode", gn.getCountryCode(), Field.Store.YES));
+				doc.add(new StringField("countryCode", gn.getCountryCode(), Field.Store.YES));
 				Location location = gn.getLocation();
 				doc.add(new StoredField("south", location.getMinY()));
 				doc.add(new StoredField("north", location.getMaxY()));
@@ -119,10 +127,38 @@ public class LuceneIndex {
 				writer.addDocument(doc);
 			}
 			reader.close();
+
 			l.debug("Merging Index...");
 			writer.forceMerge(1);
+
+			l.debug("Storing country code mapping...");
+			this.writeCountryCodeMapping(reader);
 		}
 		l.debug("Indexing completed.");
+	}
+
+	protected void writeCountryCodeMapping(OsmNamesReader reader) {
+		this.countryCodeMapping = reader.getCountryCodeMapping();
+		try (FileOutputStream fos = new FileOutputStream(this.countryCodeMappingPath); ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+			oos.writeObject(this.countryCodeMapping);
+		} catch (IOException ex) {
+			LoggerFactory.getLogger(getClass()).warn(ex.getMessage());
+		}
+	}
+
+	protected void readCountryCodeMapping() {
+		try (FileInputStream fis = new FileInputStream(this.countryCodeMappingPath); ObjectInputStream ois = new ObjectInputStream(fis)) {
+			this.countryCodeMapping = (HashMap) ois.readObject();
+		} catch (IOException ex) {
+			LoggerFactory.getLogger(getClass()).warn(ex.getMessage());
+		} catch (ClassNotFoundException ex) {}
+	}
+
+	public String getOsmIdForCountryCode(String iso2countryCode) {
+		if(this.countryCodeMapping != null) {
+			return this.countryCodeMapping.get(iso2countryCode.toUpperCase());
+		}
+		return null;
 	}
 
 	public int count() {
@@ -159,8 +195,7 @@ public class LuceneIndex {
 			} else {
 				query = new TermQuery(nameTerm);
 			}
-		}
-		else {
+		} else {
 			query = new PhraseQuery(field, (String[]) names.toArray());
 		}
 		return query;
@@ -180,15 +215,18 @@ public class LuceneIndex {
 			LoggerFactory.getLogger(getClass()).warn("Index not initialized. Call LuceneIndex::load() and LuceneIndex::close() manually.");
 			return collection;
 		}
-		
+
 		Query query = null;
 
 		// Handle possible (uppercase) country codes specially
 		if (locationName.length() == 2 && locationName.toUpperCase().equals(locationName)) {
-			Term term = new Term("countryCode", locationName.toLowerCase());
-			query = new TermQuery(term);
+			String osmId = this.getOsmIdForCountryCode(locationName);
+			if (osmId != null) {
+				Term term = new Term("osmId", osmId);
+				query = new TermQuery(term);
+			}
 		}
-		
+
 		// If no specialized query kicks in...
 		if (query == null) {
 			Query nameQuery = this.getLocationQuery(locationName, "name", fuzzy);
@@ -232,7 +270,6 @@ public class LuceneIndex {
 		if (altNamesArr.length > 0 && !altNamesArr[0].isEmpty()) {
 			gn.setAlternativeNames(altNamesArr);
 		}
-		gn.setOsmType(doc.get("osmType"));
 		gn.setOsmId(doc.get("osmId"));
 		gn.setFeatureClass(doc.get("featureClass"));
 		gn.setType(doc.get("type"));

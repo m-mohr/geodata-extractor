@@ -12,6 +12,16 @@ public class GeoAbbrev {
 	private static Map<String, String> australiaStatesMap;
 	private static Map<String, String> usStatesMap;
 
+	public boolean existsIso2Code(String iso2CountryCode) {
+		initIsoMaps();
+		return iso2ToIso3Map.containsKey(iso2CountryCode.toUpperCase());
+	}
+
+	public boolean existsIso3Code(String iso3CountryCode) {
+		initIsoMaps();
+		return iso3ToIso2Map.containsKey(iso3CountryCode.toUpperCase());
+	}
+	
 	/**
 	 * Converts ISO 3166-1 alpha-2 codes to their ISO 3166-1 alpha-3 equivalents.
 	 * 
@@ -71,7 +81,7 @@ public class GeoAbbrev {
 	}
 	
 	private static void initIsoMaps() {
-		if (iso2ToIso3Map != null && iso3ToIso2Map != null) {
+		if (iso2ToIso3Map == null || iso3ToIso2Map == null) {
 			String[] countries = Locale.getISOCountries();
 			iso2ToIso3Map = new HashMap<>(countries.length);
 			iso3ToIso2Map = new HashMap<>(countries.length);
