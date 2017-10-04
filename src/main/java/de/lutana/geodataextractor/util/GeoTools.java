@@ -87,15 +87,14 @@ public class GeoTools {
 		if (expected == null || result == null) {
 			return 0;
 		}
-
-		Envelope intersection = expected.intersection(result);
-
-		Envelope union = new Envelope(expected);
-		union.expandToInclude(result);
-		if (expected.equals(intersection)) {
+		else if (expected.equals(result)) {
 			return 1; // Mostly to return a useful value when two matching points are given (jackard would return 0).
 		}
-		else if (union.getArea() == 0) {
+
+		Envelope intersection = expected.intersection(result);
+		Envelope union = new Envelope(expected);
+		union.expandToInclude(result);
+		if (union.getArea() == 0) {
 			return 0; // Points/Lines don't have an area, therefore division by zero problems occur.
 		}
 		return intersection.getArea() / union.getArea();
