@@ -15,6 +15,7 @@ import de.lutana.geodataextractor.entity.FigureCollection;
 import de.lutana.geodataextractor.entity.Graphic;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
+import de.lutana.geodataextractor.recognizor.MapRecognizer;
 import de.lutana.geodataextractor.recognizor.TensorFlowMapRecognizer;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -29,7 +30,7 @@ import org.slf4j.LoggerFactory;
 public class DefaultStrategy implements Strategy {
 	
 	private LuceneIndex geoNamesIndex;
-	private TensorFlowMapRecognizer mapRecognizer;
+	private MapRecognizer mapRecognizer;
 	private TextDetector geonamesTextDetector;
 	private GeoNamesGraphicDetector geonamesGraphicDetector;
 	private final CoordinateGraphicDetector coordinateGraphicDetector;
@@ -40,13 +41,7 @@ public class DefaultStrategy implements Strategy {
 		Logger logger = LoggerFactory.getLogger(getClass());
 		this.geoNamesIndex = new LuceneIndex();
 		this.geoNamesIndex.load();
-		try {
-			this.mapRecognizer = TensorFlowMapRecognizer.getInstance();
-		} catch(URISyntaxException ex) {
-			logger.error("Loading TensorFlowMapRecognizer failed. Continuing without map detection.");
-			ex.printStackTrace();
-		}
-		this.mapRecognizer = null;
+		this.mapRecognizer = new MapRecognizer(false);
 		this.coordinateGraphicDetector = new CoordinateGraphicDetector();
 		this.coordinateTextDetector = new CoordinateTextDetector();
 		this.worldMapDetector = new WorldMapDetector();
@@ -87,13 +82,10 @@ public class DefaultStrategy implements Strategy {
 			Logger logger = LoggerFactory.getLogger(this.getClass());
 			logger.info("# " + figure);
 			
-			boolean isMap = true;
-			if (this.mapRecognizer != null) {
-				// Detect whether it's a map or not
-				float result = this.mapRecognizer.recognize(figure);
-				isMap = (result >= 0.4); // 0.1 (10%) tolerance
-				logger.debug((isMap ? "Map detected" : "NOT a map") + " (" + result * 100 + "%)");
-			}
+			// Detect whether it's a map or not
+			float result = this.mapRecognizer.recognize(figure);
+			boolean isMap = (result >= 0.4); // 0.1 (10%) tolerance
+			logger.debug((isMap ? "Map detected" : "NOT a map") + " (" + result * 100 + "%)");
 			
 			LocationCollection figureLocations = new LocationCollection(globalLocations);
 			this.getLocationsFromText(figure.getCaption(), figureLocations, 0.75);

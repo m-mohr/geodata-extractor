@@ -46,35 +46,32 @@ public class MorphologicalLineDetector extends CvLineDetector {
 	 */
 	@Override
 	public List<LineSegment> detect() {
-		List<LineSegment> lines = new ArrayList<>();
-		
 		OpenCV cv = OpenCV.getInstance();
 
 		// Convert to black and white image
 		Mat bw = cv.toMonotoneAdaptive(this.img.getMat(), true);
 
-		Mat horizontal = this.createLineMask(bw, DIRECTION_HORIZONTAL);
-		this.extractLines(horizontal, DIRECTION_HORIZONTAL, lines);
-		
-		Mat vertical = this.createLineMask(bw, DIRECTION_VERTICAL);
-		this.extractLines(vertical, DIRECTION_VERTICAL, lines);
+		List<LineSegment> lines = new ArrayList<>();
+		this.getLines(bw, OpenCV.MorphologicalDirection.HORIZONTAL, lines);
+		this.getLines(bw, OpenCV.MorphologicalDirection.VERTICAL, lines);
 		
 		return lines;
 	}
 	
-	private void extractLines(Mat srcImg, short direction, List<LineSegment> list) throws IllegalArgumentException {
-		if (direction != DIRECTION_VERTICAL && direction != DIRECTION_HORIZONTAL) {
-			throw new IllegalArgumentException("Second parameter needs to be DIRECTION_HORIZONTAL or DIRECTION_VERTICAL.");
-		}
-		
+	private void getLines(Mat srcImg, OpenCV.MorphologicalDirection direction, List<LineSegment> lines) {
+		Mat mask = OpenCV.getInstance().createLineMask(srcImg, direction, this.scale);
+		this.extractLines(mask, direction, lines);
+	}
+	
+	private void extractLines(Mat srcImg, OpenCV.MorphologicalDirection direction, List<LineSegment> list) throws IllegalArgumentException {
 		// Find external contour
 		Mat hierarchy = new Mat();
 		List<MatOfPoint> contours = new ArrayList<>();
 		Imgproc.findContours(srcImg, contours, hierarchy, Imgproc.RETR_CCOMP,Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
 
-		for(int i = 0; i < contours.size(); i++ ) {
+		for(MatOfPoint c : contours) {
 			// Get Polygon
-			MatOfPoint2f contour = new MatOfPoint2f(contours.get(i).toArray());
+			MatOfPoint2f contour = new MatOfPoint2f(c.toArray());
 			MatOfPoint2f contour_poly = new MatOfPoint2f();
 			Imgproc.approxPolyDP(contour, contour_poly, 3d, false); // TODO: Check params
 			
@@ -95,7 +92,7 @@ public class MorphologicalLineDetector extends CvLineDetector {
 			// TODO: Calculate the "middle" line
 			Coordinate p1 = new Coordinate(rect.x, rect.y);
 			Coordinate p2;
-			if (direction == DIRECTION_HORIZONTAL) {
+			if (direction == OpenCV.MorphologicalDirection.HORIZONTAL) {
 				p2 = new Coordinate(rect.x + rect.width, rect.y);
 			}
 			else {
@@ -104,32 +101,6 @@ public class MorphologicalLineDetector extends CvLineDetector {
 			LineSegment line = new LineSegment(p1, p2);
 			list.add(line);
 		}
-	}
-	
-	private Mat createLineMask(Mat srcImg, short direction) throws IllegalArgumentException {
-		if (direction != DIRECTION_VERTICAL && direction != DIRECTION_HORIZONTAL) {
-			throw new IllegalArgumentException("Second parameter needs to be DIRECTION_HORIZONTAL or DIRECTION_VERTICAL.");
-		}
-		
-		Mat resultImg = srcImg.clone();
-
-		// Specify size on axis
-		Size size;
-		if (direction == DIRECTION_HORIZONTAL) {
-			size = new Size(resultImg.cols() / this.scale, 1);
-		}
-		else { // VERTICAL
-			size = new Size(1, resultImg.rows() / this.scale);
-		}
-
-		// Create structure element for extracting horizontal lines through morphology operations
-		Mat structure = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, size);
-
-		// Apply morphology operation
-		Imgproc.erode(resultImg, resultImg, structure, new Point(-1, -1), 1);
-		Imgproc.dilate(resultImg, resultImg, structure, new Point(-1, -1), 1);
-
-		return resultImg;
 	}
 
 }

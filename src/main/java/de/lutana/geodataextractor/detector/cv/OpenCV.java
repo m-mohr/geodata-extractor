@@ -56,11 +56,36 @@ public class OpenCV {
 	}
 	
 	public Mat closeGaps(Mat source, int size, int shape) {
+		if (size < 1) {
+			size = 1;
+		}
 		return this.closeGaps(source, new Size(size, size), shape);
 	}
 	
 	public Mat closeGaps(Mat source, int size) {
 		return this.closeGaps(source, size, Imgproc.MORPH_ELLIPSE);
+	}
+	
+	public Mat createLineMask(Mat srcImg, MorphologicalDirection direction, int scale) {
+		Mat resultImg = srcImg.clone();
+
+		// Specify size on axis
+		Size size;
+		if (direction == MorphologicalDirection.HORIZONTAL) {
+			size = new Size(resultImg.cols() / scale, 1);
+		}
+		else { // VERTICAL
+			size = new Size(1, resultImg.rows() / scale);
+		}
+
+		// Create structure element for extracting horizontal lines through morphology operations
+		Mat structure = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, size);
+
+		// Apply morphology operation
+		Imgproc.erode(resultImg, resultImg, structure, new Point(-1, -1), 1);
+		Imgproc.dilate(resultImg, resultImg, structure, new Point(-1, -1), 1);
+
+		return resultImg;
 	}
 	
 	/**
@@ -303,5 +328,9 @@ public class OpenCV {
 		System.arraycopy(b, 0, targetPixels, 0, b.length);
 		return image;
 	}
+	
+	public static enum MorphologicalDirection {
+		HORIZONTAL, VERTICAL
+	};
 
 }
