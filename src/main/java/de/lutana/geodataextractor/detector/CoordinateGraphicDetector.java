@@ -35,7 +35,7 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 	private static final int MIN_WORD_LENGTH = 3;
 
 	@Override
-	public void detect(CvGraphic graphic, LocationCollection locations) {
+	public boolean detect(CvGraphic graphic, LocationCollection locations, double weight) {
 		Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 		// ToDo: Settings are affected globally, this might have side-effects when used in threads, ...
@@ -47,7 +47,7 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 
 		List<Rect> rects = graphic.getTextBoxes();
 		if (rects.size() > 100) {
-			return; // TODO
+			return false; // TODO
 		}
 
 		List<Word> words = new ArrayList<>();
@@ -69,7 +69,7 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 		} catch (UnsatisfiedLinkError e) {
 			e.printStackTrace();
 			logger.error("Tess4J not installed correctly, please visit http://tess4j.sourceforge.net/usage.html for instructions.");
-			return;
+			return false;
 		}
 
 		// Add a text with a directory of words
@@ -128,9 +128,12 @@ public class CoordinateGraphicDetector implements GraphicDetector {
 			} catch (CvException e) {
 				e.printStackTrace();
 			}
+			location.setWeight(weight);
 			logger.debug("Parsed location " + location + " from graphical coordinates." + (improved ? " Using CV imrprovements." : ""));
 			locations.add(location);
+			return true;
 		}
+		return false;
 	}
 	
 	public boolean improveLocationUsingAxes(CvGraphic img, CoordinateList coords, Location baseLocation) {

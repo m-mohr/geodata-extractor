@@ -15,7 +15,9 @@ public interface GraphicDetector {
 	 * 
 	 * @param graphic
 	 * @param locations
+	 * @param weight
+	 * @return true when a location has been found, false if not.
 	 */
-	public void detect(CvGraphic graphic, LocationCollection locations);
+	public boolean detect(CvGraphic graphic, LocationCollection locations, double weight);
 	
 }

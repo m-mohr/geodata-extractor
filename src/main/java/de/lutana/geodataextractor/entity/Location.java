@@ -14,7 +14,7 @@ import org.apache.commons.math3.util.Precision;
 public class Location extends Envelope {
 
 	protected double probability = 0;
-	protected double weight = 1;
+	protected double weight = 0;
 
 	public Location(double minLon, double maxLon, double minLat, double maxLat) {
 		super(minLon, maxLon, minLat, maxLat);

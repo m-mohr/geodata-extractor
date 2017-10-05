@@ -22,13 +22,15 @@ import org.slf4j.LoggerFactory;
 public class CoordinateTextDetector implements TextDetector {
 
 	@Override
-	public void detect(String text, LocationCollection locations) {
+	public boolean detect(String text, LocationCollection locations, double weight) {
 		CoordinateParser p = new CoordinateParser();
+		int before = locations.size();
 
 		CoordinateList wgsCP = p.parseWgs84Coordinates(text, false);
 		if (wgsCP.hasLocation()) {
 			Location l = wgsCP.getLocation();
 			if (l != null) {
+				l.setWeight(weight);
 				LoggerFactory.getLogger(getClass()).debug("Parsed location " + l + " from WGS84 text coordinates.");
 				locations.add(l);
 			}
@@ -38,6 +40,7 @@ public class CoordinateTextDetector implements TextDetector {
 		if (utmCP.hasLocation()) {
 			Location l = utmCP.getLocation();
 			if (l != null) {
+				l.setWeight(weight);
 				LoggerFactory.getLogger(getClass()).debug("Parsed location " + l + " from UTM text coordinates.");
 				locations.add(l);
 			}
@@ -47,6 +50,7 @@ public class CoordinateTextDetector implements TextDetector {
 		if (osCP.hasLocation()) {
 			Location l = osCP.getLocation();
 			if (l != null) {
+				l.setWeight(weight);
 				LoggerFactory.getLogger(getClass()).debug("Parsed location " + l + " from OS text coordinates.");
 				locations.add(l);
 			}
@@ -56,10 +60,13 @@ public class CoordinateTextDetector implements TextDetector {
 		if (mgrsCP.hasLocation()) {
 			Location l = mgrsCP.getLocation();
 			if (l != null) {
+				l.setWeight(weight);
 				LoggerFactory.getLogger(getClass()).debug("Parsed location " + l + " from MGRS text coordinates.");
 				locations.add(l);
 			}
 		}
+
+		return (before - locations.size()) > 0;
 	}
 
 }

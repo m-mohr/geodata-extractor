@@ -38,7 +38,7 @@ public class CoordinateDetectorTest {
 	@org.junit.Test
     public void testDetect() {
 		LocationCollection result = new LocationCollection();
-		detector.detect(this.pattern, result);
+		detector.detect(this.pattern, result, 1);
 
 		if (result.isEmpty()) {
 			Assert.assertNull(this.location);

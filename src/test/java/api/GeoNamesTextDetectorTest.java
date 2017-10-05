@@ -49,7 +49,7 @@ public class GeoNamesTextDetectorTest {
 	@org.junit.Test
     public void testDetect() {
 		LocationCollection lc = new LocationCollection();
-		parser.detect(this.text, lc);
+		parser.detect(this.text, lc, 1);
 		Assert.assertFalse(lc.isEmpty());
 		Location result = lc.get(0);
 		double jackard = GeoTools.calcJaccardIndex(expectedLocation, result);

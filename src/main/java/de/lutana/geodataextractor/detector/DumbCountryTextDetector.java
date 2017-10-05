@@ -196,18 +196,21 @@ public class DumbCountryTextDetector implements TextDetector {
 	}
 
 	@Override
-	public void detect(String text, LocationCollection locations) {
+	public boolean detect(String text, LocationCollection locations, double weight) {
 		text = text.toLowerCase();
 		Iterator<Entry<String, Location>> it = countryMap.entrySet().iterator();
 		while(it.hasNext()) {
 			Entry<String, Location> entry = it.next();
 			if (text.contains(entry.getKey().toLowerCase())) {
-				Location l = entry.getValue();
+				Location l = new Location(entry.getValue());
+				l.setWeight(weight);
 				l.setProbability(0.9);
 				LoggerFactory.getLogger(getClass()).debug("Parsed location " + l + " from DumbCountryDetector.");
 				locations.add(l);
+				return true;
 			}
 		}
+		return false;
 	}
 	
 }

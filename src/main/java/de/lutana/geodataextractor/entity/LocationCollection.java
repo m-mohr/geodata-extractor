@@ -15,24 +15,13 @@ import org.slf4j.LoggerFactory;
 public class LocationCollection implements Located, Collection<Location> {
 
 	private final List<Location> data;
-	private double weight;
 
 	public LocationCollection() {
 		this.data = new ArrayList<>();
-		this.resetWeight();
 	}
 
 	public LocationCollection(LocationCollection collection) {
 		this.data = new ArrayList<>(collection.data);
-		this.weight = collection.weight;
-	}
-	
-	public void setWeight(double weight) {
-		this.weight = weight;
-	}
-	
-	public final void resetWeight() {
-		this.weight = 1;
 	}
 	
 	@Override
@@ -159,7 +148,6 @@ public class LocationCollection implements Located, Collection<Location> {
 			LoggerFactory.getLogger(getClass()).debug("Ignored invalid location " + o);
 			return false;
 		}
-		o.setWeight(this.weight);
 		return this.data.add(o);
 	}
 

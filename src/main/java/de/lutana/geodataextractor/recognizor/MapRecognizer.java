@@ -15,7 +15,10 @@ import org.slf4j.LoggerFactory;
 
 public class MapRecognizer implements Recognizor {
 
-	private static final Pattern MAP_PATTERN = Pattern.compile("\bmaps?\b");
+	// ToDo: Compare with and without "plot(ted)"
+	// ToDo: check rvi|ndvi|vegetation\\s+index|
+	private static final Pattern MAP_PATTERN = Pattern.compile("\\b(maps?|mapviews?|ortho(?:photos?|photographs?|images?)|aerial\\s+photographs?|(?:floor|locality)\\s+plans?|cartograms?|(?:sattelite|landsat\\s+(?:tm|mss)|geoeye|worldview[\\s-]+\\d|spot\\s+\\d|aster|blackbridge|rapideye|eros\\s+[ab]|meteosat|base)\\s+image(?:ry|s)?|(?:true|false|natural)\\s+colou?r\\s+composite|rvi|ndvi|modis|(covering|showing)\\s+the\\s+(?:cit(?:y|ies)|countr?(?:y|ies)|villages?|town|continents?|earth|districts?|states?)|spatial\\s+(variability|distribution|extent|variation)|(albers|mercator|equal\\s+area|gall-peters|peters|equirectangular|cylindrical|eckert\\s+[iv]+|conic|polyconic|orthographic|stereographic|equidistant|conformal)\\s+projection)\\b", Pattern.CASE_INSENSITIVE);
+	private static final Pattern NOMAP_PATTERN = Pattern.compile("\\b((?:gap)?charts?|illustration|(dia|seismo|histo)grams?|tables?|(?<!aerial\\s{1,4}|ortho)(photos?|photographs?)|graphs?|curves?|pictures?|photos?|plot(s|ted)?|drafts?|gauges?|streamgraphs?|gapcharts?|gantt|(?:regression|dotted(?:\\s+\\w+)|dashed(?:\\s+\\w+)|solid(?:\\s+\\w+))\\s+lines?|velocity\\s+models?|(?:squares|linear|simple|polynomial)\\s+regressions?|seismic(?:[-\\s]+reflection)\\s+profiles?|(?<!in\\s{1,4})view\\s+of|over)\\b", Pattern.CASE_INSENSITIVE);
 	
 	private float defaultProbability;
 	private TensorFlowMapRecognizer tfMapRecognizer;
@@ -42,8 +45,14 @@ public class MapRecognizer implements Recognizor {
 
 		// Check whether they are speaking about map(s) in the caption
 		Matcher m = MAP_PATTERN.matcher(f.getCaption());
-		if (m.matches() && result < 0.5) {
-			result = 0.5f;
+		if (m.find()) {
+			result = Math.min(1, result + 0.5f);
+		}
+
+		// Check whether they are speaking about some non-map stuff in the caption
+		Matcher n = NOMAP_PATTERN.matcher(f.getCaption());
+		if (n.find()) {
+			result = Math.max(0, result - 0.5f);
 		}
 
 		return result == null ? this.defaultProbability : result;

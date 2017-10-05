@@ -35,7 +35,9 @@ public class GeoNamesTextDetector implements TextDetector {
 	}
 
 	@Override
-	public void detect(String text, LocationCollection locations) {
+	public boolean detect(String text, LocationCollection locations, double weight) {
+		int before = locations.size();
+
 		Logger logger = LoggerFactory.getLogger(getClass());
 		logger.debug("input: {}", text);
 
@@ -54,11 +56,14 @@ public class GeoNamesTextDetector implements TextDetector {
 				// added by a max. of 0.25 depending on the list position of the search result
 				// added by a max. of 0.25 depending on the importance (from the database)
 				l.setProbability(0.25 + 0.25 / bestCandidates.size() + 0.25 / i + geoname.getImportance() / 4);
+				l.setWeight(weight);
 				LoggerFactory.getLogger(getClass()).debug("Parsed location " + l + " from GeoNamesTextDetector.");
 				locations.add(l);
 			}
 			i++;
 		}
+
+		return (before - locations.size()) > 0;
 	}
 
 	protected List<GeoName> resolveLocations(List<LocationOccurrence> occurrences) {

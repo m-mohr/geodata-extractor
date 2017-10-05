@@ -14,7 +14,9 @@ public interface TextDetector {
 	 * 
 	 * @param text
 	 * @param locations
+	 * @param weight
+	 * @return true when a location has been found, false if not.
 	 */
-	public void detect(String text, LocationCollection locations);
+	public boolean detect(String text, LocationCollection locations, double weight);
 	
 }

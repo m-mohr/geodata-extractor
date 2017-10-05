@@ -12,13 +12,11 @@ import de.lutana.geodataextractor.detector.gazetteer.LuceneIndex;
 import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.FigureCollection;
-import de.lutana.geodataextractor.entity.Graphic;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import de.lutana.geodataextractor.recognizor.MapRecognizer;
-import de.lutana.geodataextractor.recognizor.TensorFlowMapRecognizer;
+import de.lutana.geodataextractor.recognizor.Recognizor;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +28,7 @@ import org.slf4j.LoggerFactory;
 public class DefaultStrategy implements Strategy {
 	
 	private LuceneIndex geoNamesIndex;
-	private MapRecognizer mapRecognizer;
+	private Recognizor mapRecognizer;
 	private TextDetector geonamesTextDetector;
 	private GeoNamesGraphicDetector geonamesGraphicDetector;
 	private final CoordinateGraphicDetector coordinateGraphicDetector;
@@ -79,6 +77,8 @@ public class DefaultStrategy implements Strategy {
 			if (page != null && !figure.getPage().equals(page)) {
 				continue;
 			}
+			CvGraphic cvGraphic = new CvGraphic(figure.getGraphic());
+	
 			Logger logger = LoggerFactory.getLogger(this.getClass());
 			logger.info("# " + figure);
 			
@@ -90,8 +90,18 @@ public class DefaultStrategy implements Strategy {
 			LocationCollection figureLocations = new LocationCollection(globalLocations);
 			this.getLocationsFromText(figure.getCaption(), figureLocations, 0.75);
 			if (isMap) {
-				this.getLocationsFromGraphic(figure.getGraphic(), figureLocations, 1);
+				boolean isWorldMap = this.worldMapDetector.detect(cvGraphic, figureLocations, 1);
+				// Skip the slow stuff, as world map detection is pretty accurate (95% detection rate)
+				if (!isWorldMap) {
+					this.coordinateGraphicDetector.detect(cvGraphic, figureLocations, 1);
+					if (this.geonamesGraphicDetector != null) {
+						// should be executed last as it uses previous results for outlier detection
+						this.geonamesGraphicDetector.detect(cvGraphic, figureLocations, 1);
+					}
+				}
+
 			}
+			cvGraphic.dispose();
 
 			if (figureLocations.size() > globalLocations.size()) {
 				Location location = figureLocations.getMostLikelyLocation();
@@ -113,27 +123,8 @@ public class DefaultStrategy implements Strategy {
 	}
 	
 	protected void getLocationsFromText(String text, LocationCollection locations, double weight) {
-		locations.setWeight(weight);
-
-		this.coordinateTextDetector.detect(text, locations);
-		this.geonamesTextDetector.detect(text, locations);
-
-		locations.resetWeight();
-	}
-	
-	protected void getLocationsFromGraphic(Graphic graphic, LocationCollection locations, double weight) {
-		locations.setWeight(weight);
-		CvGraphic cvGraphic = new CvGraphic(graphic);
-
-		this.worldMapDetector.detect(cvGraphic, locations);
-		this.coordinateGraphicDetector.detect(cvGraphic, locations);
-		if (this.geonamesGraphicDetector != null) {
-			// should be executed last as it uses previous results for outlier detection
-			this.geonamesGraphicDetector.detect(cvGraphic, locations);
-		}
-		
-		cvGraphic.dispose();
-		locations.resetWeight();
+		this.coordinateTextDetector.detect(text, locations, weight);
+		this.geonamesTextDetector.detect(text, locations, weight);
 	}
 	
 }

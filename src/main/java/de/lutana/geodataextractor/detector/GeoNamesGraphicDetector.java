@@ -28,7 +28,7 @@ public class GeoNamesGraphicDetector implements GraphicDetector {
 	}
 
 	@Override
-	public void detect(CvGraphic graphic, LocationCollection locations) {
+	public boolean detect(CvGraphic graphic, LocationCollection locations, double weight) {
 		Logger logger = LoggerFactory.getLogger(this.getClass());
 		
 		// ToDo: Settings are affected globally, this might have side-effects when used in threads, ...
@@ -38,7 +38,7 @@ public class GeoNamesGraphicDetector implements GraphicDetector {
 
 		List<Rect> rects = graphic.getTextBoxes();
 		if (rects.size() > 100) {
-			return; // TODO
+			return false; // TODO
 		}
 
 		List<Word> words = new ArrayList<>();
@@ -60,7 +60,7 @@ public class GeoNamesGraphicDetector implements GraphicDetector {
 		} catch (UnsatisfiedLinkError e) {
 			e.printStackTrace();
 			logger.error("Tess4J not installed correctly, please visit http://tess4j.sourceforge.net/usage.html for instructions.");
-			return;
+			return false;
 		}
 
 		LocationCollection candidates = new LocationCollection();
@@ -114,30 +114,35 @@ public class GeoNamesGraphicDetector implements GraphicDetector {
 			}
 		}
 		
-		if (!candidates.isEmpty()) {
-			// Remove outliers - this one is a bit tricky.
-			// At the moment we remove all entries that are outside the union of previous results.
-			// ToDo: Improve this
-			if (locations.size() > 0) {
-				LocationCollection filteredCandidates = new LocationCollection();
-				Location restrictingArea = locations.getLocation();
-				for(Location l : candidates) {
-					if (l.intersects(restrictingArea)) {
-						filteredCandidates.add(l);
-					}
-				}
-				candidates = filteredCandidates;
-			}
-		
-			// Merge remaining candidates
-			Location union = candidates.getLocation();
-			if (union != null) {
-				// Give this probability a bump if it was created using many locations.
-				union.setProbability(0.1 * Math.min(candidates.size(), 5) + union.getProbability() / 2);
-				locations.add(union);
-				logger.debug("Merged to final location " + union + " in GeoNamesGraphicDetector.");
-			}
+		if (candidates.isEmpty()) {
+			return false;
 		}
+
+		// Remove outliers - this one is a bit tricky.
+		// At the moment we remove all entries that are outside the union of previous results.
+		// ToDo: Improve this
+		if (locations.size() > 0) {
+			LocationCollection filteredCandidates = new LocationCollection();
+			Location restrictingArea = locations.getLocation();
+			for(Location l : candidates) {
+				if (l.intersects(restrictingArea)) {
+					filteredCandidates.add(l);
+				}
+			}
+			candidates = filteredCandidates;
+		}
+
+		// Merge remaining candidates
+		Location union = candidates.getLocation();
+		if (union != null) {
+			// Give this probability a bump if it was created using many locations.
+			union.setProbability(0.1 * Math.min(candidates.size(), 5) + union.getProbability() / 2);
+			union.setWeight(weight);
+			locations.add(union);
+			logger.debug("Merged to final location " + union + " in GeoNamesGraphicDetector.");
+			return true;
+		}
+		return false;
 	}
 
 }
