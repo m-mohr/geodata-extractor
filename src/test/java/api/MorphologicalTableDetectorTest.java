@@ -29,12 +29,15 @@ public class MorphologicalTableDetectorTest {
 		Collection<Object[]> data = BasePublicationTest.getAllFiguresWithStrategy(new NullStrategy());
 		for(Object[] obj : data) {
 			Figure figure = (Figure) obj[0];
-			File mapMetaFile = BasePublicationTest.getFigureMetaFile(figure);
-			if (mapMetaFile.exists()) {
-				Location expectedLocation = BasePublicationTest.getExpectedLocationForFigure(figure);
-				if(expectedLocation != null) {
+			BasePublicationTest.StudyResults studyResults = BasePublicationTest.getStudyResultsForFigure(figure);
+			Boolean isMap = null;
+			try {
+				isMap = studyResults.isMap();
+				if (isMap) {
 					onlyMaps.add(obj);
 				}
+			} catch (BasePublicationTest.InconsistencyException ex) {
+				Assert.assertNotNull(ex.getMessage(), isMap);
 			}
 		}
 		return onlyMaps;

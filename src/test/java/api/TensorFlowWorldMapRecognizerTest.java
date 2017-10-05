@@ -3,14 +3,14 @@ package api;
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.locator.NullStrategy;
-import de.lutana.geodataextractor.recognizor.TensorFlowMapRecognizer;
+import de.lutana.geodataextractor.recognizor.MapRecognizer;
 import de.lutana.geodataextractor.recognizor.TensorFlowWorldMapRecognizer;
 import docs.BasePublicationTest;
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import org.junit.Assert;
+import org.junit.Assume;
 
 
 @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
@@ -25,16 +25,19 @@ public class TensorFlowWorldMapRecognizerTest {
     }
 	
 	private Boolean getExpectedResult(Figure figure) {
+		BasePublicationTest.StudyResults studyResults = BasePublicationTest.getStudyResultsForFigure(figure);
 		Boolean expected = null;
-		File mapMetaFile = BasePublicationTest.getFigureMetaFile(figure);
-		if (mapMetaFile.exists()) {
-			Location expLoc = BasePublicationTest.getExpectedLocationForFigure(figure);
-			if (expLoc != null) {
-				expected = (expLoc.getMinX() == -180 && expLoc.getMaxX() == 180 && expLoc.getMinY() == -90 && expLoc.getMaxY() == 90);
+		try {
+			Assume.assumeTrue(studyResults.isFigure()); // Ignores tests when it's not a valid figure
+			Location location = studyResults.getLocation();
+			if (location != null) {
+				expected = (location.getMinX() == -180 && location.getMaxX() == 180 && location.getMinY() == -90 && location.getMaxY() == 90);
 			}
 			else {
 				expected = false;
 			}
+		} catch (BasePublicationTest.InconsistencyException ex) {
+			Assert.assertNotNull(ex.getMessage(), expected);
 		}
 		return expected;
 	}
@@ -57,7 +60,8 @@ public class TensorFlowWorldMapRecognizerTest {
 
 		Boolean isWorldMap = false;
 		Float result = null;
-		float isMap = TensorFlowMapRecognizer.getInstance().recognize(figureObj.getGraphic());
+		MapRecognizer mr = new MapRecognizer(false);
+		float isMap = mr.recognize(figureObj);
 		if (isMap >= 0.4) {
 			result = TensorFlowWorldMapRecognizer.getInstance().recognize(figureObj.getGraphic());
 			isWorldMap = (result >= 0.5);

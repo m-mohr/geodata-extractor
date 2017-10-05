@@ -1,15 +1,15 @@
 package api;
 
 import de.lutana.geodataextractor.entity.Figure;
-import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.locator.NullStrategy;
 import de.lutana.geodataextractor.recognizor.MapRecognizer;
 import docs.BasePublicationTest;
-import java.io.File;
+import docs.BasePublicationTest.StudyResults;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import org.junit.Assert;
+import org.junit.Assume;
 
 
 @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
@@ -29,11 +29,13 @@ public class MapRecognizerTest {
 		float result = m.recognize(figureObj);
 		Boolean isMap = (result >= 0.5);
 
+		StudyResults studyResults = BasePublicationTest.getStudyResultsForFigure(figureObj);
 		Boolean expected = null;
-		File mapMetaFile = BasePublicationTest.getFigureMetaFile(figureObj);
-		if (mapMetaFile.exists()) {
-			Location expectedLocation = BasePublicationTest.getExpectedLocationForFigure(figureObj);
-			expected = (expectedLocation != null);
+		try {
+			Assume.assumeTrue(studyResults.isFigure()); // Ignores tests when it's not a valid figure
+			expected = studyResults.isMap();
+		} catch (BasePublicationTest.InconsistencyException ex) {
+			Assert.assertNotNull(ex.getMessage(), expected);
 		}
 
 		System.out.println((isMap.equals(expected) ? "" : "!! ") + figureObj.getDocument().getFile().getName() + "#" + figureObj.toString() + ": " + (expected ? "MAP" : "NOT a map") + " == " + (isMap ? "MAP" : "NOT a map") + "(" + Math.round(result * 100) + "%)");

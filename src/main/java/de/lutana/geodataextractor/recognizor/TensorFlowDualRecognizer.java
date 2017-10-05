@@ -68,6 +68,7 @@ public abstract class TensorFlowDualRecognizer implements Recognizor {
 	}
 	
 	public float recognize(Graphic g) throws IOException {
+		// ToDo: Don't read the file again, get it from memory using CvGraphic somehow
 		byte[] imgData = Files.readAllBytes(g.getFile().toPath());
 		return this.recognize(imgData);
 	}

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import org.junit.Assert;
+import org.junit.Assume;
 
 
 @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
@@ -25,14 +26,18 @@ public class TensorFlowMapRecognizerTest {
 
 	@org.junit.Test
     public void testFigures() throws IOException, URISyntaxException {
-		Boolean expected = null;
-		float result = TensorFlowMapRecognizer.getInstance().recognize(figureObj.getGraphic());
+		float result = TensorFlowMapRecognizer.getInstance().recognize(figureObj);
 		Boolean isMap = (result >= 0.5);
-		File mapMetaFile = BasePublicationTest.getFigureMetaFile(figureObj);
-		if (mapMetaFile.exists()) {
-			Location expectedLocation = BasePublicationTest.getExpectedLocationForFigure(figureObj);
-			expected = (expectedLocation != null);
+
+		BasePublicationTest.StudyResults studyResults = BasePublicationTest.getStudyResultsForFigure(figureObj);
+		Boolean expected = null;
+		try {
+			Assume.assumeTrue(studyResults.isFigure()); // Ignores tests when it's not a valid figure
+			expected = studyResults.isMap();
+		} catch (BasePublicationTest.InconsistencyException ex) {
+			Assert.assertNotNull(ex.getMessage(), expected);
 		}
+		
 		System.out.println((isMap.equals(expected) ? "" : "!! ") + figureObj.getDocument().getFile().getName() + "#" + figureObj.toString() + ": " + (expected ? "MAP" : "NOT a map") + " == " + (isMap ? "MAP" : "NOT a map") + "(" + Math.round(result * 100) + "%)");
 		Assert.assertEquals(expected, isMap);
     }

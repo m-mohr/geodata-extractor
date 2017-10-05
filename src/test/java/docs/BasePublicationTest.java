@@ -18,7 +18,9 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.junit.Assert;
 import static org.junit.Assert.assertTrue;
+import org.junit.Assume;
 
 public abstract class BasePublicationTest {
 
@@ -41,18 +43,32 @@ public abstract class BasePublicationTest {
 
 	protected void testFigure(Figure figure) {
 		Document document = figure.getDocument();
-		Location expected = getExpectedLocationForFigure(figure);
-		this.assertLocation(document.getFile().getName() + "#" + figure.getGraphicFile().getName(), expected, figure.getLocation(), figure.getGraphicFile());
+		StudyResults studyResults = getStudyResultsForFigure(figure);
+		this.assertFigure(document.getFile().getName() + "#" + figure.getGraphicFile().getName(), studyResults, figure.getLocation(), figure.getGraphicFile());
 	}
 
 	protected void assertDocument(Location expected, Document document) {
-		this.assertLocation(document.getFile().getName(), expected, document.getLocation(), document.getFile());
+		this.assertLocation(document.getFile().getName(), (expected != null), expected, document.getLocation(), document.getFile());
 	}
 
-	protected void assertLocation(String testName, Location expected, Location result, File contextFile) {
+	protected void assertFigure(String testName, StudyResults studyResults, Location result, File contextFile) {
+		Boolean isMap = null;
+		Location expected = null;
+		try {
+			Assume.assumeTrue(studyResults.isFigure()); // Ignores tests when it's not a valid figure
+			isMap = studyResults.isMap();
+			expected = studyResults.getLocation();
+		} catch (InconsistencyException ex) {
+			Assert.assertNotNull(ex.getMessage(), isMap);
+		}
+		
+		this.assertLocation(testName, isMap, expected, result, contextFile);
+	}
+	
+	protected void assertLocation(String testName, boolean isMap, Location expected, Location result, File contextFile) {
 		Double jaccardIndex = GeoTools.calcJaccardIndex(expected, result);
 		String info = " - " + testName + ": Expected " + expected + "; Found " + result;
-		if (expected == null) {
+		if (!isMap) {
 			System.out.println("NOMAP" + info);
 			assertTrue("Not a map", true);
 		}
@@ -73,27 +89,30 @@ public abstract class BasePublicationTest {
 		FigureCollection figures = document.getFigures();
 		LocationCollection locations = new LocationCollection();
 		for (Figure figure : figures) {
-			Location location = getExpectedLocationForFigure(figure);
-			if (location != null) {
-				locations.add(location);
+			StudyResults studyResults = getStudyResultsForFigure(figure);
+			Location expectedLocation = null;
+			try {
+				expectedLocation = studyResults.getLocation();
+				if (expectedLocation != null) {
+					locations.add(expectedLocation);
+				}
+			} catch (InconsistencyException ex) {
+				Assert.assertNotNull(ex.getMessage(), expectedLocation);
 			}
 		}
 		// ToDo: Is the union of all locations really the wanted behaviour?
 		return locations.getLocation();
 	}
 
-	public static Location getExpectedLocationForFigure(Figure figure) {
+	public static StudyResults getStudyResultsForFigure(Figure figure) {
 		File metaFile = getFigureMetaFile(figure);
 		if (!metaFile.exists()) {
-			// This is not a map that's why there is no meta data
 			return null;
 		}
 
 		ObjectMapper mapper = new ObjectMapper();
 		try {
-			BBoxContainer c = mapper.readValue(metaFile, BBoxContainer.class);
-			// ToDo: Is the union of all locations really the wanted behaviour?
-			return c.toLocationCollection().getLocation();
+			return mapper.readValue(metaFile, StudyResults.class);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -142,28 +161,88 @@ public abstract class BasePublicationTest {
 		return list;
 	}
 	
+	public static class InconsistencyException extends Exception {
+		
+		private final StudyResults container;
+		
+		public InconsistencyException(StudyResults container, String message) {
+			super(message);
+			this.container = container;
+		}
+		
+	}
+	
 	@JsonIgnoreProperties(ignoreUnknown = true)
-	public static class BBoxContainer {
-		public List<BBox> locations;
-		public BBoxContainer() {}
-		public LocationCollection toLocationCollection() {
-			LocationCollection collection = new LocationCollection();
-			if (locations != null) {
-				for(BBox location : locations) {
-					collection.add(location.toLocation());
+	public static class StudyResults {
+		public String document;
+		public String graphic;
+		public List<StudyItem> study;
+
+		public StudyResults() {}
+		
+		public boolean isMap() throws InconsistencyException {
+			Boolean value = null;
+			for(StudyItem item : study) {
+				if (value == null) {
+					value = item.isMap();
+				}
+				else if(value != item.isMap()) {
+					throw new InconsistencyException(this, "Inconsistency in isMap");
 				}
 			}
-			return collection;
+			return value;
+		}
+		
+		public boolean isFigure() throws InconsistencyException {
+			Boolean value = null;
+			for(StudyItem item : study) {
+				if (value == null) {
+					value = item.isFigure();
+				}
+				else if(value != item.isFigure()) {
+					throw new InconsistencyException(this, "Inconsistency in isValidFigure");
+				}
+			}
+			return value;
+		}
+
+		public Location getLocation() throws InconsistencyException {
+			LocationCollection collection = new LocationCollection();
+			if (study != null) {
+				for(StudyItem item : study) {
+					Location location = item.getLocation();
+					if (location != null) {
+						collection.add(location);
+					}
+				}
+			}
+			// ToDo: Consistency check
+			return collection.getLocation();
 		}
 	}
 	
-	public static class BBox {
+	public static class StudyItem {
+		public String isMap;
+		public String isFigure;
 		public Double minlon;
 		public Double maxlon;
 		public Double minlat;
 		public Double maxlat;
-		public BBox() {}
-		public Location toLocation() {
+
+		public StudyItem() {}
+
+		public boolean isMap() {
+			return isMap.equals("1");
+		}
+
+		public boolean isFigure() {
+			return isFigure.equals("1");
+		}
+
+		public Location getLocation() {
+			if (minlon == null || maxlon == null || minlat == null || maxlat == null) {
+				return null;
+			}
 			return new Location(minlon, maxlon, minlat, maxlat);
 		}
 	}
