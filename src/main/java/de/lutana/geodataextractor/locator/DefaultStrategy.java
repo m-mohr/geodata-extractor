@@ -47,9 +47,8 @@ public class DefaultStrategy implements Strategy {
 		try {
 			this.geonamesTextDetector = new GeoNamesTextDetector(this.geoNamesIndex);
 		} catch (IOException | ClassNotFoundException ex) {
-			logger.error("Loading GeoNamesTextDetector failed. Continuing with the DumbCountryTextDetector.");
+			logger.error("Loading GeoNamesTextDetector failed. Continuing with the DumbCountryTextDetector. " + ex.getMessage());
 			this.geonamesTextDetector = new DumbCountryTextDetector();
-			ex.printStackTrace();
 		}
 	}
 
@@ -86,10 +85,10 @@ public class DefaultStrategy implements Strategy {
 			float result = this.mapRecognizer.recognize(figure);
 			boolean isMap = (result >= 0.4); // 0.1 (10%) tolerance
 			logger.debug((isMap ? "Map detected" : "NOT a map") + " (" + result * 100 + "%)");
-			
-			LocationCollection figureLocations = new LocationCollection(globalLocations);
-			this.getLocationsFromText(figure.getCaption(), figureLocations, 0.75);
+
 			if (isMap) {
+				LocationCollection figureLocations = new LocationCollection(globalLocations);
+				this.getLocationsFromText(figure.getCaption(), figureLocations, 0.75);
 				boolean isWorldMap = this.worldMapDetector.detect(cvGraphic, figureLocations, 1);
 				// Skip the slow stuff, as world map detection is pretty accurate (95% detection rate)
 				if (!isWorldMap) {
@@ -100,17 +99,16 @@ public class DefaultStrategy implements Strategy {
 					}
 				}
 
+				if (figureLocations.size() > globalLocations.size()) {
+					Location location = figureLocations.getMostLikelyLocation();
+					figure.setLocation(location);
+				}
+				else if (isMap && globalLocations.size() > 0) {
+					Location location = globalLocations.getMostLikelyLocation();
+					figure.setLocation(location);
+				}
 			}
 			cvGraphic.dispose();
-
-			if (figureLocations.size() > globalLocations.size()) {
-				Location location = figureLocations.getMostLikelyLocation();
-				figure.setLocation(location);
-			}
-			else if (isMap && globalLocations.size() > 0) {
-				Location location = globalLocations.getMostLikelyLocation();
-				figure.setLocation(location);
-			}
 		}
 		return true;
 	}

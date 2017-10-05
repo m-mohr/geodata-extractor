@@ -34,9 +34,6 @@ public class MapRecognizer implements Recognizor {
 	
 	public float recognize(Figure f, CvGraphic cachedGraphic) {
 		Float result = null;
-//		if (this.containsTable(cachedGraphic)) {
-//			return 0.75f;
-//		}
 
 		// Detect whether it's a map or not using Tensorflow
 		if (this.tfMapRecognizer != null) {
@@ -54,6 +51,10 @@ public class MapRecognizer implements Recognizor {
 		if (n.find()) {
 			result = Math.max(0, result - 0.5f);
 		}
+
+//		if (this.containsTable(cachedGraphic)) {
+//			result = Math.max(0, result - 0.5f);
+//		}
 
 		return result == null ? this.defaultProbability : result;
 	}
