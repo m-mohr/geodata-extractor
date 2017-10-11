@@ -1,6 +1,5 @@
 package api;
 
-import de.lutana.geodataextractor.detector.coordinates.CoordinateFromText;
 import de.lutana.geodataextractor.detector.gazetteer.GeoName;
 import de.lutana.geodataextractor.detector.gazetteer.LuceneIndex;
 import java.io.IOException;

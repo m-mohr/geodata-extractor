@@ -1,4 +1,4 @@
-package api;
+package docs;
 
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.locator.NullStrategy;

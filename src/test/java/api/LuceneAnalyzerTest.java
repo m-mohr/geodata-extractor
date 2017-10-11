@@ -1,12 +1,7 @@
 package api;
 
 import de.lutana.geodataextractor.detector.gazetteer.LuceneAnalyzer;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.List;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.junit.Assert;
 
 public class LuceneAnalyzerTest {
