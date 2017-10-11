@@ -72,6 +72,10 @@ public abstract class BasePublicationTest {
 			System.out.println("NOMAP" + info);
 			assertTrue("Not a map", true);
 		}
+		else if (expected == null) {
+			System.out.println("NOLOC" + info);
+			assertTrue("Not location to compare to", true);
+		}
 		else {
 			boolean success = (jaccardIndex > JACCARD_INDEX_THRESHOLD);
 			Double formatted = Math.round(jaccardIndex * 100d) / 100d;
@@ -100,7 +104,6 @@ public abstract class BasePublicationTest {
 				Assert.assertNotNull(ex.getMessage(), expectedLocation);
 			}
 		}
-		// ToDo: Is the union of all locations really the wanted behaviour?
 		return locations.getLocation();
 	}
 
@@ -217,7 +220,7 @@ public abstract class BasePublicationTest {
 				}
 			}
 			// ToDo: Consistency check
-			return collection.getLocation();
+			return collection.getMostLikelyLocation();
 		}
 	}
 	

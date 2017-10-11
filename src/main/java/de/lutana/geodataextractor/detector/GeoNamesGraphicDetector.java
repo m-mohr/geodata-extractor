@@ -24,7 +24,7 @@ public class GeoNamesGraphicDetector implements GraphicDetector {
 
 	public GeoNamesGraphicDetector(LuceneIndex index) {
 		this.index = index;
-		this.fuzzyIfNoResultsMode = true;
+		this.fuzzyIfNoResultsMode = false;
 	}
 
 	@Override
@@ -123,7 +123,7 @@ public class GeoNamesGraphicDetector implements GraphicDetector {
 		// ToDo: Improve this
 		if (locations.size() > 0) {
 			LocationCollection filteredCandidates = new LocationCollection();
-			Location restrictingArea = locations.getLocation();
+			Location restrictingArea = locations.getUnifiedLocation();
 			for(Location l : candidates) {
 				if (l.intersects(restrictingArea)) {
 					filteredCandidates.add(l);
@@ -133,7 +133,7 @@ public class GeoNamesGraphicDetector implements GraphicDetector {
 		}
 
 		// Merge remaining candidates
-		Location union = candidates.getLocation();
+		Location union = candidates.getUnifiedLocation();
 		if (union != null) {
 			// Give this probability a bump if it was created using many locations.
 			union.setProbability(0.1 * Math.min(candidates.size(), 5) + union.getProbability() / 2);

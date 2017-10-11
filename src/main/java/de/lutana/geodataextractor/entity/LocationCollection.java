@@ -26,6 +26,10 @@ public class LocationCollection implements Located, Collection<Location> {
 	
 	@Override
 	public Location getLocation() {
+		return this.getMostLikelyLocation();
+	}
+	
+	public Location getUnifiedLocation() {
 		Location union = GeoTools.union(this.data);
 		if (union != null) {
 			union.setWeight(1);
@@ -36,6 +40,10 @@ public class LocationCollection implements Located, Collection<Location> {
 			union.setProbability(scoreSum / this.data.size());
 		}
 		return union;
+	}
+	
+	private double avg(double m, double n) {
+		return (m+n)/2;
 	}
 	
 	public Location getMostLikelyLocation() {
@@ -54,13 +62,23 @@ public class LocationCollection implements Located, Collection<Location> {
 					// Decide to use only the higher scored location if score is somehow far different
 					return l1Score > l2Score ? l1 : l2;
 				}
+				else if (l1.intersects(l2)) {
+					// Both rectangles intersect, calculate an "average" rectangle.
+					// ToDo: Check whether this works correct in all edge cases
+					double minLon = this.avg(l1.getMinX(), l2.getMinX());
+					double maxLon = this.avg(l1.getMaxX(), l2.getMaxX());
+					double minLat = this.avg(l1.getMinY(), l2.getMinY());
+					double maxLat = this.avg(l1.getMaxY(), l2.getMaxY());
+					return new Location(minLon, maxLon, minLat, maxLat);
+				}
 				else {
-					// Return union - we can't decide
-					return this.getLocation();
+					// We can't decide: return union 
+					return this.getUnifiedLocation();
 				}
 		}
 
 		// ToDo: Pretty slow O(n²) - is there a more elegant solution?
+		// ToDo: Would it be a better solution to have a heatmap and get the location by a threshold?
 		double[] scores = new double[count];
 		for(int i = 0; i < count; i++) {
 			Location l = this.data.get(i);
