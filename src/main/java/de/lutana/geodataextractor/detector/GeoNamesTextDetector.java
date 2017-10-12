@@ -67,7 +67,7 @@ public class GeoNamesTextDetector implements TextDetector {
 	}
 
 	protected List<GeoName> resolveLocations(List<LocationOccurrence> occurrences) {
-		List<GeoName> bestCandidates = new ArrayList<GeoName>();
+		List<GeoName> bestCandidates = new ArrayList<>();
 
 		// are you forgetting something? -- short-circuit if no locations were provided
 		if (occurrences == null || occurrences.isEmpty()) {
@@ -273,7 +273,7 @@ public class GeoNamesTextDetector implements TextDetector {
 		if (index == allCandidates.size()) {
 			// return a list with an empty list
 			List<List<GeoName>> result = new ArrayList<>();
-			result.add(new ArrayList<GeoName>());
+			result.add(new ArrayList<>());
 			return result;
 		}
 
@@ -287,7 +287,7 @@ public class GeoNamesTextDetector implements TextDetector {
 		for (int j = 0; j < Math.min(allCandidates.get(index).size(), depth); j++) {
 			// add the element to all combinations obtained for the rest of the lists
 			for (List<GeoName> recList : recursive) {
-				List<GeoName> newList = new ArrayList<GeoName>();
+				List<GeoName> newList = new ArrayList<>();
 				// add element of the first list
 				newList.add(allCandidates.get(index).get(j));
 				// copy a combination from recursive

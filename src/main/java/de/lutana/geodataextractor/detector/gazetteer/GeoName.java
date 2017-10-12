@@ -148,6 +148,8 @@ public class GeoName {
 					return "way";
 				case 'r':
 					return "relation";
+				case 'c':
+					return "custom";
 			}
 		}
 		return osmType;
