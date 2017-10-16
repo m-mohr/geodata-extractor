@@ -24,7 +24,7 @@ import org.junit.Assume;
 
 public abstract class BasePublicationTest {
 
-	public static final Double JACCARD_INDEX_THRESHOLD = 0.5;
+	public static final Double JACCARD_INDEX_THRESHOLD = 0.01;
 	public static final File DOC_FOLDER = new File("./test-docs/");
 
 	private static GeodataExtractor instance;
@@ -70,11 +70,10 @@ public abstract class BasePublicationTest {
 		String info = " - " + testName + ": Expected " + expected + "; Found " + result;
 		if (!isMap) {
 			System.out.println("NOMAP" + info);
-			assertTrue("Not a map", true);
 		}
 		else if (expected == null) {
 			System.out.println("NOLOC" + info);
-			assertTrue("Not location to compare to", true);
+			Assert.assertNull("Found location for a non-map", result);
 		}
 		else {
 			boolean success = (jaccardIndex > JACCARD_INDEX_THRESHOLD);

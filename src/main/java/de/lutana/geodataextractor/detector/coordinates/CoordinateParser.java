@@ -247,11 +247,17 @@ public class CoordinateParser {
 		Double min = 0d;
 		try {
 			min = Double.parseDouble(m.group(2));
+			if (min < 0 || min > 60) {
+				min = 0d;
+			}
 		} catch(NumberFormatException | NullPointerException e) {}
 
 		Double sec = 0d;
 		try {
 			sec = Double.parseDouble(m.group(3));
+			if (sec < 0 || sec > 60) {
+				sec = 0d;
+			}
 		} catch(NumberFormatException | NullPointerException e) {}
 
 		Double coord;

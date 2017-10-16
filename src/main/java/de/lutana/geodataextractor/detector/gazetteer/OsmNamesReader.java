@@ -46,16 +46,29 @@ public class OsmNamesReader implements Iterator<GeoName> {
 		if (cc == null || cc.isEmpty()) {
 			return;
 		}
+		cc = cc.toUpperCase();
 		
-		Integer smallestRank = countryCodeRankMapping.get(cc);
+		Integer smallestRank = Integer.MAX_VALUE;
+		if (countryCodeRankMapping.containsKey(cc)) {
+			smallestRank = countryCodeRankMapping.get(cc);
+		}
+
 		int rank = gn.getPlaceRank();
 		String type = gn.getType();
+		String osmType = gn.getOsmType();
 		String featureClass = gn.getFeatureClass();
-		if ((smallestRank == null || (rank > 0 && rank < smallestRank)) && 
-				(type != null && type.equalsIgnoreCase("administrative") &&
-				(featureClass != null && featureClass.equalsIgnoreCase("boundary")))) {
-			countryCodeRankMapping.put(cc.toUpperCase(), gn.getPlaceRank());
-			countryCodeIdMapping.put(cc.toUpperCase(), gn.getOsmId());
+		String state = gn.getState();
+		String county = gn.getCounty();
+		String city = gn.getCity();
+		if (rank > 0 && rank < smallestRank && 
+				type != null && type.equalsIgnoreCase("administrative") &&
+				osmType != null && osmType.equalsIgnoreCase("relation") &&
+				featureClass != null && featureClass.equalsIgnoreCase("boundary") &&
+				(state == null || state.isEmpty()) &&
+				(county == null || county.isEmpty()) &&
+				(city == null || city.isEmpty())) {
+			countryCodeRankMapping.put(cc, gn.getPlaceRank());
+			countryCodeIdMapping.put(cc, gn.getOsmId());
 		}
 	}
 

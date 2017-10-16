@@ -58,7 +58,7 @@ public class FigureCollection extends ArrayList<Figure> implements Located {
 	
 	@Override
 	public Location getLocation() {
-		return this.getFigureLocations().getLocation();
+		return this.getFigureLocations().getUnifiedLocation();
 	}
 	
 }
