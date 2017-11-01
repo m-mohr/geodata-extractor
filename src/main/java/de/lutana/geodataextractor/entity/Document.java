@@ -7,6 +7,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -17,14 +19,12 @@ import java.util.Objects;
 public class Document implements Located {
 
 	protected File file;
-	protected String title;
-	protected String description;
+	protected Map<String, String> texts;
 	protected FigureCollection figures;
 
 	public Document(File file) {
 		this.file = file;
-		this.title = "";
-		this.description = "";
+		this.texts = new HashMap<>();
 		this.figures = new FigureCollection();
 	}
 
@@ -43,10 +43,33 @@ public class Document implements Located {
 	}
 
 	/**
+	 * @param type
+	 * @return the title
+	 */
+	public String getText(String type) {
+		return this.texts.getOrDefault(type, "");
+	}
+
+	/**
+	 * @param type
+	 * @param text the text to set
+	 * @return 
+	 */
+	public boolean setText(String type, String text) {
+		if (text == null) {
+			this.texts.remove(type);
+			return false;
+		}
+
+		this.texts.put(type, text.trim());
+		return true;
+	}
+
+	/**
 	 * @return the title
 	 */
 	public String getTitle() {
-		return title;
+		return this.texts.get("title");
 	}
 
 	/**
@@ -54,23 +77,21 @@ public class Document implements Located {
 	 * @return 
 	 */
 	public boolean setTitle(String title) {
-		if (title == null) {
-			return false;
+		if (title != null) {
+			title = title.trim();
+			if (!title.matches("\\S+\\b\\s+\\b.+")) {
+				return false;
+			}
 		}
-
-		title = title.trim();
-		if (title.matches("\\S+\\b\\s+\\b.+")) {
-			this.title = title;
-			return true;
-		}
-		return false;
+		
+		return this.setText("title", title);
 	}
 
 	/**
 	 * @return the description
 	 */
 	public String getDescription() {
-		return description;
+		return this.getText("description");
 	}
 
 	/**
@@ -78,16 +99,13 @@ public class Document implements Located {
 	 * @return 
 	 */
 	public boolean setDescription(String description) {
-		if (description == null) {
-			return false;
+		if (description != null) {
+			description = description.trim();
+			if (description.equalsIgnoreCase("abstract")) {
+				return false;
+			}
 		}
-
-		description = description.trim();
-		if (!description.isEmpty() && !description.equalsIgnoreCase("abstract")) {
-			this.description = description;
-			return true;
-		}
-		return false;
+		return this.setText("description", description);
 	}
 
 	/**
@@ -152,10 +170,10 @@ public class Document implements Located {
 					String fieldName = parser.getCurrentName();
 					jsonToken = parser.nextToken();
 					if(fieldName.equals("title")){
-						this.title = parser.getValueAsString();
+						this.setTitle(parser.getValueAsString());
 					}
 					else if (fieldName.equals("abstract")){
-						this.description = parser.getValueAsString();
+						this.setDescription(parser.getValueAsString());
 					}
 				}
 			}
@@ -184,8 +202,8 @@ public class Document implements Located {
 			try (JsonGenerator g = factory.createGenerator(destMetadata, JsonEncoding.UTF8)) {
 				g.writeStartObject();
 				g.writeStringField("document", this.file.getName());
-				g.writeStringField("title", this.title);
-				g.writeStringField("abstract", this.description);
+				g.writeStringField("title", this.getTitle());
+				g.writeStringField("abstract", this.getDescription());
 				g.writeEndObject();
 			}
 		} catch(IOException ex) {

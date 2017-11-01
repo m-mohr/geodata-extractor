@@ -68,8 +68,9 @@ public class DefaultStrategy implements Strategy {
 		LocationCollection globalLocations = new LocationCollection();
 
 		LoggerFactory.getLogger(this.getClass()).info("## Document: " + document);
-		this.getLocationsFromText(document.getTitle(), globalLocations, 0.5);
-		this.getLocationsFromText(document.getDescription(), globalLocations, 0.5);
+		this.getLocationsFromText(document.getTitle(), globalLocations, 0.2);
+		this.getLocationsFromText(document.getDescription(), globalLocations, 0.2);
+		// ToDo: We could analyse more texts from the document here using getText/setText, e.g. full text publication contents
 
 		FigureCollection figures = document.getFigures();
 		for(Figure figure : figures) {
@@ -88,7 +89,7 @@ public class DefaultStrategy implements Strategy {
 
 			if (isMap) {
 				LocationCollection figureLocations = new LocationCollection(globalLocations);
-				this.getLocationsFromText(figure.getCaption(), figureLocations, 0.75);
+				this.getLocationsFromText(figure.getCaption(), figureLocations, 0.5);
 				boolean isWorldMap = this.worldMapDetector.detect(cvGraphic, figureLocations, 1);
 				// Skip the slow stuff, as world map detection is pretty accurate (95% detection rate)
 				if (!isWorldMap) {
