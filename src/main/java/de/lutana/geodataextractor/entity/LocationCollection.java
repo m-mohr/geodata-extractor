@@ -1,11 +1,13 @@
 package de.lutana.geodataextractor.entity;
 
-import de.lutana.geodataextractor.util.GeoTools;
+import de.lutana.geodataextractor.entity.locationresolver.HeatmapResolver;
+import de.lutana.geodataextractor.entity.locationresolver.JackardIndexResolver;
+import de.lutana.geodataextractor.entity.locationresolver.LocationResolver;
+import de.lutana.geodataextractor.entity.locationresolver.UnionResolver;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import org.apache.commons.math3.util.Precision;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -30,97 +32,23 @@ public class LocationCollection implements Located, Collection<Location> {
 	}
 	
 	public Location getUnifiedLocation() {
-		Location union = GeoTools.union(this.data);
-		if (union != null) {
-			union.setWeight(1);
-			double scoreSum = 0;
-			for(Location l : this.data) {
-				scoreSum += l.getScore();
-			}
-			union.setProbability(scoreSum / this.data.size());
-		}
-		return union;
-	}
-	
-	private double avg(double m, double n) {
-		return (m+n)/2;
+		return this.resolveLocation(new UnionResolver());
 	}
 	
 	public Location getMostLikelyLocation() {
-		int count = this.data.size();
-		switch (count) {
-			case 0:
-				return null;
-			case 1:
-				return this.data.get(0);
-			case 2:
-				Location l1 = this.data.get(0);
-				double l1Score = l1.getScoreWithPenalty();
-				Location l2 = this.data.get(1);
-				double l2Score = l2.getScoreWithPenalty();
-				if (Math.abs(l1Score - l2Score) > 0.2) {
-					// Decide to use only the higher scored location if score is somehow far different
-					return l1Score > l2Score ? l1 : l2;
-				}
-				else if (l1.intersects(l2)) {
-					// Both rectangles intersect, calculate an "average" rectangle.
-					// ToDo: Check whether this works correct in all edge cases
-					double minLon = this.avg(l1.getMinX(), l2.getMinX());
-					double maxLon = this.avg(l1.getMaxX(), l2.getMaxX());
-					double minLat = this.avg(l1.getMinY(), l2.getMinY());
-					double maxLat = this.avg(l1.getMaxY(), l2.getMaxY());
-					return new Location(minLon, maxLon, minLat, maxLat);
-				}
-				else {
-					// We can't decide: return union 
-					return this.getUnifiedLocation();
-				}
-		}
+		return this.getMostLikelyLocationUsingJackardIndex();
+	}
 
-		// ToDo: Pretty slow O(n²) - is there a more elegant solution?
-		// ToDo: Would it be a better solution to have a heatmap and get the location by a threshold?
-		double[] scores = new double[count];
-		for(int i = 0; i < count; i++) {
-			Location l = this.data.get(i);
-			double otherScores = 0;
-			for(Location l2 : this.data) {
-				if (l == l2) {
-					continue;
-				}
-
-				// Points/Lines are calculated differntly as jackard always returns someting near to 0 for them.
-				// If they are contained in the area slightly increase the score otherwirse decrease it.
-				double l2Weight;
-				if (l2.isPoint() || l2.isLine()) {
-					l2Weight = l.contains(l2) ? 0.2 : 0.0;
-				}
-				else {
-					// The more the rectangles have in common the better - "commonness" based on jackard
-					l2Weight = GeoTools.calcJaccardIndex(l, l2);
-				}
-				l2Weight /= count - 1;
-				otherScores += l2Weight * l2.getScore();
-			}
-			// simple points or lines get a penalty
-			scores[i] = (l.getScoreWithPenalty() + otherScores) / 2;
-
-			LoggerFactory.getLogger(getClass()).debug("[score: " + Precision.round(scores[i], 2) + "/" + Precision.round(otherScores, 2) + "] " + l);
-		}
-		
-		double maxValue = -1;
-		int maxIndex = -1;
-		for(int i = 0; i < scores.length; i++) {
-			if (scores[i] > maxValue) {
-				maxValue = scores[i];
-				maxIndex = i;
-			}
-		}
-		
-		if (maxIndex == -1) {
-			return null;
-		}
-
-		return this.data.get(maxIndex);
+	public Location getMostLikelyLocationUsingHeatmap() {
+		return this.resolveLocation(new HeatmapResolver());
+	}
+	
+	public Location getMostLikelyLocationUsingJackardIndex() {
+		return this.resolveLocation(new JackardIndexResolver());
+	}
+	
+	public Location resolveLocation(LocationResolver resolver) {
+		return resolver.resolve(this);
 	}
 	
 	public Location get(int index) {
@@ -205,5 +133,5 @@ public class LocationCollection implements Located, Collection<Location> {
 	public void clear() {
 		this.data.clear();
 	}
-
+	
 }

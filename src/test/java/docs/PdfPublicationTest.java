@@ -27,4 +27,14 @@ public class PdfPublicationTest extends BasePublicationTest {
 		runDocumentTest(this.documentFile);
     }
 	
+    @org.junit.BeforeClass
+    public static void benachmarkInit() {
+        BasePublicationTest.resetBenchmark();
+    }
+	
+    @org.junit.AfterClass
+    public static void benchmarkFinalize() {
+        System.out.println(BasePublicationTest.getBenchmark());
+    }
+	
 }

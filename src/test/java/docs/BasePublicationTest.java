@@ -24,8 +24,11 @@ import org.junit.Assume;
 
 public abstract class BasePublicationTest {
 
-	public static final Double JACCARD_INDEX_THRESHOLD = 0.01;
+	public static final Double JACCARD_INDEX_THRESHOLD = 0.001;
 	public static final File DOC_FOLDER = new File("./test-docs/");
+	
+	private static int testCount = 0;
+	private static long testTimeSum = 0;
 
 	private static GeodataExtractor instance;
 
@@ -103,7 +106,7 @@ public abstract class BasePublicationTest {
 				Assert.assertNotNull(ex.getMessage(), expectedLocation);
 			}
 		}
-		return locations.getLocation();
+		return locations.getMostLikelyLocation();
 	}
 
 	public static StudyResults getStudyResultsForFigure(Figure figure) {
@@ -131,7 +134,25 @@ public abstract class BasePublicationTest {
 			instance.enableCaching(true);
 		}
 		File documentFile = getDocumentFile(documentPath);
-		return instance.runSingle(documentFile, page);
+		long timeStart = System.currentTimeMillis();
+		Document doc = instance.runSingle(documentFile, page);
+		testCount++;
+		testTimeSum += System.currentTimeMillis() - timeStart;
+		return doc;
+	}
+	
+	public static void resetBenchmark() {
+		testCount = 0;
+		testTimeSum = 0;
+	}
+	
+	public static String getBenchmark() {
+		if (testCount == 0) {
+			return "No tests benchmarked.";
+		}
+		return "Number of tests: " + testCount + System.lineSeparator() +
+				"Runtime: " + (testTimeSum / 1000) + " seconds" + System.lineSeparator() + 
+				"Avg. runtime per test: " + (testTimeSum / (testCount * 1000)) + "seconds";
 	}
 
 	public static File getDocumentFile(String documentFile) {

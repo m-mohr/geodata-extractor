@@ -34,4 +34,14 @@ public class PdfPublicationFigureTest extends BasePublicationTest {
 		testFigure(this.figureObj);
     }
 	
+    @org.junit.BeforeClass
+    public static void benachmarkInit() {
+        BasePublicationTest.resetBenchmark();
+    }
+	
+    @org.junit.AfterClass
+    public static void benchmarkFinalize() {
+        System.out.println(BasePublicationTest.getBenchmark());
+    }
+	
 }
