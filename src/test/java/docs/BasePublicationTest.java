@@ -9,6 +9,7 @@ import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.FigureCollection;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
+import de.lutana.geodataextractor.entity.locationresolver.JackardIndexResolver;
 import de.lutana.geodataextractor.locator.Strategy;
 import de.lutana.geodataextractor.util.FileExtension;
 import de.lutana.geodataextractor.util.GeoTools;
@@ -106,7 +107,7 @@ public abstract class BasePublicationTest {
 				Assert.assertNotNull(ex.getMessage(), expectedLocation);
 			}
 		}
-		return locations.getMostLikelyLocation();
+		return locations.resolveLocation(new JackardIndexResolver());
 	}
 
 	public static StudyResults getStudyResultsForFigure(Figure figure) {

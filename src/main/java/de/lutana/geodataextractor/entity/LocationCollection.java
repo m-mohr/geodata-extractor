@@ -36,15 +36,7 @@ public class LocationCollection implements Located, Collection<Location> {
 	}
 	
 	public Location getMostLikelyLocation() {
-		return this.getMostLikelyLocationUsingJackardIndex();
-	}
-
-	public Location getMostLikelyLocationUsingHeatmap() {
 		return this.resolveLocation(new HeatmapResolver());
-	}
-	
-	public Location getMostLikelyLocationUsingJackardIndex() {
-		return this.resolveLocation(new JackardIndexResolver());
 	}
 	
 	public Location resolveLocation(LocationResolver resolver) {

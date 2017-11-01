@@ -21,7 +21,7 @@ import org.opencv.photo.Photo;
  */
 public class MapAxesLineDetector extends CvLineDetector {
 	
-	private int dim;
+	private final int dim;
 	
 	public MapAxesLineDetector(CvGraphic img) {
 		super(img);

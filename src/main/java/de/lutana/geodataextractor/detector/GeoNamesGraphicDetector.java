@@ -7,6 +7,7 @@ import de.lutana.geodataextractor.util.GeoTools;
 import de.lutana.geodataextractor.detector.cv.TesseractOCR;
 import de.lutana.geodataextractor.detector.gazetteer.GeoName;
 import de.lutana.geodataextractor.detector.gazetteer.LuceneIndex;
+import de.lutana.geodataextractor.entity.locationresolver.LocationResolver;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -19,12 +20,14 @@ import org.slf4j.LoggerFactory;
 
 public class GeoNamesGraphicDetector implements GraphicDetector {
 
+	private MapResolver locationResolver;
 	private LuceneIndex index;
 	private boolean fuzzyIfNoResultsMode;
 
 	public GeoNamesGraphicDetector(LuceneIndex index) {
 		this.index = index;
 		this.fuzzyIfNoResultsMode = false;
+		this.locationResolver = new MapResolver();
 	}
 
 	@Override
@@ -114,35 +117,84 @@ public class GeoNamesGraphicDetector implements GraphicDetector {
 			}
 		}
 		
-		if (candidates.isEmpty()) {
-			return false;
-		}
-
-		// Remove outliers - this one is a bit tricky.
-		// At the moment we remove all entries that are outside the union of previous results.
-		// ToDo: Improve this
-		if (locations.size() > 0) {
-			LocationCollection filteredCandidates = new LocationCollection();
-			Location restrictingArea = locations.getUnifiedLocation();
-			for(Location l : candidates) {
-				if (l.intersects(restrictingArea)) {
-					filteredCandidates.add(l);
-				}
-			}
-			candidates = filteredCandidates;
-		}
-
-		// Merge remaining candidates
-		Location union = candidates.getUnifiedLocation();
-		if (union != null) {
-			// Give this probability a bump if it was created using many locations.
-			union.setProbability(0.1 * Math.min(candidates.size(), 5) + union.getProbability() / 2);
-			union.setWeight(weight);
-			locations.add(union);
-			logger.debug("Merged to final location " + union + " in GeoNamesGraphicDetector.");
+		Location chosenCandidate = candidates.resolveLocation(this.getLocationResolver());
+		if (chosenCandidate != null) {
+			chosenCandidate.setWeight(weight);
+			logger.debug("Merged to final location " + chosenCandidate + " in GeoNamesGraphicDetector.");
+			locations.add(chosenCandidate);
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * @return the locationResolver
+	 */
+	public MapResolver getLocationResolver() {
+		return locationResolver;
+	}
+
+	/**
+	 * @param locationResolver the locationResolver to set
+	 */
+	public void setLocationResolver(MapResolver locationResolver) {
+		this.locationResolver = locationResolver;
+	}
+
+	/**
+	 * @return the index
+	 */
+	public LuceneIndex getIndex() {
+		return index;
+	}
+
+	/**
+	 * @param index the index to set
+	 */
+	public void setIndex(LuceneIndex index) {
+		this.index = index;
+	}
+
+	/**
+	 * @return the fuzzyIfNoResultsMode
+	 */
+	public boolean isFuzzyIfNoResultsMode() {
+		return fuzzyIfNoResultsMode;
+	}
+
+	/**
+	 * @param fuzzyIfNoResultsMode the fuzzyIfNoResultsMode to set
+	 */
+	public void setFuzzyIfNoResultsMode(boolean fuzzyIfNoResultsMode) {
+		this.fuzzyIfNoResultsMode = fuzzyIfNoResultsMode;
+	}
+	
+	public static class MapResolver implements LocationResolver {
+	
+		public Location resolve(LocationCollection locations) {
+			// Remove outliers - this one is a bit tricky.
+			// At the moment we remove all entries that are outside the union of previous results.
+			// ToDo: Improve this
+			if (locations.size() > 0) {
+				LocationCollection filteredCandidates = new LocationCollection();
+				Location restrictingArea = locations.getUnifiedLocation();
+				for(Location l : locations) {
+					if (l.intersects(restrictingArea)) {
+						filteredCandidates.add(l);
+					}
+				}
+				locations = filteredCandidates;
+			}
+
+			// Merge remaining candidates
+			Location union = locations.getUnifiedLocation();
+			if (union != null) {
+				// Give this probability a bump if it was created using many locations.
+				union.setProbability(0.1 * Math.min(locations.size(), 5) + union.getProbability() / 2);
+				return union;
+			}
+			return null;
+		}
 	}
 
 }
