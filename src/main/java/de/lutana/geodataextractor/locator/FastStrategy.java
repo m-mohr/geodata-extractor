@@ -1,9 +1,7 @@
 package de.lutana.geodataextractor.locator;
 
 import de.lutana.geodataextractor.detector.DumbCountryTextDetector;
-import de.lutana.geodataextractor.detector.CoordinateGraphicDetector;
 import de.lutana.geodataextractor.detector.CoordinateTextDetector;
-import de.lutana.geodataextractor.detector.GeoNamesGraphicDetector;
 import de.lutana.geodataextractor.detector.GeoNamesTextDetector;
 import de.lutana.geodataextractor.detector.TextDetector;
 import de.lutana.geodataextractor.detector.WorldMapDetector;
@@ -21,31 +19,29 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Default strategy to gather and combine location information.
+ * Fast strategy to gather and combine location information as quickly as possible.
  * 
- * Tries to find a sweet spot to deliver the best results, without thinking about speed.
+ * Tries to find locations as fast as possible.
+ * Therefore doesn't work much on the images.
+ * Might return less or worse results than other strategies.
  * 
  * @author Matthias Mohr
  */
-public class DefaultStrategy implements Strategy {
+public class FastStrategy implements Strategy {
 	
 	private LuceneIndex geoNamesIndex;
 	private Recognizor mapRecognizer;
 	private TextDetector geonamesTextDetector;
-	private GeoNamesGraphicDetector geonamesGraphicDetector;
-	private final CoordinateGraphicDetector coordinateGraphicDetector;
 	private final CoordinateTextDetector coordinateTextDetector;
 	private final WorldMapDetector worldMapDetector;
 	
-	public DefaultStrategy() {
+	public FastStrategy() {
 		Logger logger = LoggerFactory.getLogger(getClass());
 		this.geoNamesIndex = new LuceneIndex();
 		this.geoNamesIndex.load();
 		this.mapRecognizer = new MapRecognizer(false);
-		this.coordinateGraphicDetector = new CoordinateGraphicDetector();
 		this.coordinateTextDetector = new CoordinateTextDetector();
 		this.worldMapDetector = new WorldMapDetector();
-		this.geonamesGraphicDetector = new GeoNamesGraphicDetector(this.geoNamesIndex);
 		try {
 			this.geonamesTextDetector = new GeoNamesTextDetector(this.geoNamesIndex);
 		} catch (IOException | ClassNotFoundException ex) {
@@ -70,8 +66,8 @@ public class DefaultStrategy implements Strategy {
 		LocationCollection globalLocations = new LocationCollection();
 
 		LoggerFactory.getLogger(this.getClass()).info("## Document: " + document);
-		this.getLocationsFromText(document.getTitle(), globalLocations, 0.2);
-		this.getLocationsFromText(document.getDescription(), globalLocations, 0.2);
+		this.getLocationsFromText(document.getTitle(), globalLocations, 0.5);
+		this.getLocationsFromText(document.getDescription(), globalLocations, 0.5);
 		// ToDo: We could analyse more texts from the document here using getText/setText, e.g. full text publication contents
 
 		FigureCollection figures = document.getFigures();
@@ -86,21 +82,13 @@ public class DefaultStrategy implements Strategy {
 			
 			// Detect whether it's a map or not
 			float result = this.mapRecognizer.recognize(figure);
-			boolean isMap = (result >= 0.4); // 0.1 (10%) tolerance
+			boolean isMap = (result >= 0.5);
 			logger.debug((isMap ? "Map detected" : "NOT a map") + " (" + result * 100 + "%)");
 
 			if (isMap) {
 				LocationCollection figureLocations = new LocationCollection(globalLocations);
-				this.getLocationsFromText(figure.getCaption(), figureLocations, 0.5);
-				boolean isWorldMap = this.worldMapDetector.detect(cvGraphic, figureLocations, 1);
-				// Skip the slow stuff, as world map detection is pretty accurate (95% detection rate)
-				if (!isWorldMap) {
-					this.coordinateGraphicDetector.detect(cvGraphic, figureLocations, 1);
-					if (this.geonamesGraphicDetector != null) {
-						// should be executed last as it uses previous results for outlier detection
-						this.geonamesGraphicDetector.detect(cvGraphic, figureLocations, 1);
-					}
-				}
+				this.getLocationsFromText(figure.getCaption(), figureLocations, 0.75);
+				this.worldMapDetector.detect(cvGraphic, figureLocations, 1);
 
 				if (figureLocations.size() > globalLocations.size()) {
 					Location location = figureLocations.getMostLikelyLocation();

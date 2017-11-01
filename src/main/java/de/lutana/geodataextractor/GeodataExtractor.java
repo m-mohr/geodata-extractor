@@ -30,7 +30,7 @@ public class GeodataExtractor {
 	 * @see de.lutana.geodataextractor.locator.DefaultStrategy
 	 */
 	public GeodataExtractor() {
-		this(new DefaultStrategy());
+		this(Config.getStrategy());
 	}
 
 	/**

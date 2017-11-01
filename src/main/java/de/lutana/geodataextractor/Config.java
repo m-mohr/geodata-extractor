@@ -5,6 +5,8 @@ import de.lutana.geodataextractor.fileparser.HtmlParser;
 import de.lutana.geodataextractor.fileparser.Parser;
 import de.lutana.geodataextractor.fileparser.ParserFactory;
 import de.lutana.geodataextractor.fileparser.PdfParser;
+import de.lutana.geodataextractor.locator.DefaultStrategy;
+import de.lutana.geodataextractor.locator.Strategy;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -32,6 +34,10 @@ public class Config {
 			folder.deleteOnExit();
 		}
 		return folder;
+	}
+	
+	public static Strategy getStrategy() {
+		return new DefaultStrategy();
 	}
 	
 	public static Parser[] getParsers() {
