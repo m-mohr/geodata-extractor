@@ -21,8 +21,12 @@ public class FigureCollection extends ArrayList<Figure> implements Located {
 	 */
 	public boolean load(File folder, Document document) {
 		boolean success = true;
-		File[] files = folder.listFiles(new FileExtension.Filter("png"));
-		for (File graphicFile : files) {
+		File[] files = folder.listFiles(new FileExtension.Filter("json"));
+		for (File jsonFile : files) {
+			if (jsonFile.getName().equals("document.json")) {
+				continue;
+			}
+			File graphicFile = new File(jsonFile.getParentFile(), FileExtension.replace(jsonFile.getName(), "png"));
 			Figure figure = new Figure(document, graphicFile, null);
 			if (figure.load()) {
 				this.add(figure);
