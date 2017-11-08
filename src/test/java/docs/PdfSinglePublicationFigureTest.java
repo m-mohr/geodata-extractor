@@ -26,7 +26,9 @@ public class PdfSinglePublicationFigureTest extends BasePublicationTest {
 				list.add(new Object[]{figure});
 			}
 		}
-		list.add(new Object[]{document});
+		if (page == null) {
+			list.add(new Object[]{document});
+		}
 		return list;
     }
 	
