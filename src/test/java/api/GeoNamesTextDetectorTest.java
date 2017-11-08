@@ -1,7 +1,7 @@
 package api;
 
-import de.lutana.geodataextractor.detector.GeoNamesTextDetector;
-import de.lutana.geodataextractor.detector.gazetteer.LuceneIndex;
+import de.lutana.geodataextractor.recognizer.GeoNamesTextRecognizer;
+import de.lutana.geodataextractor.recognizer.gazetteer.LuceneIndex;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import de.lutana.geodataextractor.util.GeoTools;
@@ -18,7 +18,7 @@ public class GeoNamesTextDetectorTest {
     @org.junit.runners.Parameterized.Parameter(1)
     public Location expectedLocation;
 	
-	private GeoNamesTextDetector parser;
+	private GeoNamesTextRecognizer parser;
 	private LuceneIndex index;
 
     @org.junit.runners.Parameterized.Parameters
@@ -36,7 +36,7 @@ public class GeoNamesTextDetectorTest {
 	public void setUp() throws IOException, ClassNotFoundException {
 		index = new LuceneIndex();
 		index.load();
-		parser = new GeoNamesTextDetector(index);
+		parser = new GeoNamesTextRecognizer(index);
 	}
 	
 	@org.junit.After
@@ -49,7 +49,7 @@ public class GeoNamesTextDetectorTest {
 	@org.junit.Test
     public void testDetect() {
 		LocationCollection lc = new LocationCollection();
-		parser.detect(this.text, lc, 1);
+		parser.recognize(this.text, lc, 1);
 		Assert.assertFalse(lc.isEmpty());
 		Location result = lc.get(0);
 		double jackard = GeoTools.calcJaccardIndex(expectedLocation, result);

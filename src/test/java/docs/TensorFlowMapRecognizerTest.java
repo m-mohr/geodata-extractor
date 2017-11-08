@@ -2,7 +2,7 @@ package docs;
 
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.strategy.NullStrategy;
-import de.lutana.geodataextractor.recognizor.TensorFlowMapRecognizer;
+import de.lutana.geodataextractor.detector.TensorFlowMapDetector;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
@@ -23,7 +23,7 @@ public class TensorFlowMapRecognizerTest {
 
 	@org.junit.Test
     public void testFigures() throws IOException, URISyntaxException {
-		float result = TensorFlowMapRecognizer.getInstance().recognize(figureObj);
+		float result = TensorFlowMapDetector.getInstance().detect(figureObj);
 		Boolean isMap = (result >= 0.5);
 
 		BasePublicationTest.StudyResults studyResults = BasePublicationTest.getStudyResultsForFigure(figureObj);

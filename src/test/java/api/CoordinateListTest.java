@@ -1,7 +1,7 @@
 package api;
 
-import de.lutana.geodataextractor.detector.coordinates.CoordinateFromText;
-import de.lutana.geodataextractor.detector.coordinates.CoordinateList;
+import de.lutana.geodataextractor.recognizer.coordinates.CoordinateFromText;
+import de.lutana.geodataextractor.recognizer.coordinates.CoordinateList;
 import java.util.Arrays;
 import java.util.Collection;
 import org.junit.Assert;

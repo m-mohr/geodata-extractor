@@ -3,8 +3,8 @@ package docs;
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.strategy.NullStrategy;
-import de.lutana.geodataextractor.recognizor.MapRecognizer;
-import de.lutana.geodataextractor.recognizor.TensorFlowWorldMapRecognizer;
+import de.lutana.geodataextractor.detector.MapDetector;
+import de.lutana.geodataextractor.detector.TensorFlowWorldMapDetector;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
@@ -48,10 +48,10 @@ public class WorldMapRecognizerTest {
 
 		Boolean isWorldMap = false;
 		Float result = null;
-		MapRecognizer mr = new MapRecognizer(false);
-		float isMap = mr.recognize(figureObj);
+		MapDetector mr = new MapDetector(false);
+		float isMap = mr.detect(figureObj);
 		if (isMap >= 0.4) {
-			result = TensorFlowWorldMapRecognizer.getInstance().recognize(figureObj.getGraphic());
+			result = TensorFlowWorldMapDetector.getInstance().detect(figureObj.getGraphic());
 			isWorldMap = (result >= 0.5);
 		}
 		System.out.print((isWorldMap.equals(expected) ? "" : "!! ") + figureObj.getDocument().getFile().getName() + "#" + figureObj.toString() + ": " + (expected == true ? "WORLD" : "OTHER") + " == " + (isWorldMap == true ? "WORLD" : "OTHER"));

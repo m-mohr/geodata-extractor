@@ -1,24 +1,24 @@
 package de.lutana.geodataextractor.strategy;
 
-import de.lutana.geodataextractor.detector.DumbCountryTextDetector;
-import de.lutana.geodataextractor.detector.CoordinateGraphicDetector;
-import de.lutana.geodataextractor.detector.CoordinateTextDetector;
-import de.lutana.geodataextractor.detector.GeoNamesGraphicDetector;
-import de.lutana.geodataextractor.detector.GeoNamesTextDetector;
-import de.lutana.geodataextractor.detector.TextDetector;
-import de.lutana.geodataextractor.detector.WorldMapDetector;
-import de.lutana.geodataextractor.detector.cv.CvGraphic;
-import de.lutana.geodataextractor.detector.gazetteer.LuceneIndex;
+import de.lutana.geodataextractor.recognizer.DumbCountryTextRecognizer;
+import de.lutana.geodataextractor.recognizer.CoordinateGraphicRecognizer;
+import de.lutana.geodataextractor.recognizer.CoordinateTextRecognizer;
+import de.lutana.geodataextractor.recognizer.GeoNamesGraphicRecognizer;
+import de.lutana.geodataextractor.recognizer.GeoNamesTextRecognizer;
+import de.lutana.geodataextractor.recognizer.WorldMapRecognizer;
+import de.lutana.geodataextractor.recognizer.cv.CvGraphic;
+import de.lutana.geodataextractor.recognizer.gazetteer.LuceneIndex;
 import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.FigureCollection;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
-import de.lutana.geodataextractor.recognizor.MapRecognizer;
-import de.lutana.geodataextractor.recognizor.Recognizor;
+import de.lutana.geodataextractor.detector.MapDetector;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import de.lutana.geodataextractor.detector.Detector;
+import de.lutana.geodataextractor.recognizer.TextRecognizer;
 
 /**
  * Default strategy to gather and combine location information.
@@ -30,27 +30,27 @@ import org.slf4j.LoggerFactory;
 public class DefaultStrategy implements Strategy {
 	
 	private LuceneIndex geoNamesIndex;
-	private Recognizor mapRecognizer;
-	private TextDetector geonamesTextDetector;
-	private GeoNamesGraphicDetector geonamesGraphicDetector;
-	private final CoordinateGraphicDetector coordinateGraphicDetector;
-	private final CoordinateTextDetector coordinateTextDetector;
-	private final WorldMapDetector worldMapDetector;
+	private Detector mapRecognizer;
+	private TextRecognizer geonamesTextDetector;
+	private GeoNamesGraphicRecognizer geonamesGraphicDetector;
+	private final CoordinateGraphicRecognizer coordinateGraphicDetector;
+	private final CoordinateTextRecognizer coordinateTextDetector;
+	private final WorldMapRecognizer worldMapDetector;
 	
 	public DefaultStrategy() {
 		Logger logger = LoggerFactory.getLogger(getClass());
 		this.geoNamesIndex = new LuceneIndex();
 		this.geoNamesIndex.load();
-		this.mapRecognizer = new MapRecognizer(false);
-		this.coordinateGraphicDetector = new CoordinateGraphicDetector();
-		this.coordinateTextDetector = new CoordinateTextDetector();
-		this.worldMapDetector = new WorldMapDetector();
-		this.geonamesGraphicDetector = new GeoNamesGraphicDetector(this.geoNamesIndex);
+		this.mapRecognizer = new MapDetector(false);
+		this.coordinateGraphicDetector = new CoordinateGraphicRecognizer();
+		this.coordinateTextDetector = new CoordinateTextRecognizer();
+		this.worldMapDetector = new WorldMapRecognizer();
+		this.geonamesGraphicDetector = new GeoNamesGraphicRecognizer(this.geoNamesIndex);
 		try {
-			this.geonamesTextDetector = new GeoNamesTextDetector(this.geoNamesIndex);
+			this.geonamesTextDetector = new GeoNamesTextRecognizer(this.geoNamesIndex);
 		} catch (IOException | ClassNotFoundException ex) {
 			logger.error("Loading GeoNamesTextDetector failed. Continuing with the DumbCountryTextDetector. " + ex.getMessage());
-			this.geonamesTextDetector = new DumbCountryTextDetector();
+			this.geonamesTextDetector = new DumbCountryTextRecognizer();
 		}
 	}
 
@@ -85,20 +85,20 @@ public class DefaultStrategy implements Strategy {
 			logger.info("# " + figure);
 			
 			// Detect whether it's a map or not
-			float result = this.mapRecognizer.recognize(figure);
+			float result = this.mapRecognizer.detect(figure);
 			boolean isMap = (result >= 0.4); // 0.1 (10%) tolerance
 			logger.debug((isMap ? "Map detected" : "NOT a map") + " (" + result * 100 + "%)");
 
 			if (isMap) {
 				LocationCollection figureLocations = new LocationCollection(globalLocations);
 				this.getLocationsFromText(figure.getCaption(), figureLocations, 0.5);
-				boolean isWorldMap = this.worldMapDetector.detect(cvGraphic, figureLocations, 1);
+				boolean isWorldMap = this.worldMapDetector.recognize(cvGraphic, figureLocations, 1);
 				// Skip the slow stuff, as world map detection is pretty accurate (95% detection rate)
 				if (!isWorldMap) {
-					this.coordinateGraphicDetector.detect(cvGraphic, figureLocations, 1);
+					this.coordinateGraphicDetector.recognize(cvGraphic, figureLocations, 1);
 					if (this.geonamesGraphicDetector != null) {
 						// should be executed last as it uses previous results for outlier detection
-						this.geonamesGraphicDetector.detect(cvGraphic, figureLocations, 1);
+						this.geonamesGraphicDetector.recognize(cvGraphic, figureLocations, 1);
 					}
 				}
 
@@ -127,8 +127,8 @@ public class DefaultStrategy implements Strategy {
 		if (text == null) {
 			return;
 		}
-		this.coordinateTextDetector.detect(text, locations, weight);
-		this.geonamesTextDetector.detect(text, locations, weight);
+		this.coordinateTextDetector.recognize(text, locations, weight);
+		this.geonamesTextDetector.recognize(text, locations, weight);
 	}
 	
 }

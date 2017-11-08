@@ -2,7 +2,7 @@ package docs;
 
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.strategy.NullStrategy;
-import de.lutana.geodataextractor.recognizor.TensorFlowWorldMapRecognizer;
+import de.lutana.geodataextractor.detector.TensorFlowWorldMapDetector;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
@@ -25,7 +25,7 @@ public class TensorFlowWorldMapRecognizerTest {
 		Boolean expected = WorldMapRecognizerTest.getExpectedResult(figureObj);
 		Assert.assertNotNull(expected);
 
-		float result = TensorFlowWorldMapRecognizer.getInstance().recognize(figureObj.getGraphic());
+		float result = TensorFlowWorldMapDetector.getInstance().detect(figureObj.getGraphic());
 		Boolean isWorldMap = (result >= 0.5);
 		System.out.println((isWorldMap.equals(expected) ? "" : "!! ") + figureObj.getDocument().getFile().getName() + "#" + figureObj.toString() + ": " + (expected ? "WORLD" : "OTHER") + " == " + (isWorldMap ? "WORLD" : "OTHER") + "(" + Math.round(result * 100) + "%)");
 		Assert.assertEquals(expected, isWorldMap);

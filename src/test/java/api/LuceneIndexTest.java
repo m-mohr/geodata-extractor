@@ -1,7 +1,7 @@
 package api;
 
-import de.lutana.geodataextractor.detector.gazetteer.GeoName;
-import de.lutana.geodataextractor.detector.gazetteer.LuceneIndex;
+import de.lutana.geodataextractor.recognizer.gazetteer.GeoName;
+import de.lutana.geodataextractor.recognizer.gazetteer.LuceneIndex;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;

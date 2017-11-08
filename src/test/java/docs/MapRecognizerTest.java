@@ -2,7 +2,7 @@ package docs;
 
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.strategy.NullStrategy;
-import de.lutana.geodataextractor.recognizor.MapRecognizer;
+import de.lutana.geodataextractor.detector.MapDetector;
 import docs.BasePublicationTest.StudyResults;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -24,8 +24,8 @@ public class MapRecognizerTest {
 
 	@org.junit.Test
     public void testFigures() throws IOException, URISyntaxException {
-		MapRecognizer m = new MapRecognizer(false);
-		float result = m.recognize(figureObj);
+		MapDetector m = new MapDetector(false);
+		float result = m.detect(figureObj);
 		Boolean isMap = (result >= 0.5);
 
 		StudyResults studyResults = BasePublicationTest.getStudyResultsForFigure(figureObj);

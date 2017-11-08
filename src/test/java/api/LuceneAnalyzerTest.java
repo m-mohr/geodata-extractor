@@ -1,6 +1,6 @@
 package api;
 
-import de.lutana.geodataextractor.detector.gazetteer.LuceneAnalyzer;
+import de.lutana.geodataextractor.recognizer.gazetteer.LuceneAnalyzer;
 import java.util.List;
 import org.junit.Assert;
 
