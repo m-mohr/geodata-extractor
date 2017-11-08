@@ -2,7 +2,7 @@ package docs;
 
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.Location;
-import de.lutana.geodataextractor.locator.NullStrategy;
+import de.lutana.geodataextractor.strategy.NullStrategy;
 import de.lutana.geodataextractor.recognizor.MapRecognizer;
 import de.lutana.geodataextractor.recognizor.TensorFlowWorldMapRecognizer;
 import java.io.IOException;

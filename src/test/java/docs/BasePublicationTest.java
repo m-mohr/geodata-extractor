@@ -10,7 +10,7 @@ import de.lutana.geodataextractor.entity.FigureCollection;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import de.lutana.geodataextractor.entity.locationresolver.JackardIndexResolver;
-import de.lutana.geodataextractor.locator.Strategy;
+import de.lutana.geodataextractor.strategy.Strategy;
 import de.lutana.geodataextractor.util.FileExtension;
 import de.lutana.geodataextractor.util.GeoTools;
 import java.io.File;

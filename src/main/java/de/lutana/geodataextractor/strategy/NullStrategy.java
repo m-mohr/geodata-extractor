@@ -1,4 +1,4 @@
-package de.lutana.geodataextractor.locator;
+package de.lutana.geodataextractor.strategy;
 
 import de.lutana.geodataextractor.entity.Document;
 

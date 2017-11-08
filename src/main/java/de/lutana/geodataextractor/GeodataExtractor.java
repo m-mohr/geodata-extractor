@@ -1,7 +1,7 @@
 package de.lutana.geodataextractor;
 
-import de.lutana.geodataextractor.locator.DefaultStrategy;
-import de.lutana.geodataextractor.locator.Strategy;
+import de.lutana.geodataextractor.strategy.DefaultStrategy;
+import de.lutana.geodataextractor.strategy.Strategy;
 import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.fileparser.Parser;
 import de.lutana.geodataextractor.fileparser.ParserFactory;
@@ -27,7 +27,7 @@ public class GeodataExtractor {
 	/**
 	 * Creates an instance using the DefaultStrategy.
 	 * 
-	 * @see de.lutana.geodataextractor.locator.DefaultStrategy
+	 * @see de.lutana.geodataextractor.strategy.DefaultStrategy
 	 */
 	public GeodataExtractor() {
 		this(Config.getStrategy());

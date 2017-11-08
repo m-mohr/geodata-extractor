@@ -3,7 +3,7 @@ package de.lutana.geodataextractor;
 import com.beust.jcommander.IStringConverter;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.JCommander;
-import de.lutana.geodataextractor.locator.Strategy;
+import de.lutana.geodataextractor.strategy.Strategy;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
