@@ -12,7 +12,7 @@ import org.junit.Assume;
 
 
 @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
-public class MapRecognizerTest {
+public class MapDetectorTest {
 
     @org.junit.runners.Parameterized.Parameter(0)
     public Figure figureObj;

@@ -22,6 +22,7 @@ public class MapDetector implements Detector {
 	
 	private float defaultProbability;
 	private TensorFlowMapDetector tfMapDetector;
+	private float patternOffset = 0.5f;
 	
 	public MapDetector(boolean rejectByDefault) {
 		this.defaultProbability = rejectByDefault ? 0 : 1;
@@ -43,13 +44,13 @@ public class MapDetector implements Detector {
 		// Check whether they are speaking about map(s) in the caption
 		Matcher m = MAP_PATTERN.matcher(f.getCaption());
 		if (m.find()) {
-			result = Math.min(1, result + 0.5f);
+			result = Math.min(1, result + this.patternOffset);
 		}
 
 		// Check whether they are speaking about some non-map stuff in the caption
 		Matcher n = NOMAP_PATTERN.matcher(f.getCaption());
 		if (n.find()) {
-			result = Math.max(0, result - 0.5f);
+			result = Math.max(0, result - this.patternOffset);
 		}
 
 //		if (this.containsTable(cachedGraphic)) {

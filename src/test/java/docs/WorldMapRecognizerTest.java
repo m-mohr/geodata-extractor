@@ -50,7 +50,7 @@ public class WorldMapRecognizerTest {
 		Float result = null;
 		MapDetector mr = new MapDetector(false);
 		float isMap = mr.detect(figureObj);
-		if (isMap >= 0.4) {
+		if (isMap >= 0.5) {
 			result = TensorFlowWorldMapDetector.getInstance().detect(figureObj.getGraphic());
 			isWorldMap = (result >= 0.5);
 		}

@@ -11,7 +11,7 @@ import org.junit.Assume;
 
 
 @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
-public class TensorFlowMapRecognizerTest {
+public class TensorFlowMapDetectorTest {
 
     @org.junit.runners.Parameterized.Parameter(0)
     public Figure figureObj;
