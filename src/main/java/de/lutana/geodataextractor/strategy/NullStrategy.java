@@ -9,7 +9,7 @@ import de.lutana.geodataextractor.entity.Document;
  * 
  * @author Matthias
  */
-public class NullStrategy implements Strategy {
+public class NullStrategy extends AbstractStrategy {
 
 	/**
 	 * Doesn't perform any task.
@@ -22,8 +22,5 @@ public class NullStrategy implements Strategy {
 	public boolean execute(Document document, Integer page) {
 		return true;
 	}
-
-	@Override
-	public void shutdown() {}
 	
 }
