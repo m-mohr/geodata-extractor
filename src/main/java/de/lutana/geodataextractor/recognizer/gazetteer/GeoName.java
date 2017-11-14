@@ -2,6 +2,7 @@ package de.lutana.geodataextractor.recognizer.gazetteer;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import de.lutana.geodataextractor.entity.Location;
+import org.slf4j.LoggerFactory;
 
 public class GeoName {
 
@@ -299,6 +300,9 @@ public class GeoName {
 	 * @param location the location to set
 	 */
 	public void setLocation(Location location) {
+		if (!location.isValid()) {
+			LoggerFactory.getLogger(getClass()).error("Ignored invalid location for geoname: " + this.toString());
+		}
 		this.location = location;
 	}
 	
