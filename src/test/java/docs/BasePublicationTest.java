@@ -10,6 +10,7 @@ import de.lutana.geodataextractor.entity.FigureCollection;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import de.lutana.geodataextractor.entity.locationresolver.JackardIndexResolver;
+import de.lutana.geodataextractor.strategy.NullStrategy;
 import de.lutana.geodataextractor.strategy.Strategy;
 import de.lutana.geodataextractor.util.FileExtension;
 import de.lutana.geodataextractor.util.GeoTools;
@@ -73,7 +74,7 @@ public abstract class BasePublicationTest {
 		Double jaccardIndex = GeoTools.calcJaccardIndex(expected, result);
 		String info = " - " + testName + ": Expected " + expected + "; Found " + result;
 		if (!isMap) {
-			System.out.println("NOMAP" + info);
+			System.out.println("NOMAP - " + testName);
 		}
 		else if (expected == null) {
 			System.out.println("NOLOC" + info);
@@ -170,6 +171,62 @@ public abstract class BasePublicationTest {
 		return new File(metaFolder, FileExtension.replace(figure.getGraphicFile().getName(), "json"));
 	}
 	
+	public static Collection<Object[]> getInconsistencies() {
+		Collection<Object[]> figures = getAllFiguresWithStrategy(new NullStrategy());
+		Collection<Object[]> list = new ArrayList<>();
+		for (Object[] data : figures) {
+			Figure figure = (Figure) data[0];
+			StudyResults sr = BasePublicationTest.getStudyResultsForFigure(figure);
+			List<String> where = new ArrayList<>();
+			try {
+				sr.isMap();
+			} catch(InconsistencyException e) {
+				where.add("Map");
+			}
+			try {
+				sr.isFigure();
+			} catch(InconsistencyException e) {
+				where.add("Figure");
+			}
+			try {
+				sr.getLocation();
+			} catch(InconsistencyException e) {
+				where.add("Location");
+			}
+			list.add(new Object[]{figure, where});
+		}
+		return list;
+	}
+	
+	public static Collection<Object[]> getAllMapsWithStrategy(Strategy strategy) {
+		return getAllMapsWithStrategy(strategy, false);
+	}
+	
+	public static Collection<Object[]> getAllMapsWithStrategy(Strategy strategy, boolean onlyWithCoordinates) {
+		GeodataExtractor extractor = new GeodataExtractor(strategy);
+		extractor.enableCaching(true);
+		Collection<Object[]> list = new ArrayList<>();
+		File[] files = BasePublicationTest.DOC_FOLDER.listFiles(new FileExtension.Filter("pdf"));
+		for (File file : files) {
+			Document document = extractor.runSingle(file);
+			FigureCollection figures = document.getFigures();
+			for (Figure figure : figures) {
+				StudyResults sr = BasePublicationTest.getStudyResultsForFigure(figure);
+				try {
+					boolean isMap = sr.isMap();
+					if (!isMap) {
+						continue;
+					}
+					else if (onlyWithCoordinates && !sr.hasCoordinates()) {
+						continue;
+					}
+					list.add(new Object[]{figure});
+				} catch(InconsistencyException e) {}
+			}
+		}
+		return list;
+	}
+	
 	public static Collection<Object[]> getAllFiguresWithStrategy(Strategy strategy) {
 		GeodataExtractor extractor = new GeodataExtractor(strategy);
 		extractor.enableCaching(true);
@@ -201,8 +258,13 @@ public abstract class BasePublicationTest {
 		public String document;
 		public String graphic;
 		public List<StudyItem> study;
+		public boolean hasCoordinates;
 
 		public StudyResults() {}
+		
+		public boolean hasCoordinates() {
+			return this.hasCoordinates;
+		}
 		
 		public boolean isMap() throws InconsistencyException {
 			Boolean value = null;
@@ -233,14 +295,21 @@ public abstract class BasePublicationTest {
 		public Location getLocation() throws InconsistencyException {
 			LocationCollection collection = new LocationCollection();
 			if (study != null) {
+				Location lastLocation = null;
 				for(StudyItem item : study) {
 					Location location = item.getLocation();
 					if (location != null) {
 						collection.add(location);
+						// Consistency check
+						if (lastLocation != null) {
+							if (GeoTools.calcJaccardIndex(lastLocation, location) < 0.5) {
+								throw new InconsistencyException(this, "Inconsistency in getLocation");
+							}
+						}
+						lastLocation = location;
 					}
 				}
 			}
-			// ToDo: Consistency check
 			return collection.getMostLikelyLocation();
 		}
 	}
