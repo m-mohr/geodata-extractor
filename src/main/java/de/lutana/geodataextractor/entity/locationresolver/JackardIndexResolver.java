@@ -7,6 +7,8 @@ import org.apache.commons.math3.util.Precision;
 import org.slf4j.LoggerFactory;
 
 public class JackardIndexResolver extends SmallSetResolver {
+	
+	private static final double MINIMUM_FOR_OVERLAPPING_GEOMETRIES = 0.2;
 
 	@Override
 	public Location resolve(LocationCollection locations) {
@@ -31,11 +33,14 @@ public class JackardIndexResolver extends SmallSetResolver {
 				// If they are contained in the area slightly increase the score otherwirse decrease it.
 				double l2Weight;
 				if (l2.isPoint() || l2.isLine()) {
-					l2Weight = l.contains(l2) ? 0.2 : 0.0;
+					l2Weight = l.contains(l2) ? MINIMUM_FOR_OVERLAPPING_GEOMETRIES : 0.0;
 				}
 				else {
 					// The more the rectangles have in common the better - "commonness" based on jackard
 					l2Weight = GeoTools.calcJaccardIndex(l, l2);
+					if (l2Weight < MINIMUM_FOR_OVERLAPPING_GEOMETRIES && l.contains(l2)) {
+						l2Weight = MINIMUM_FOR_OVERLAPPING_GEOMETRIES;
+					}
 				}
 				l2Weight /= count - 1;
 				otherScores += l2Weight * l2.getScore();
