@@ -178,6 +178,9 @@ public abstract class BasePublicationTest {
 			Figure figure = (Figure) data[0];
 			StudyResults sr = BasePublicationTest.getStudyResultsForFigure(figure);
 			List<String> where = new ArrayList<>();
+			if (sr.getParticipants() < 2) {
+				where.add("# Participants");
+			}
 			try {
 				sr.isMap();
 			} catch(InconsistencyException e) {
@@ -264,6 +267,10 @@ public abstract class BasePublicationTest {
 		
 		public boolean hasCoordinates() {
 			return this.hasCoordinates;
+		}
+		
+		public int getParticipants() {
+			return this.study.size();
 		}
 		
 		public boolean isMap() throws InconsistencyException {
