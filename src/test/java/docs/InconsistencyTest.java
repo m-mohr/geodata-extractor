@@ -20,7 +20,7 @@ public class InconsistencyTest {
 
 	@org.junit.Test
     public void testDocuments() {
-		assertTrue("Inconsistency " + where + " for figure " + figureObj.getGraphicFile().getAbsoluteFile(), where.isEmpty());
+		assertTrue(where.toString(), where.isEmpty());
     }
 	
 }

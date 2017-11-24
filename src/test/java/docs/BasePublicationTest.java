@@ -184,17 +184,17 @@ public abstract class BasePublicationTest {
 			try {
 				sr.isMap();
 			} catch(InconsistencyException e) {
-				where.add("Map");
+				where.add(e.toString());
 			}
 			try {
 				sr.isFigure();
 			} catch(InconsistencyException e) {
-				where.add("Figure");
+				where.add(e.toString());
 			}
 			try {
 				sr.getLocation();
 			} catch(InconsistencyException e) {
-				where.add("Location");
+				where.add(e.toString());
 			}
 			list.add(new Object[]{figure, where});
 		}
@@ -254,18 +254,28 @@ public abstract class BasePublicationTest {
 			this.container = container;
 		}
 		
+		@Override
+		public String toString() {
+			return super.getMessage() + "[id: " + container.fid + ", file: " + container.graphic + "]";
+		}
+		
 	}
 	
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class StudyResults {
+		public Integer fid;
 		public String document;
 		public String graphic;
 		public List<StudyItem> study;
-		public boolean hasCoordinates;
+		public Boolean hasCoordinates;
 
 		public StudyResults() {}
 		
-		public boolean hasCoordinates() {
+		public Integer getFigureId() {
+			return this.fid;
+		}
+		
+		public Boolean hasCoordinates() {
 			return this.hasCoordinates;
 		}
 		
@@ -274,48 +284,89 @@ public abstract class BasePublicationTest {
 		}
 		
 		public boolean isMap() throws InconsistencyException {
-			Boolean value = null;
+			int trueCount = 0;
+			int falseCount = 0;
 			for(StudyItem item : study) {
-				if (value == null) {
-					value = item.isMap();
+				if (item.isMap()) {
+					trueCount++;
 				}
-				else if(value != item.isMap()) {
-					throw new InconsistencyException(this, "Inconsistency in isMap");
+				else {
+					falseCount++;
 				}
+			}
+			Boolean value = this.getDominantBoolean(trueCount, falseCount);
+			if(value == null) {
+				throw new InconsistencyException(this, "Inconsistency in isMap");
 			}
 			return value;
 		}
 		
 		public boolean isFigure() throws InconsistencyException {
-			Boolean value = null;
+			int trueCount = 0;
+			int falseCount = 0;
 			for(StudyItem item : study) {
-				if (value == null) {
-					value = item.isFigure();
+				if (item.isFigure()) {
+					trueCount++;
 				}
-				else if(value != item.isFigure()) {
-					throw new InconsistencyException(this, "Inconsistency in isValidFigure");
+				else {
+					falseCount++;
 				}
+			}
+			Boolean value = this.getDominantBoolean(trueCount, falseCount);
+			if(value == null) {
+				throw new InconsistencyException(this, "Inconsistency in isValidFigure");
 			}
 			return value;
 		}
+		
+		protected Boolean getDominantBoolean(int trueCount, int falseCount) {
+			double parts = 100d / (trueCount + falseCount);
+			double truePercent = parts * trueCount;
+			double falsePercent = parts * falseCount;
+			if(Math.max(truePercent, falsePercent) > 66) {
+				return (truePercent > falsePercent);
+			}
+			return null;
+		}
 
 		public Location getLocation() throws InconsistencyException {
+			if (study == null) {
+				return null;
+			}
 			LocationCollection collection = new LocationCollection();
-			if (study != null) {
-				Location lastLocation = null;
-				for(StudyItem item : study) {
-					Location location = item.getLocation();
-					if (location != null) {
-						collection.add(location);
-						// Consistency check
-						if (lastLocation != null) {
-							if (GeoTools.calcJaccardIndex(lastLocation, location) < 0.5) {
-								throw new InconsistencyException(this, "Inconsistency in getLocation");
-							}
-						}
-						lastLocation = location;
+			int[] inconsistenciesSub = new int[study.size()];
+			int inconsistencies = 0;
+			int allowedInconsistencies = (int) (0.66 * study.size());
+			for(int i = 0; i < study.size(); i++) {
+				StudyItem item = study.get(i);
+				Location location = item.getLocation();
+				if (location == null) {
+					continue;
+				}
+				for(StudyItem item2 : study) {
+					if (item == item2) {
+						continue;
+					}
+					Location location2 = item2.getLocation();
+					if (location2 == null) {
+						continue;
+					}
+
+					double jackard = GeoTools.calcJaccardIndex(location, location2);
+					if (jackard < 0.5) {
+						inconsistenciesSub[i]++;
 					}
 				}
+
+				if (inconsistenciesSub[i] > allowedInconsistencies) {
+					inconsistencies++;
+				}
+				else {
+					collection.add(location);
+				}
+			}
+			if (inconsistencies > allowedInconsistencies) {
+				throw new InconsistencyException(this, "Inconsistency in getLocation");
 			}
 			return collection.getMostLikelyLocation();
 		}
