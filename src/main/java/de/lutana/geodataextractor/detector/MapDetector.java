@@ -6,6 +6,7 @@ import de.lutana.geodataextractor.recognizer.cv.MorphologicalTableDetector;
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.util.GeoTools;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -13,7 +14,7 @@ import java.util.regex.Pattern;
 import org.opencv.core.Rect;
 import org.slf4j.LoggerFactory;
 
-public class MapDetector implements Detector {
+public class MapDetector implements GraphicDetector {
 
 	// ToDo: Compare with and without "plot(ted)"
 	// ToDo: check rvi|ndvi|vegetation\\s+index|
@@ -33,6 +34,11 @@ public class MapDetector implements Detector {
 		}
 	}
 	
+	public void preload() throws URISyntaxException, IOException {
+		tfMapDetector.preload();
+	}
+	
+	@Override
 	public float detect(Figure f, CvGraphic cachedGraphic) {
 		Float result = null;
 
@@ -62,7 +68,7 @@ public class MapDetector implements Detector {
 
 	@Override
 	public float detect(Figure f) {
-		return this.detect(f, new CvGraphic(f.getGraphic()));
+		return this.detect(f, new CvGraphic(f));
 	}
 	
 	protected boolean containsTable(CvGraphic graphic) {

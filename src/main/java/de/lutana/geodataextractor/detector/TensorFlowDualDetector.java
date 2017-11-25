@@ -2,6 +2,8 @@ package de.lutana.geodataextractor.detector;
 
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.Graphic;
+import de.lutana.geodataextractor.recognizer.cv.CvGraphic;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -11,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import javax.imageio.ImageIO;
 import org.tensorflow.Graph;
 import org.tensorflow.Session;
 import org.tensorflow.Tensor;
@@ -21,7 +24,7 @@ import org.tensorflow.Tensor;
  * @author Matthias Mohr
  * @see https://github.com/emara-geek/object-recognition-tensorflow
  */
-public abstract class TensorFlowDualDetector implements Detector {
+public abstract class TensorFlowDualDetector implements GraphicDetector {
 	public static final String END_NODE = "final_result";
 
 	protected Path graphFile;
@@ -50,7 +53,7 @@ public abstract class TensorFlowDualDetector implements Detector {
 		this(new File(graphFile.toURI()), new File(labelFile.toURI()), endNode, className);
 	}
 
-	protected void lazyLoad() throws IOException {
+	public void preload() throws IOException {
 		if (labels == null || graph == null) {
 			labels = Files.readAllLines(labelFile, Charset.forName("UTF-8"));
 			graph = Files.readAllBytes(graphFile);
@@ -61,20 +64,32 @@ public abstract class TensorFlowDualDetector implements Detector {
 	public float detect(Figure f) {
 		try {
 			return this.detect(f.getGraphic());
-		} catch (IOException ex) {
-			ex.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+			return -1;
+		}
+	}
+
+	@Override
+	public float detect(Figure f, CvGraphic g) {
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			// JPEG is faster than PNG, but destroyes transparency
+			ImageIO.write(g.getBufferedImage(), "jpg", baos);
+			return this.detect(baos.toByteArray());
+		} catch (IOException e) {
+			e.printStackTrace();
 			return -1;
 		}
 	}
 	
 	public float detect(Graphic g) throws IOException {
-		// ToDo: Don't read the file again, get it from memory using CvGraphic somehow
 		byte[] imgData = Files.readAllBytes(g.getFile().toPath());
 		return this.detect(imgData);
 	}
 	
 	public float detect(byte[] imgData) throws IOException {
-		this.lazyLoad();
+		this.preload();
 		try (Tensor image = Tensor.create(imgData)) {
 			float[] labelProbabilities = this.executeInceptionGraph(graph, image);
 			int indexMap = labels.indexOf(this.className);

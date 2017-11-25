@@ -29,8 +29,13 @@ public abstract class BasePublicationTest {
 	public static final Double JACCARD_INDEX_THRESHOLD = 0.001;
 	public static final File DOC_FOLDER = new File("./test-docs/");
 	
+	private static int benchmarkCount = 0;
+	private static long benchmarkTimeSum = 0;
 	private static int testCount = 0;
-	private static long testTimeSum = 0;
+	private static int testsTruePos = 0;
+	private static int testsTrueNeg = 0;
+	private static int testsFalsePos = 0;
+	private static int testsFalseNeg = 0;
 
 	private static GeodataExtractor instance;
 
@@ -138,23 +143,69 @@ public abstract class BasePublicationTest {
 		File documentFile = getDocumentFile(documentPath);
 		long timeStart = System.currentTimeMillis();
 		Document doc = instance.runSingle(documentFile, page);
-		testCount++;
-		testTimeSum += System.currentTimeMillis() - timeStart;
+		addBenchmark(System.currentTimeMillis() - timeStart);
 		return doc;
 	}
 	
-	public static void resetBenchmark() {
+	public static void resetTestEnv() {
+		benchmarkCount = 0;
+		benchmarkTimeSum = 0;
 		testCount = 0;
-		testTimeSum = 0;
+		testsTruePos = 0;
+		testsTrueNeg = 0;
+		testsFalsePos = 0;
+		testsFalseNeg = 0;
 	}
 	
-	public static String getBenchmark() {
-		if (testCount == 0) {
-			return "No tests benchmarked.";
+	public static void addBenchmark(double time) {
+		benchmarkCount++;
+		benchmarkTimeSum += time;
+	}
+	
+	public static void addTestResults(boolean expected, boolean result) {
+		testCount++;
+		if (expected) {
+			if (result) {
+				testsTruePos++;
+			}
+			else {
+				testsFalsePos++;
+			}
 		}
-		return "Number of tests: " + testCount + System.lineSeparator() +
-				"Runtime: " + (testTimeSum / 1000) + " seconds" + System.lineSeparator() + 
-				"Avg. runtime per test: " + (testTimeSum / (testCount * 1000)) + "seconds";
+		else {
+			if (result) {
+				testsFalseNeg++;
+			}
+			else {
+				testsTrueNeg++;
+			}
+		}
+	}
+
+	public static String getTestResults() {
+		if (testCount == 0 && benchmarkCount == 0) {
+			return "No tests evaluated." + System.lineSeparator();
+		}
+		String data = "";
+		if (testCount > 0) {
+			double precision = (double) testsTruePos / (double) (testsTruePos + testsFalsePos);
+			double recall = (double) testsTruePos / (double) (testsTruePos + testsFalseNeg);
+			double f1 = 2d * ( precision * recall ) / (precision + recall);
+			double accuracy = (double) (testsTruePos + testsTrueNeg) / (double) testCount;
+			double tnr = (double) testsTrueNeg / (double) (testsTrueNeg + testsFalsePos);
+			data += "Number of tests: " + testCount + " (TP: " + testsTruePos + ", TN: " + testsTrueNeg + ", FP: " + testsFalsePos + ", FN: " + testsFalseNeg + ")" + System.lineSeparator() +
+				"Accuracy: " + accuracy + System.lineSeparator() +
+				"True negative rate: " + tnr + System.lineSeparator() +
+				"Precision: " + precision + System.lineSeparator() +
+				"Recall: " + recall + System.lineSeparator() +
+				"F1-Score: " + f1 + System.lineSeparator();
+		}
+		if (benchmarkCount > 0) {
+			data += "Number of runs: " + benchmarkCount + System.lineSeparator() +
+				"Total runtime: " + ((double) benchmarkTimeSum / 1000) + " seconds" + System.lineSeparator() + 
+				"Avg. runtime per test: " + ((double) benchmarkTimeSum / (double) (benchmarkCount * 1000)) + " seconds" + System.lineSeparator();
+		}
+		return data;
 	}
 
 	public static File getDocumentFile(String documentFile) {
@@ -368,7 +419,7 @@ public abstract class BasePublicationTest {
 			if (inconsistencies > allowedInconsistencies) {
 				throw new InconsistencyException(this, "Inconsistency in getLocation");
 			}
-			return collection.getMostLikelyLocation();
+			return collection.resolveLocation(new JackardIndexResolver());
 		}
 	}
 	

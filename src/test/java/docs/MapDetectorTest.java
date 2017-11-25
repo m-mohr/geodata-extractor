@@ -12,10 +12,12 @@ import org.junit.Assume;
 
 
 @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
-public class MapDetectorTest {
+public class MapDetectorTest extends BasePublicationTest {
 
     @org.junit.runners.Parameterized.Parameter(0)
     public Figure figureObj;
+	
+	private static MapDetector detector;
 
     @org.junit.runners.Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -24,8 +26,9 @@ public class MapDetectorTest {
 
 	@org.junit.Test
     public void testFigures() throws IOException, URISyntaxException {
-		MapDetector m = new MapDetector(false);
-		float result = m.detect(figureObj);
+		long timeStart = System.currentTimeMillis();
+		float result = detector.detect(figureObj);
+		addBenchmark(System.currentTimeMillis() - timeStart);
 		Boolean isMap = (result >= 0.5);
 
 		StudyResults studyResults = BasePublicationTest.getStudyResultsForFigure(figureObj);
@@ -38,7 +41,19 @@ public class MapDetectorTest {
 		}
 
 		System.out.println((isMap.equals(expected) ? "" : "!! ") + figureObj.getDocument().getFile().getName() + "#" + figureObj.toString() + ": " + (expected ? "MAP" : "NOT a map") + " == " + (isMap ? "MAP" : "NOT a map") + "(" + Math.round(result * 100) + "%)");
+		addTestResults(expected, isMap);
 		Assert.assertEquals(expected, isMap);
+    }
+	
+    @org.junit.BeforeClass
+    public static void initTests() {
+		detector = new MapDetector(false);
+        BasePublicationTest.resetTestEnv();
+    }
+	
+    @org.junit.AfterClass
+    public static void finalizeTests() {
+        System.out.println(BasePublicationTest.getTestResults());
     }
 	
 }

@@ -11,19 +11,22 @@ import org.junit.Assume;
 
 
 @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
-public class TensorFlowMapDetectorTest {
+public class TensorFlowMapDetectorTest extends BasePublicationTest {
 
     @org.junit.runners.Parameterized.Parameter(0)
     public Figure figureObj;
 
     @org.junit.runners.Parameterized.Parameters
-    public static Collection<Object[]> data() {
+    public static Collection<Object[]> data() throws IOException, URISyntaxException {
+		TensorFlowMapDetector.getInstance().preload();
 		return BasePublicationTest.getAllFiguresWithStrategy(new NullStrategy());
     }
 
 	@org.junit.Test
     public void testFigures() throws IOException, URISyntaxException {
+		long timeStart = System.currentTimeMillis();
 		float result = TensorFlowMapDetector.getInstance().detect(figureObj);
+		addBenchmark(System.currentTimeMillis() - timeStart);
 		Boolean isMap = (result >= 0.5);
 
 		BasePublicationTest.StudyResults studyResults = BasePublicationTest.getStudyResultsForFigure(figureObj);
@@ -36,7 +39,18 @@ public class TensorFlowMapDetectorTest {
 		}
 		
 		System.out.println((isMap.equals(expected) ? "" : "!! ") + figureObj.getDocument().getFile().getName() + "#" + figureObj.toString() + ": " + (expected ? "MAP" : "NOT a map") + " == " + (isMap ? "MAP" : "NOT a map") + "(" + Math.round(result * 100) + "%)");
+		addTestResults(expected, isMap);
 		Assert.assertEquals(expected, isMap);
+    }
+	
+    @org.junit.BeforeClass
+    public static void initTests() {
+        BasePublicationTest.resetTestEnv();
+    }
+	
+    @org.junit.AfterClass
+    public static void finalizeTests() {
+        System.out.println(BasePublicationTest.getTestResults());
     }
 	
 }

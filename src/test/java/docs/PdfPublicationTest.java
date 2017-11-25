@@ -28,13 +28,13 @@ public class PdfPublicationTest extends BasePublicationTest {
     }
 	
     @org.junit.BeforeClass
-    public static void benachmarkInit() {
-        BasePublicationTest.resetBenchmark();
+    public static void initTests() {
+        BasePublicationTest.resetTestEnv();
     }
 	
     @org.junit.AfterClass
-    public static void benchmarkFinalize() {
-        System.out.println(BasePublicationTest.getBenchmark());
+    public static void finalizeTests() {
+        System.out.println(BasePublicationTest.getTestResults());
     }
 	
 }

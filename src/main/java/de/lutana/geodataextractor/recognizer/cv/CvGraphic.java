@@ -1,5 +1,6 @@
 package de.lutana.geodataextractor.recognizer.cv;
 
+import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.Graphic;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -18,6 +19,7 @@ public class CvGraphic extends Graphic {
 	private BufferedImage bImage = null;
 	private FImage fImage = null;
 	private Mat mat = null;
+	private Figure figure = null;
 
 	private List<LineCandidate> textLines = null;
 	private Integer backgroundBrightness = null;
@@ -26,8 +28,9 @@ public class CvGraphic extends Graphic {
 		super(file);
 	}
 	
-	public CvGraphic(Graphic file) {
-		super(file.getFile());
+	public CvGraphic(Figure figure) {
+		super(figure.getGraphicFile());
+		this.figure = figure;
 	}
 	
 	/**
@@ -37,6 +40,14 @@ public class CvGraphic extends Graphic {
 		this.bImage = null;
 		this.textLines = null;
 		this.backgroundBrightness = null;
+	}
+	
+	public Figure getFigure() {
+		return this.figure;
+	}
+	
+	public void setFigure(Figure figure) {
+		this.figure = figure;
 	}
 	
 	public BufferedImage getBufferedImage() {

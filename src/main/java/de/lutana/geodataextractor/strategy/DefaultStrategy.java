@@ -17,7 +17,9 @@ import de.lutana.geodataextractor.detector.MapDetector;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import de.lutana.geodataextractor.detector.Detector;
+import de.lutana.geodataextractor.detector.GraphicDetector;
+import de.lutana.geodataextractor.entity.locationresolver.LocationResolver;
+import de.lutana.geodataextractor.entity.locationresolver.ScoredUnionResolver;
 import de.lutana.geodataextractor.recognizer.TextRecognizer;
 
 /**
@@ -30,7 +32,7 @@ import de.lutana.geodataextractor.recognizer.TextRecognizer;
 public class DefaultStrategy implements Strategy {
 	
 	private LuceneIndex geoNamesIndex;
-	private Detector mapRecognizer;
+	private GraphicDetector mapRecognizer;
 	private TextRecognizer geonamesTextDetector;
 	private GeoNamesGraphicRecognizer geonamesGraphicDetector;
 	private final CoordinateGraphicRecognizer coordinateGraphicDetector;
@@ -79,13 +81,13 @@ public class DefaultStrategy implements Strategy {
 			if (page != null && !figure.getPage().equals(page)) {
 				continue;
 			}
-			CvGraphic cvGraphic = new CvGraphic(figure.getGraphic());
+			CvGraphic cvGraphic = new CvGraphic(figure);
 	
 			Logger logger = LoggerFactory.getLogger(this.getClass());
 			logger.info("# " + figure);
 			
 			// Detect whether it's a map or not
-			float result = this.mapRecognizer.detect(figure);
+			float result = this.mapRecognizer.detect(figure, cvGraphic);
 			boolean isMap = (result >= 0.4); // 0.1 (10%) tolerance
 			logger.debug((isMap ? "Map detected" : "NOT a map") + " (" + result * 100 + "%)");
 
