@@ -18,8 +18,6 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import de.lutana.geodataextractor.detector.GraphicDetector;
-import de.lutana.geodataextractor.entity.locationresolver.LocationResolver;
-import de.lutana.geodataextractor.entity.locationresolver.ScoredUnionResolver;
 import de.lutana.geodataextractor.recognizer.TextRecognizer;
 
 /**
@@ -95,7 +93,7 @@ public class DefaultStrategy implements Strategy {
 				LocationCollection figureLocations = new LocationCollection(globalLocations);
 				this.getLocationsFromText(figure.getCaption(), figureLocations, 0.5);
 				boolean isWorldMap = this.worldMapDetector.recognize(cvGraphic, figureLocations, 1);
-				// Skip the slow stuff, as world map detection is pretty accurate (95% detection rate)
+				// Skip the slow stuff, as world map detection is pretty accurate (97% detection rate)
 				if (!isWorldMap) {
 					this.coordinateGraphicDetector.recognize(cvGraphic, figureLocations, 1);
 					if (this.geonamesGraphicDetector != null) {

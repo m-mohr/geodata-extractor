@@ -268,10 +268,11 @@ public abstract class BasePublicationTest {
 				StudyResults sr = BasePublicationTest.getStudyResultsForFigure(figure);
 				try {
 					boolean isMap = sr.isMap();
+					Boolean hasCoords = sr.hasCoordinates();
 					if (!isMap) {
 						continue;
 					}
-					else if (onlyWithCoordinates && !sr.hasCoordinates()) {
+					else if (onlyWithCoordinates && (hasCoords == null || hasCoords == false)) {
 						continue;
 					}
 					list.add(new Object[]{figure});
@@ -318,7 +319,7 @@ public abstract class BasePublicationTest {
 		public String document;
 		public String graphic;
 		public List<StudyItem> study;
-		public Boolean hasCoordinates;
+		public Boolean coordinates;
 
 		public StudyResults() {}
 		
@@ -327,7 +328,7 @@ public abstract class BasePublicationTest {
 		}
 		
 		public Boolean hasCoordinates() {
-			return this.hasCoordinates;
+			return this.coordinates;
 		}
 		
 		public int getParticipants() {
