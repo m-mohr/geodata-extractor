@@ -36,6 +36,7 @@ public abstract class BasePublicationTest {
 	private static int testsTrueNeg = 0;
 	private static int testsFalsePos = 0;
 	private static int testsFalseNeg = 0;
+	private static List<Double> results;
 
 	private static GeodataExtractor instance;
 
@@ -83,11 +84,13 @@ public abstract class BasePublicationTest {
 		}
 		else if (expected == null) {
 			System.out.println("NOLOC" + info);
-			Assert.assertNull("Found location for a non-map", result);
+			addTestResult(0);
+			Assert.assertNull("No location found for a map", result);
 		}
 		else {
 			boolean success = (jaccardIndex > JACCARD_INDEX_THRESHOLD);
 			Double formatted = Math.round(jaccardIndex * 100d) / 100d;
+			addTestResult(jaccardIndex);
 			System.out.println((success ? "FOUND" : "ERROR") + info + " - Jaccard Index: " + formatted);
 			if (result != null) {
 				try {
@@ -155,11 +158,16 @@ public abstract class BasePublicationTest {
 		testsTrueNeg = 0;
 		testsFalsePos = 0;
 		testsFalseNeg = 0;
+		results = new ArrayList<>();
 	}
 	
 	public static void addBenchmark(double time) {
 		benchmarkCount++;
 		benchmarkTimeSum += time;
+	}
+	
+	public static void addTestResult(double result) {
+		results.add(result);
 	}
 	
 	public static void addTestResults(boolean expected, boolean result) {
@@ -183,7 +191,7 @@ public abstract class BasePublicationTest {
 	}
 
 	public static String getTestResults() {
-		if (testCount == 0 && benchmarkCount == 0) {
+		if (testCount == 0 && benchmarkCount == 0 && results.isEmpty()) {
 			return "No tests evaluated." + System.lineSeparator();
 		}
 		String data = "";
@@ -199,6 +207,41 @@ public abstract class BasePublicationTest {
 				"Precision: " + precision + System.lineSeparator() +
 				"Recall: " + recall + System.lineSeparator() +
 				"F1-Score: " + f1 + System.lineSeparator();
+		}
+		if (!results.isEmpty()) {
+			int excellent = 0;
+			int good = 0;
+			int fair = 0;
+			int poor = 0;
+			int wrong = 0;
+			
+			for(Double v : results) {
+				if (v < 0.01) {
+					wrong++;
+				}
+				else if (v <= 0.25) {
+					poor++;
+				}
+				else if (v <= 0.50) {
+					fair++;
+				}
+				else if (v <= 0.75) {
+					good++;
+				}
+				else if (v <= 1.00) {
+					excellent++;
+				}
+				else {
+					throw new IndexOutOfBoundsException();
+				}
+			}
+			
+			data += "Number of tests: " + results.size() + System.lineSeparator() +
+				"Wrong    : " + wrong + System.lineSeparator() +
+				"Poor     : " + poor + System.lineSeparator() +
+				"Fair     : " + fair + System.lineSeparator() +
+				"Good     : " + good + System.lineSeparator() +
+				"Excellent: " + excellent + System.lineSeparator();
 		}
 		if (benchmarkCount > 0) {
 			data += "Number of runs: " + benchmarkCount + System.lineSeparator() +

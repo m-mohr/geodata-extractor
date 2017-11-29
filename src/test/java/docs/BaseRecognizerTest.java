@@ -76,6 +76,7 @@ public class BaseRecognizerTest extends BasePublicationTest {
 		Double formatted = Math.round(hightestJackaedIndex * 100d) / 100d;
 		String info = formatted + " - " + expectedFigure.getGraphicFile().getPath();
 		System.out.println(info);
+		addTestResult(hightestJackaedIndex);
 		assertTrue(info, hightestJackaedIndex >= THRESHOLD);
 	}
 	
