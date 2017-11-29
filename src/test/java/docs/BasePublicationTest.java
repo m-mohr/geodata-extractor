@@ -252,36 +252,6 @@ public abstract class BasePublicationTest {
 		return list;
 	}
 	
-	public static Collection<Object[]> getAllMapsWithStrategy(Strategy strategy) {
-		return getAllMapsWithStrategy(strategy, false);
-	}
-	
-	public static Collection<Object[]> getAllMapsWithStrategy(Strategy strategy, boolean onlyWithCoordinates) {
-		GeodataExtractor extractor = new GeodataExtractor(strategy);
-		extractor.enableCaching(true);
-		Collection<Object[]> list = new ArrayList<>();
-		File[] files = BasePublicationTest.DOC_FOLDER.listFiles(new FileExtension.Filter("pdf"));
-		for (File file : files) {
-			Document document = extractor.runSingle(file);
-			FigureCollection figures = document.getFigures();
-			for (Figure figure : figures) {
-				StudyResults sr = BasePublicationTest.getStudyResultsForFigure(figure);
-				try {
-					boolean isMap = sr.isMap();
-					Boolean hasCoords = sr.hasCoordinates();
-					if (!isMap) {
-						continue;
-					}
-					else if (onlyWithCoordinates && (hasCoords == null || hasCoords == false)) {
-						continue;
-					}
-					list.add(new Object[]{figure});
-				} catch(InconsistencyException e) {}
-			}
-		}
-		return list;
-	}
-	
 	public static Collection<Object[]> getAllFiguresWithStrategy(Strategy strategy) {
 		GeodataExtractor extractor = new GeodataExtractor(strategy);
 		extractor.enableCaching(true);
