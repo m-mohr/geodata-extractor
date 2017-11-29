@@ -154,20 +154,24 @@ public class CoordinateGraphicRecognizer implements GraphicRecognizer {
 				continue;
 			}
 			CoordinateFromOcr ocrCoord = (CoordinateFromOcr) coord;
-			Coordinate c = ocrCoord.getBoundingBoxCenter();
+			Coordinate c = ocrCoord.getBoundingBoxCenter(); // Center of bbox
+			Envelope env = ocrCoord.getBoundingBox(); // BBox of text area
+			double ht = env.getHeight() / 2; // Half the height as tolerance
+			double wt = env.getWidth() / 2; // Half the width as tolerance
 
 			Axis nearestAxis = null;
 			double minDistanceFromNearestAxis = Double.MAX_VALUE;
 			for(Axis axis : axes) {
 				LineSegment l = axis.getLine();
 				// Check whether the text is not inside the line bounds => reject it
-				if (axis.isMostlyHorizontal() && (c.x < l.minX() || c.x > l.maxX())) {
+				if (axis.isMostlyHorizontal() && (env.getMinX() < l.minX()-wt || env.getMaxX() > l.maxX()+wt)) {
 					continue;
 				}
-				else if (axis.isMostlyVertical() && (c.y < l.minY() || c.y > l.maxY())) {
+				else if (axis.isMostlyVertical() && (env.getMinY() < l.minY()-ht || env.getMaxY() > l.maxY()+ht)) {
 					continue;
 				}
 				
+				// ToDO: This is inaccurate for diagonal lines
 				Coordinate snappedPoint = axis.getLine().closestPoint(c);
 				double distance = snappedPoint.distance(c);
 				if (minDistanceFromNearestAxis > distance) {

@@ -2,9 +2,7 @@ package de.lutana.geodataextractor.recognizer.cv;
 
 import com.vividsolutions.jts.geom.LineSegment;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -50,7 +48,7 @@ public class MapAxesLineDetector extends CvLineDetector {
 			this.removeText(dest);
 
 			// Use colour clustering to get b/w image that groups big chunks together
-			dest = this.cluster(dest, 3).get(0); // ToDo: Speed up?
+			dest = this.cluster(dest, 2);
 
 			// Invert image for morph. ops.
 			cv.invertMonotone(dest);
@@ -66,8 +64,8 @@ public class MapAxesLineDetector extends CvLineDetector {
 			Imgproc.dilate(dest, dest, structure, new Point(-1, -1), 1);
 
 			// Detect lines using HoughP Transform
-			List<LineSegment> lines = HoughProbabilisticLineDetector.detect(dest, 1, Math.PI / 180, dim * 20, dim * 30, dim * 2.5);
-			if (lines.size() > 200) {
+			List<LineSegment> lines = HoughProbabilisticLineDetector.detect(dest, 1, Math.PI / 180, dim * 18, dim * 25, dim * 2.5);
+			if (lines.size() > 500) {
 				return new ArrayList<>(); // Too many results. Something went wrong and good results are unlikely.
 			}
 
@@ -88,7 +86,7 @@ public class MapAxesLineDetector extends CvLineDetector {
 		Photo.inpaint(source, mask, source, 3, Photo.INPAINT_TELEA);
 	}
 	
-	public List<Mat> cluster(Mat cutout, int k) {
+	public Mat cluster(Mat cutout, int k) {
 		Mat samples = cutout.reshape(1, cutout.cols() * cutout.rows());
 		Mat samples32f = new Mat();
 		samples.convertTo(samples32f, CvType.CV_32F, 1.0 / 255.0);
@@ -100,15 +98,8 @@ public class MapAxesLineDetector extends CvLineDetector {
 
 		centers.convertTo(centers, CvType.CV_8UC1, 255.0);
 		centers.reshape(3);
-		
-		List<Mat> clusters = new ArrayList<>();
-		for(int i = 0; i < centers.rows(); i++) {
-			clusters.add(Mat.zeros(cutout.size(), cutout.type()));
-		}
-		
-		Map<Integer, Integer> counts = new HashMap<>();
-		for(int i = 0; i < centers.rows(); i++) counts.put(i, 0);
-		
+
+		Mat newImg = new Mat(cutout.rows(), cutout.cols(), cutout.type());
 		int rows = 0;
 		for(int y = 0; y < cutout.rows(); y++) {
 			for(int x = 0; x < cutout.cols(); x++) {
@@ -116,12 +107,11 @@ public class MapAxesLineDetector extends CvLineDetector {
 				int r = (int)centers.get(label, 2)[0];
 				int g = (int)centers.get(label, 1)[0];
 				int b = (int)centers.get(label, 0)[0];
-				counts.put(label, counts.get(label) + 1);
-				clusters.get(label).put(y, x, b, g, r);
+				newImg.put(y, x, b, g, r);
 				rows++;
 			}
 		}
-		return clusters;
+		return newImg;
 	}
 
 }

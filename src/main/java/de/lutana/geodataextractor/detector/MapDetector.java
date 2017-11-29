@@ -23,7 +23,7 @@ public class MapDetector implements GraphicDetector {
 	
 	private float defaultProbability;
 	private TensorFlowMapDetector tfMapDetector;
-	private float patternOffset = 0.5f;
+	private float patternOffset = 0.45f;
 	
 	public MapDetector(boolean rejectByDefault) {
 		this.defaultProbability = rejectByDefault ? 0 : 1;
