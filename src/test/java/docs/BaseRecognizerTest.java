@@ -50,6 +50,8 @@ public class BaseRecognizerTest extends BasePublicationTest {
 	
 	public void assertFigure(Figure expectedFigure, TextRecognizer recognizer) {
 		LocationCollection locations = new LocationCollection();
+		recognizer.recognize(expectedFigure.getDocument().getTitle(), locations, 1);
+		recognizer.recognize(expectedFigure.getDocument().getDescription(), locations, 1);
 		recognizer.recognize(expectedFigure.getCaption(), locations, 1);
 		
 		this.assertLocations(expectedFigure, locations);
