@@ -1,7 +1,6 @@
 package de.lutana.geodataextractor.entity;
 
 import de.lutana.geodataextractor.entity.locationresolver.HeatmapResolver;
-import de.lutana.geodataextractor.entity.locationresolver.JackardIndexResolver;
 import de.lutana.geodataextractor.entity.locationresolver.LocationResolver;
 import de.lutana.geodataextractor.entity.locationresolver.UnionResolver;
 import java.util.ArrayList;
@@ -28,15 +27,11 @@ public class LocationCollection implements Located, Collection<Location> {
 	
 	@Override
 	public Location getLocation() {
-		return this.getMostLikelyLocation();
+		return this.resolveLocation(new HeatmapResolver());
 	}
 	
 	public Location getUnifiedLocation() {
 		return this.resolveLocation(new UnionResolver());
-	}
-	
-	public Location getMostLikelyLocation() {
-		return this.resolveLocation(new HeatmapResolver());
 	}
 	
 	public Location resolveLocation(LocationResolver resolver) {

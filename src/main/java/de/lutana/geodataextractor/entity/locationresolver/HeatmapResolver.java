@@ -7,11 +7,29 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 public class HeatmapResolver extends SmallSetResolver {
+	
+	private Double threshold;
+	private THRESHOLD type;
+	
+	public HeatmapResolver() {
+		this.type = THRESHOLD.AVERAGE;
+		this.threshold = null;
+	}
+	
+	public HeatmapResolver(THRESHOLD type) {
+		this.type = type;
+		this.threshold = null;
+	}
+	
+	public HeatmapResolver(double threshold) {
+		this.type = THRESHOLD.CUSTOM;
+		this.threshold = threshold;
+	}
 
 	@Override
 	public Location resolve(LocationCollection locations) {
 		Location l = super.resolve(locations);
-		if (l != null) {
+		if (l != null || locations.isEmpty()) {
 			return l;
 		}
 
@@ -24,12 +42,20 @@ public class HeatmapResolver extends SmallSetResolver {
 			treeY.put(location.getMinY(), new EnvScorer());
 			treeY.put(location.getMaxY(), new EnvScorer());
 		}
-		
-		double maxScore = -Double.MAX_VALUE;
+
+		if (this.type == THRESHOLD.MAX_SCORE) {
+			threshold = -Double.MAX_VALUE;
+		}
+		else if (this.type == THRESHOLD.AVERAGE) {
+			this.threshold = 0d;
+		}
 		for(Location location : locations) {
 			double score = location.getScore();
-			if (score > maxScore) {
-				maxScore = score;
+			if (this.type == THRESHOLD.MAX_SCORE && score > this.threshold) {
+				threshold = score;
+			}
+			else if (this.type == THRESHOLD.AVERAGE) {
+				this.threshold += score;
 			}
 			SortedMap<Double, EnvScorer> subX = treeX.subMap(location.getMinX(), true, location.getMaxX(), true);
 			for(EnvScorer e : subX.values()) {
@@ -42,9 +68,13 @@ public class HeatmapResolver extends SmallSetResolver {
 				e.count++;
 			}
 		}
+
+		if (type == THRESHOLD.AVERAGE) {
+			this.threshold = this.threshold / locations.size();
+		}
 		
-		double[] boundsX = this.getMinMaxValuesFromTree(treeX, maxScore);
-		double[] boundsY = this.getMinMaxValuesFromTree(treeY, maxScore);
+		double[] boundsX = this.getMinMaxValuesFromTree(treeX, this.threshold);
+		double[] boundsY = this.getMinMaxValuesFromTree(treeY, this.threshold);
 		l = new Location(boundsX[0], boundsX[1], boundsY[0], boundsY[1]);
 		l.setProbability(1);
 		l.setWeight(1);
@@ -73,6 +103,12 @@ public class HeatmapResolver extends SmallSetResolver {
 	private class EnvScorer {
 		public double sum = 0;
 		public int count = 0;
+	}
+	
+	public enum THRESHOLD {
+		AVERAGE,
+		MAX_SCORE,
+		CUSTOM
 	}
 	
 }

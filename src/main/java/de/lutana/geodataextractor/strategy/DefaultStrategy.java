@@ -18,6 +18,8 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import de.lutana.geodataextractor.detector.GraphicDetector;
+import de.lutana.geodataextractor.entity.locationresolver.HeatmapResolver;
+import de.lutana.geodataextractor.entity.locationresolver.LocationResolver;
 import de.lutana.geodataextractor.recognizer.TextRecognizer;
 
 /**
@@ -52,6 +54,10 @@ public class DefaultStrategy implements Strategy {
 			logger.error("Loading GeoNamesTextDetector failed. Continuing with the DumbCountryTextDetector. " + ex.getMessage());
 			this.geonamesTextDetector = new DumbCountryTextRecognizer();
 		}
+	}
+	
+	public LocationResolver getLocationResolver() {
+		return new HeatmapResolver();
 	}
 
 	/**
@@ -103,11 +109,11 @@ public class DefaultStrategy implements Strategy {
 				}
 
 				if (figureLocations.size() > globalLocations.size()) {
-					Location location = figureLocations.getMostLikelyLocation();
+					Location location = figureLocations.resolveLocation(this.getLocationResolver());
 					figure.setLocation(location);
 				}
 				else if (isMap && globalLocations.size() > 0) {
-					Location location = globalLocations.getMostLikelyLocation();
+					Location location = globalLocations.resolveLocation(this.getLocationResolver());
 					figure.setLocation(location);
 				}
 			}

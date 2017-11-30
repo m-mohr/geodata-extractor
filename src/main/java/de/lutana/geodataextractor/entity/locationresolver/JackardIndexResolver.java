@@ -13,7 +13,7 @@ public class JackardIndexResolver extends SmallSetResolver {
 	@Override
 	public Location resolve(LocationCollection locations) {
 		Location location = super.resolve(locations);
-		if (location != null) {
+		if (location != null || locations.isEmpty()) {
 			return location;
 		}
 
