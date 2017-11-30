@@ -2,6 +2,8 @@ package de.lutana.geodataextractor.recognizer.gazetteer;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import de.lutana.geodataextractor.entity.Location;
+import java.util.ArrayList;
+import java.util.Collection;
 import org.slf4j.LoggerFactory;
 
 public class GeoName {
@@ -19,7 +21,7 @@ public class GeoName {
 	/**
 	 * All other available and distinct names
 	 */
-	private String[] alternativeNames;
+	private Collection<String> alternativeNames;
 	/**
 	 * The OSM ID of the feature (mostly for identifying test results)
 	 */
@@ -77,7 +79,7 @@ public class GeoName {
 	private double resultScore;
 
 	public GeoName() {
-		this.alternativeNames = new String[] {};
+		this.alternativeNames = new ArrayList<>();
 	}
 	
 	/**
@@ -111,15 +113,32 @@ public class GeoName {
 	/**
 	 * @return the alternativeNames
 	 */
-	public String[] getAlternativeNames() {
+	public Collection<String> getAlternativeNames() {
 		return alternativeNames;
 	}
 
 	/**
 	 * @param alternativeNames the alternativeNames to set
 	 */
-	public void setAlternativeNames(String[] alternativeNames) {
+	public void setAlternativeNames(Collection<String> alternativeNames) {
 		this.alternativeNames = alternativeNames;
+	}
+
+	/**
+	 * @param alternativeNames the alternativeNames to set
+	 */
+	public void setAlternativeNames(String[] alternativeNames) {
+		this.alternativeNames = new ArrayList<>(alternativeNames.length);
+		for(String name : alternativeNames) {
+			this.alternativeNames.add(name);
+		}
+	}
+
+	/**
+	 * @param name the alternative name to add
+	 */
+	public void addAlternativeName(String name) {
+		this.alternativeNames.add(name);
 	}
 
 	/**

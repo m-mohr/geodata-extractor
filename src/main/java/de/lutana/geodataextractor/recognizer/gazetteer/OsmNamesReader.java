@@ -142,9 +142,49 @@ public class OsmNamesReader implements Iterator<GeoName> {
 			}
 		}
 		
+		this.fixOsmNames(gn);
+		
 		this.makeCountryCodeMapping(gn);
 		
 		return gn;
+	}
+	
+	private void fixOsmNames(GeoName gn) {
+		String osmId = gn.getOsmId();
+		// Importance for Greece is too low in data set: https://github.com/OSMNames/OSMNames/issues/148
+		if (osmId.equals("r192307")) {
+			gn.setImportance(0.9f);
+		}
+		// Add pacific as alternative name to the pacific ocean
+		else if (osmId.equals("n305640005")) {
+			gn.addAlternativeName("Pacific");
+		}
+		// Add atlantic as alternative name to the atlantic ocean
+		else if (osmId.equals("n305640306")) {
+			gn.addAlternativeName("Atlantic");
+		}
+		// and so on...
+		else if (osmId.equals("n305639726")) {
+			gn.addAlternativeName("North Atlantic");
+		}
+		else if (osmId.equals("n305640288")) {
+			gn.addAlternativeName("South Atlantic");
+		}
+		else if (osmId.equals("n305640027")) {
+			gn.addAlternativeName("North Pacific");
+		}
+		else if (osmId.equals("n305640292")) {
+			gn.addAlternativeName("South Pacific");
+		}
+		// River Amazon should also be Amazonas
+		else if (osmId.equals("w27912146")) { 
+			gn.addAlternativeName("Amazonas");
+			gn.addAlternativeName("Amazon");
+		}
+		// Hamburg has an empty bbox
+		else if (osmId.equals("n565666208")) { 
+			gn.setLocation(new Location(8.105329, 10.32528, 53.395111, 54.027683));
+		}
 	}
 	
 	public void close() {

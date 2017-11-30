@@ -1,13 +1,8 @@
 package docs;
 
-import de.lutana.geodataextractor.entity.Document;
 import de.lutana.geodataextractor.entity.Figure;
-import de.lutana.geodataextractor.entity.FigureCollection;
-import de.lutana.geodataextractor.entity.LocationCollection;
 import de.lutana.geodataextractor.recognizer.GeoNamesGraphicRecognizer;
-import de.lutana.geodataextractor.recognizer.cv.CvGraphic;
 import de.lutana.geodataextractor.recognizer.gazetteer.LuceneIndex;
-import de.lutana.geodataextractor.strategy.Strategy;
 import java.util.Collection;
 
 @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)

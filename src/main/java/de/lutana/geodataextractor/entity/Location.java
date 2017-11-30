@@ -1,9 +1,11 @@
 package de.lutana.geodataextractor.entity;
 
+import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import de.lutana.geodataextractor.util.GeoTools;
 import java.security.InvalidParameterException;
 import java.util.Comparator;
+import org.apache.commons.math3.ml.clustering.Clusterable;
 import org.apache.commons.math3.util.Precision;
 
 /**
@@ -11,7 +13,7 @@ import org.apache.commons.math3.util.Precision;
  *
  * @author Matthias Mohr
  */
-public class Location extends Envelope {
+public class Location extends Envelope implements Clusterable {
 
 	protected double probability = 0;
 	protected double weight = 0;
@@ -34,6 +36,12 @@ public class Location extends Envelope {
 	
 	public void setY(double min, double max) {
 		this.init(this.getMinX(), this.getMaxX(), min, max);
+	}
+
+	@Override
+	public double[] getPoint() {
+		Coordinate c = this.centre();
+		return new double[] {c.x, c.y};
 	}
 
 	public double getProbability() {
