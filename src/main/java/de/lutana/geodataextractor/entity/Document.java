@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -40,6 +41,10 @@ public class Document implements Located {
 	 */
 	public void setFile(File file) {
 		this.file = file;
+	}
+	
+	public Collection<String> getTexts() {
+		return this.texts.values();
 	}
 
 	/**

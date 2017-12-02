@@ -1,6 +1,10 @@
 package de.lutana.geodataextractor.strategy;
 
 import de.lutana.geodataextractor.entity.Document;
+import de.lutana.geodataextractor.entity.Figure;
+import de.lutana.geodataextractor.entity.LocationCollection;
+import de.lutana.geodataextractor.entity.locationresolver.LocationResolver;
+import de.lutana.geodataextractor.entity.locationresolver.UnionResolver;
 
 /**
  * Doesn't perform any task.
@@ -10,17 +14,21 @@ import de.lutana.geodataextractor.entity.Document;
  * @author Matthias
  */
 public class NullStrategy extends AbstractStrategy {
-
-	/**
-	 * Doesn't perform any task.
-	 * 
-	 * @param document
-	 * @param page
-	 * @return 
-	 */
-	@Override
-	public boolean execute(Document document, Integer page) {
-		return true;
+	
+	public NullStrategy() {
+		this(new UnionResolver());
 	}
+
+	public NullStrategy(LocationResolver locationResolver) {
+		super(locationResolver);
+	}
+
+	@Override
+	protected LocationCollection getDocumentLocations(Document document) {
+		return new LocationCollection();
+	}
+
+	@Override
+	protected void extractFigureLocations(Figure figure, LocationCollection documentLocations) {}
 	
 }

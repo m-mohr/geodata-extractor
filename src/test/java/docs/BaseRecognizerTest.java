@@ -15,11 +15,12 @@ import de.lutana.geodataextractor.util.GeoTools;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import org.junit.Assert;
 import static org.junit.Assert.assertTrue;
 
 public class BaseRecognizerTest extends BasePublicationTest {
 	
-	public static final double THRESHOLD = 0.5d;
+	public static double THRESHOLD = 0.5d;
 	
 	public static Collection<Object[]> getData(boolean onlyWithCoordinates) {
 		GeodataExtractor extractor = new GeodataExtractor(new NullStrategy());
@@ -48,25 +49,33 @@ public class BaseRecognizerTest extends BasePublicationTest {
 		return list;
 	}
 	
-	public void assertFigure(Figure expectedFigure, TextRecognizer recognizer) {
+	public static void assertFigure(Figure expectedFigure, TextRecognizer recognizer) {
 		LocationCollection locations = new LocationCollection();
-		recognizer.recognize(expectedFigure.getDocument().getTitle(), locations, 1);
-		recognizer.recognize(expectedFigure.getDocument().getDescription(), locations, 1);
-		recognizer.recognize(expectedFigure.getCaption(), locations, 1);
+		Document doc = expectedFigure.getDocument();
+		Assert.assertNotNull("No parent document available", doc);
+		if (doc.getTitle() != null) {
+			recognizer.recognize(doc.getTitle(), locations, 1);
+		}
+		if (doc.getDescription() != null) {
+			recognizer.recognize(doc.getDescription(), locations, 1);
+		}
+		if (expectedFigure.getCaption() != null) {
+			recognizer.recognize(expectedFigure.getCaption(), locations, 1);
+		}
 		
-		this.assertLocations(expectedFigure, locations);
+		assertLocations(expectedFigure, locations);
 	}
 	
-	public void assertFigure(Figure expectedFigure, GraphicRecognizer recognizer) {
+	public static void assertFigure(Figure expectedFigure, GraphicRecognizer recognizer) {
 		LocationCollection locations = new LocationCollection();
 		CvGraphic cvGraphic = new CvGraphic(expectedFigure);
 		recognizer.recognize(cvGraphic, locations, 1);
 		cvGraphic.dispose();
 		
-		this.assertLocations(expectedFigure, locations);
+		assertLocations(expectedFigure, locations);
 	}
 	
-	public void assertLocations(Figure expectedFigure, LocationCollection locations) {
+	public static void assertLocations(Figure expectedFigure, LocationCollection locations) {
 		double hightestJackaedIndex = 0;
 		for(Location foundLocation : locations) {
 			Double jaccardIndex = GeoTools.calcJaccardIndex(expectedFigure.getLocation(), foundLocation);

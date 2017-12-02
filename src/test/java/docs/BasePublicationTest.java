@@ -38,16 +38,6 @@ public abstract class BasePublicationTest {
 	private static int testsFalseNeg = 0;
 	private static List<Double> results;
 
-	private static GeodataExtractor instance;
-
-	protected void runDocumentTest(String documentFile) {
-		this.testDocument(getDocument(documentFile));
-	}
-
-	protected void runDocumentTest(String documentFile, Location expectedLocation) {
-		this.assertDocument(expectedLocation, getDocument(documentFile));
-	}
-
 	protected void testDocument(Document document) {
 		this.assertDocument(getExpectedLocationForDocument(document), document);
 	}
@@ -133,22 +123,6 @@ public abstract class BasePublicationTest {
 		}
 		return null;
 	}
-
-	public static Document getDocument(String documentPath) {
-		return getDocument(documentPath, null);
-	}
-	
-	public static Document getDocument(String documentPath, Integer page) {
-		if (instance == null) {
-			instance = new GeodataExtractor();
-			instance.enableCaching(true);
-		}
-		File documentFile = getDocumentFile(documentPath);
-		long timeStart = System.currentTimeMillis();
-		Document doc = instance.runSingle(documentFile, page);
-		addBenchmark(System.currentTimeMillis() - timeStart);
-		return doc;
-	}
 	
 	public static void resetTestEnv() {
 		benchmarkCount = 0;
@@ -215,6 +189,7 @@ public abstract class BasePublicationTest {
 			int poor = 0;
 			int wrong = 0;
 			
+			double sum = 0;
 			for(Double v : results) {
 				if (v < 0.01) {
 					wrong++;
@@ -234,14 +209,17 @@ public abstract class BasePublicationTest {
 				else {
 					throw new IndexOutOfBoundsException();
 				}
+				sum += v;
 			}
+			double avgJI = sum / results.size();
 			
 			data += "Number of tests: " + results.size() + System.lineSeparator() +
 				"Wrong    : " + wrong + System.lineSeparator() +
 				"Poor     : " + poor + System.lineSeparator() +
 				"Fair     : " + fair + System.lineSeparator() +
 				"Good     : " + good + System.lineSeparator() +
-				"Excellent: " + excellent + System.lineSeparator();
+				"Excellent: " + excellent + System.lineSeparator() +
+				"Avg. JI  : " + avgJI + System.lineSeparator();
 		}
 		if (benchmarkCount > 0) {
 			data += "Number of runs: " + benchmarkCount + System.lineSeparator() +
@@ -294,14 +272,42 @@ public abstract class BasePublicationTest {
 		}
 		return list;
 	}
+
+	public static Document getDocument(String documentPath) {
+		return getDocument(getDocumentFile(documentPath), null, null);
+	}
 	
-	public static Collection<Object[]> getAllFiguresWithStrategy(Strategy strategy) {
-		GeodataExtractor extractor = new GeodataExtractor(strategy);
-		extractor.enableCaching(true);
+	public static Document getDocument(String documentPath, Integer page) {
+		return getDocument(getDocumentFile(documentPath), null, page);
+	}
+	
+	public static Document getDocument(File documentFile, Strategy strategy, Integer page) {
+		if (strategy == null) {
+			strategy = Config.getStrategy();
+		}
+		GeodataExtractor instance = new GeodataExtractor(strategy);
+		instance.enableCaching(true);
+		long timeStart = System.currentTimeMillis();
+		Document doc = instance.runSingle(documentFile, page);
+		addBenchmark(System.currentTimeMillis() - timeStart);
+		return doc;
+	}
+	
+	public static Collection<Object[]> getAllDocumentsWithStrategy(Strategy strategy) {
 		Collection<Object[]> list = new ArrayList<>();
 		File[] files = BasePublicationTest.DOC_FOLDER.listFiles(new FileExtension.Filter("pdf"));
 		for (File file : files) {
-			Document document = extractor.runSingle(file);
+			Document document = getDocument(file, strategy, null);
+			list.add(new Object[]{document});
+		}
+		return list;
+	}
+	
+	public static Collection<Object[]> getAllFiguresWithStrategy(Strategy strategy) {
+		Collection<Object[]> list = new ArrayList<>();
+		File[] files = BasePublicationTest.DOC_FOLDER.listFiles(new FileExtension.Filter("pdf"));
+		for (File file : files) {
+			Document document = getDocument(file, strategy, null);
 			FigureCollection figures = document.getFigures();
 			for (Figure figure : figures) {
 				list.add(new Object[]{figure});

@@ -1,30 +1,24 @@
 package docs;
 
-import de.lutana.geodataextractor.util.FileExtension;
-import static docs.BasePublicationTest.DOC_FOLDER;
-import java.io.File;
-import java.util.ArrayList;
+import de.lutana.geodataextractor.entity.Document;
+import de.lutana.geodataextractor.entity.locationresolver.HeatmapResolver;
+import de.lutana.geodataextractor.strategy.DefaultStrategy;
 import java.util.Collection;
 
 @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
-public class PdfPublicationTest extends BasePublicationTest {
+public class PdfPublicationHeatmapMaxTest extends BasePublicationTest {
 
     @org.junit.runners.Parameterized.Parameter(0)
-    public String documentFile;
+    public Document document;
 
     @org.junit.runners.Parameterized.Parameters
     public static Collection<Object[]> data() {
-		Collection<Object[]> list = new ArrayList<>();
-		File[] files = DOC_FOLDER.listFiles(new FileExtension.Filter("pdf"));
-		for (File file : files) {
-			list.add(new Object[]{file.getName()});
-		}
-		return list;
+		return getAllDocumentsWithStrategy(new DefaultStrategy(new HeatmapResolver(HeatmapResolver.THRESHOLD.MAX_SCORE)));
     }
 
 	@org.junit.Test
     public void testDocuments() {
-		runDocumentTest(this.documentFile);
+		testDocument(this.document);
     }
 	
     @org.junit.BeforeClass

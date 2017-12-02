@@ -18,11 +18,16 @@ public class LocationCollection implements Located, Collection<Location> {
 	private final List<Location> data;
 
 	public LocationCollection() {
-		this.data = new ArrayList<>();
+		this(null);
 	}
 
 	public LocationCollection(LocationCollection collection) {
-		this.data = new ArrayList<>(collection.data);
+		if (collection == null) {
+			this.data = new ArrayList<>();
+		}
+		else {
+			this.data = new ArrayList<>(collection.data);
+		}
 	}
 	
 	@Override

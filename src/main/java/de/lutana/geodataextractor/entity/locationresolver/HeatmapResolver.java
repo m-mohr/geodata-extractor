@@ -12,7 +12,7 @@ public class HeatmapResolver extends SmallSetResolver {
 	private THRESHOLD type;
 	
 	public HeatmapResolver() {
-		this.type = THRESHOLD.AVERAGE;
+		this.type = THRESHOLD.MAX_SCORE;
 		this.threshold = null;
 	}
 	
@@ -52,7 +52,7 @@ public class HeatmapResolver extends SmallSetResolver {
 		for(Location location : locations) {
 			double score = location.getScore();
 			if (this.type == THRESHOLD.MAX_SCORE && score > this.threshold) {
-				threshold = score;
+				this.threshold = score;
 			}
 			else if (this.type == THRESHOLD.AVERAGE) {
 				this.threshold += score;
@@ -72,7 +72,7 @@ public class HeatmapResolver extends SmallSetResolver {
 		if (type == THRESHOLD.AVERAGE) {
 			this.threshold = this.threshold / locations.size();
 		}
-		
+
 		double[] boundsX = this.getMinMaxValuesFromTree(treeX, this.threshold);
 		double[] boundsY = this.getMinMaxValuesFromTree(treeY, this.threshold);
 		l = new Location(boundsX[0], boundsX[1], boundsY[0], boundsY[1]);
@@ -86,7 +86,7 @@ public class HeatmapResolver extends SmallSetResolver {
 		Double max = -Double.MAX_VALUE;
 		for(Map.Entry<Double, EnvScorer> e : tree.entrySet()) {
 			EnvScorer env = e.getValue();
-			if (env.sum >= threshold || env.count > 1) {
+			if (env.sum >= threshold) {
 				double value = e.getKey();
 				if (value > max) {
 					max = value;
