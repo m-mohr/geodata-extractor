@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 public class JackardIndexResolver extends SmallSetResolver {
 	
-	private static final double MINIMUM_FOR_OVERLAPPING_GEOMETRIES = 0.2;
+	private static final double MINIMUM_FOR_OVERLAPPING_GEOMETRIES = 0.35;
 
 	@Override
 	public Location resolve(LocationCollection locations) {
