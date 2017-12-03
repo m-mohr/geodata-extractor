@@ -77,10 +77,12 @@ public class BaseRecognizerTest extends BasePublicationTest {
 	
 	public static void assertLocations(Figure expectedFigure, LocationCollection locations) {
 		double hightestJackaedIndex = 0;
-		for(Location foundLocation : locations) {
-			Double jaccardIndex = GeoTools.calcJaccardIndex(expectedFigure.getLocation(), foundLocation);
-			if (hightestJackaedIndex < jaccardIndex) {
-				hightestJackaedIndex = jaccardIndex;
+		if (locations != null) {
+			for(Location foundLocation : locations) {
+				Double jaccardIndex = GeoTools.calcJaccardIndex(expectedFigure.getLocation(), foundLocation);
+				if (hightestJackaedIndex < jaccardIndex) {
+					hightestJackaedIndex = jaccardIndex;
+				}
 			}
 		}
 

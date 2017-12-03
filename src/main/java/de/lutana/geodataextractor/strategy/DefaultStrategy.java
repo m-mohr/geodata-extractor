@@ -86,10 +86,9 @@ public class DefaultStrategy extends AbstractStrategy {
 		CvGraphic cvGraphic = new CvGraphic(figure);
 
 		// Detect whether it's a map or not
-		float result = this.mapRecognizer.detect(figure, cvGraphic);
-		boolean isMap = (result >= 0.4); // 10% tolerance
-		LoggerFactory.getLogger(this.getClass()).debug((isMap ? "Map detected" : "NOT a map") + " (" + result * 100 + "%)");
-
+		float mapConfidence = this.mapRecognizer.detect(figure, cvGraphic);
+		boolean isMap = (mapConfidence >= 0.4); // 10% tolerance
+		LoggerFactory.getLogger(this.getClass()).debug((isMap ? "Map detected" : "NOT a map") + " (" + mapConfidence * 100 + "%)");
 		if (isMap) {
 			LocationCollection figureLocations = this.getMapLocations(figure, cvGraphic, documentLocations);
 			this.resolveFigureLocation(figure, figureLocations);

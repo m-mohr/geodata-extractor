@@ -75,7 +75,7 @@ public abstract class BasePublicationTest {
 		else if (expected == null) {
 			System.out.println("NOLOC" + info);
 			addTestResult(0);
-			Assert.assertNull("No location found for a map", result);
+			Assert.assertNull("No location available for the map", result);
 		}
 		else {
 			boolean success = (jaccardIndex > JACCARD_INDEX_THRESHOLD);
