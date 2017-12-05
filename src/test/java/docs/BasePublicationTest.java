@@ -189,29 +189,35 @@ public abstract class BasePublicationTest {
 			int poor = 0;
 			int wrong = 0;
 			
-			double sum = 0;
+			double sum1 = 0;
+			double sum2 = 0;
 			for(Double v : results) {
+				sum1 += v;
 				if (v < 0.01) {
 					wrong++;
 				}
 				else if (v <= 0.25) {
 					poor++;
+					sum2 += v;
 				}
 				else if (v <= 0.50) {
 					fair++;
+					sum2 += v;
 				}
 				else if (v <= 0.75) {
 					good++;
+					sum2 += v;
 				}
 				else if (v <= 1.00) {
 					excellent++;
+					sum2 += v;
 				}
 				else {
 					throw new IndexOutOfBoundsException();
 				}
-				sum += v;
 			}
-			double avgJI = sum / results.size();
+			double avgJI1 = sum1 / results.size();
+			double avgJI2 = sum2 / (results.size() - wrong);
 			
 			data += "Number of tests: " + results.size() + System.lineSeparator() +
 				"Wrong    : " + wrong + System.lineSeparator() +
@@ -219,7 +225,8 @@ public abstract class BasePublicationTest {
 				"Fair     : " + fair + System.lineSeparator() +
 				"Good     : " + good + System.lineSeparator() +
 				"Excellent: " + excellent + System.lineSeparator() +
-				"Avg. JI  : " + avgJI + System.lineSeparator();
+				"Avg. JI (all)       : " + avgJI1 + System.lineSeparator() +
+				"Avg. JI (w/o wrong) : " + avgJI2 + System.lineSeparator();
 		}
 		if (benchmarkCount > 0) {
 			data += "Number of runs: " + benchmarkCount + System.lineSeparator() +
