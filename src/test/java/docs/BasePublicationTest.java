@@ -192,23 +192,24 @@ public abstract class BasePublicationTest {
 			double sum1 = 0;
 			double sum2 = 0;
 			for(Double v : results) {
+				long v2 = Math.round(v * 100);
 				sum1 += v;
-				if (v > -0.00000001 && v < 0.00000001) { // Catch rounding errors of doubles
+				if (v2 == 0) {
 					wrong++;
 				}
-				else if (v <= 0.25) {
+				else if (v2 <= 25) {
 					poor++;
 					sum2 += v;
 				}
-				else if (v <= 0.50) {
+				else if (v2 <= 50) {
 					fair++;
 					sum2 += v;
 				}
-				else if (v <= 0.75) {
+				else if (v2 <= 75) {
 					good++;
 					sum2 += v;
 				}
-				else if (v <= 1.00) {
+				else if (v2 <= 100) {
 					excellent++;
 					sum2 += v;
 				}
