@@ -193,7 +193,7 @@ public abstract class BasePublicationTest {
 			double sum2 = 0;
 			for(Double v : results) {
 				sum1 += v;
-				if (v < 0.01) {
+				if (v > -0.00000001 && v < 0.00000001) { // Catch rounding errors of doubles
 					wrong++;
 				}
 				else if (v <= 0.25) {

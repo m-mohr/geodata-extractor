@@ -2,8 +2,6 @@ package de.lutana.geodataextractor.recognizer;
 
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
-import de.lutana.geodataextractor.entity.locationresolver.HeatmapResolver;
-import de.lutana.geodataextractor.entity.locationresolver.HeatmapResolver.THRESHOLD;
 import de.lutana.geodataextractor.recognizer.cv.CvGraphic;
 import de.lutana.geodataextractor.util.GeoTools;
 import de.lutana.geodataextractor.recognizer.cv.TesseractOCR;
