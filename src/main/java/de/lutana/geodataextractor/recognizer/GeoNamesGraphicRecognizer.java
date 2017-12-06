@@ -3,7 +3,7 @@ package de.lutana.geodataextractor.recognizer;
 import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.entity.LocationCollection;
 import de.lutana.geodataextractor.entity.locationresolver.HeatmapResolver;
-import de.lutana.geodataextractor.entity.locationresolver.JackardIndexResolver;
+import de.lutana.geodataextractor.entity.locationresolver.HeatmapResolver.THRESHOLD;
 import de.lutana.geodataextractor.recognizer.cv.CvGraphic;
 import de.lutana.geodataextractor.util.GeoTools;
 import de.lutana.geodataextractor.recognizer.cv.TesseractOCR;
@@ -175,8 +175,22 @@ public class GeoNamesGraphicRecognizer implements GraphicRecognizer {
 	
 		@Override
 		public Location resolve(LocationCollection locations) {
+			// Remove outliers - this one is a bit tricky.
+			// At the moment we remove all entries that are outside the union of previous results.
+			// ToDo: Improve this
+			if (locations.size() > 0) {
+				LocationCollection filteredCandidates = new LocationCollection();
+				Location restrictingArea = locations.getUnifiedLocation();
+				for(Location l : locations) {
+					if (l.intersects(restrictingArea)) {
+						filteredCandidates.add(l);
+					}
+				}
+				locations = filteredCandidates;
+			}
+
 			// Merge remaining candidates
-			Location union = locations.resolveLocation(new HeatmapResolver());
+			Location union = locations.getUnifiedLocation();
 			if (union != null) {
 				// Give this probability a bump if it was created using many locations.
 				union.setProbability(0.1 * Math.min(locations.size(), 5) + union.getProbability() / 2);
