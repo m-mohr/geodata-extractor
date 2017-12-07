@@ -12,7 +12,7 @@ public class PdfPublicationFigureNoResolveTest extends BaseRecognizerTest {
 
 	public static class TestAnalyzerStrategy extends DefaultStrategy {
 		@Override
-		protected void extractFigureLocations(Figure figure, LocationCollection documentLocations) {
+		public void extractFigureLocations(Figure figure, LocationCollection documentLocations) {
 			CvGraphic cvGraphic = new CvGraphic(figure);
 
 			LocationCollection figureLocations = null;
@@ -30,7 +30,7 @@ public class PdfPublicationFigureNoResolveTest extends BaseRecognizerTest {
 		}
 		
 		@Override
-		protected void resolveFigureLocation(Figure figure, LocationCollection locations) {
+		public void resolveFigureLocation(Figure figure, LocationCollection locations) {
 			StudyResults studyResults = getStudyResultsForFigure(figure);
 			Location expected = null;
 			try {

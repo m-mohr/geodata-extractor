@@ -49,10 +49,18 @@ public class Document implements Located {
 
 	/**
 	 * @param type
-	 * @return the title
+	 * @return the text
 	 */
 	public String getText(String type) {
 		return this.texts.getOrDefault(type, "");
+	}
+
+	/**
+	 * @param type
+	 * @return the text
+	 */
+	public boolean hasText(String type) {
+		return this.texts.containsKey(type);
 	}
 
 	/**

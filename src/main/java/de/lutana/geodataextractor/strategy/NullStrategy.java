@@ -24,11 +24,11 @@ public class NullStrategy extends AbstractStrategy {
 	}
 
 	@Override
-	protected LocationCollection getDocumentLocations(Document document) {
+	public LocationCollection getDocumentLocations(Document document) {
 		return new LocationCollection();
 	}
 
 	@Override
-	protected void extractFigureLocations(Figure figure, LocationCollection documentLocations) {}
+	public void extractFigureLocations(Figure figure, LocationCollection documentLocations) {}
 	
 }

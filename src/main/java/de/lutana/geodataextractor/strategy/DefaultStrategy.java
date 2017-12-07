@@ -37,13 +37,22 @@ public class DefaultStrategy extends AbstractStrategy {
 	protected final WorldMapRecognizer worldMapDetector;
 	
 	public DefaultStrategy() {
-		this(new JackardIndexResolver());
+		this(null);
 	}
 	
 	public DefaultStrategy(LocationResolver locationResolver) {
-		super(locationResolver);
-		this.geoNamesIndex = new LuceneIndex();
-		this.geoNamesIndex.load();
+		this(locationResolver, null);
+	}
+	
+	public DefaultStrategy(LocationResolver locationResolver, LuceneIndex geoNamesIndex) {
+		super(locationResolver != null ? locationResolver : new JackardIndexResolver());
+		if (geoNamesIndex == null) {
+			this.geoNamesIndex = new LuceneIndex();
+			this.geoNamesIndex.load();
+		}
+		else {
+			this.geoNamesIndex = geoNamesIndex;
+		}
 		this.mapRecognizer = new MapDetector(false);
 		this.coordinateGraphicDetector = new CoordinateGraphicRecognizer();
 		this.coordinateTextDetector = new CoordinateTextRecognizer();
@@ -54,11 +63,11 @@ public class DefaultStrategy extends AbstractStrategy {
 		} catch (IOException | ClassNotFoundException ex) {
 			LoggerFactory.getLogger(getClass()).error("Loading GeoNamesTextDetector failed. Continuing with the DumbCountryTextDetector. " + ex.getMessage());
 			this.geonamesTextDetector = new DumbCountryTextRecognizer();
-		}
+		}	
 	}
 
 	@Override
-	protected LocationCollection getDocumentLocations(Document document) {
+	public LocationCollection getDocumentLocations(Document document) {
 		LocationCollection documentLocations = new LocationCollection();
 		for(String text : document.getTexts()) {
 			this.getLocationsFromText(text, documentLocations, 0.5);
@@ -66,7 +75,7 @@ public class DefaultStrategy extends AbstractStrategy {
 		return documentLocations;
 	}
 	
-	protected LocationCollection getMapLocations(Figure figure, CvGraphic graphic, LocationCollection documentLocations) {
+	public LocationCollection getMapLocations(Figure figure, CvGraphic graphic, LocationCollection documentLocations) {
 		LocationCollection figureLocations = new LocationCollection(documentLocations);
 		this.getLocationsFromText(figure.getCaption(), figureLocations, 0.75);
 		boolean isWorldMap = this.worldMapDetector.recognize(graphic, figureLocations, 1);
@@ -81,8 +90,12 @@ public class DefaultStrategy extends AbstractStrategy {
 		return figureLocations;
 	}
 	
+	public void disableGeoNamesGraphicRecognizer() {
+		this.geonamesGraphicDetector = null;
+	}
+	
 	@Override
-	protected void extractFigureLocations(Figure figure, LocationCollection documentLocations) {
+	public void extractFigureLocations(Figure figure, LocationCollection documentLocations) {
 		CvGraphic cvGraphic = new CvGraphic(figure);
 
 		// Detect whether it's a map or not
@@ -96,7 +109,7 @@ public class DefaultStrategy extends AbstractStrategy {
 		cvGraphic.dispose();
 	}
 	
-	protected void getLocationsFromText(String text, LocationCollection locations, double weight) {
+	public void getLocationsFromText(String text, LocationCollection locations, double weight) {
 		if (text == null) {
 			return;
 		}

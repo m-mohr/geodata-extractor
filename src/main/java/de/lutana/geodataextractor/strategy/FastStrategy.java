@@ -26,7 +26,7 @@ public class FastStrategy extends DefaultStrategy {
 	}
 
 	@Override
-	protected LocationCollection getMapLocations(Figure figure, CvGraphic graphic, LocationCollection documentLocations) {
+	public LocationCollection getMapLocations(Figure figure, CvGraphic graphic, LocationCollection documentLocations) {
 		LocationCollection figureLocations = new LocationCollection(documentLocations);
 		this.getLocationsFromText(figure.getCaption(), figureLocations, 0.75);
 		this.worldMapDetector.recognize(graphic, figureLocations, 1);

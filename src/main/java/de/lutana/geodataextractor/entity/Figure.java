@@ -38,6 +38,18 @@ public class Figure extends Locatable {
 		this.caption = "";
 		this.setGraphicFile(graphic);
 	}
+	
+	/**
+	 * 
+	 * @param figure 
+	 */
+	public Figure(Figure figure) {
+		this.document = figure.document;
+		this.index = figure.index;
+		this.page = figure.page;
+		this.caption = figure.caption;
+		this.setGraphicFile(figure.getGraphicFile());
+	}
 
 	/**
 	 * Returns the caption.

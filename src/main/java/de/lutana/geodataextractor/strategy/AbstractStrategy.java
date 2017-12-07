@@ -45,11 +45,11 @@ public abstract class AbstractStrategy implements Strategy {
 		return true;
 	}
 	
-	protected abstract LocationCollection getDocumentLocations(Document document);
+	public abstract LocationCollection getDocumentLocations(Document document);
 	
-	protected abstract void extractFigureLocations(Figure figure, LocationCollection documentLocations);
+	public abstract void extractFigureLocations(Figure figure, LocationCollection documentLocations);
 
-	protected void resolveFigureLocation(Figure figure, LocationCollection locations) {
+	public void resolveFigureLocation(Figure figure, LocationCollection locations) {
 		Location location = locations.resolveLocation(this.getLocationResolver());
 		figure.setLocation(location);
 	}
