@@ -23,6 +23,7 @@ import java.util.List;
 import org.junit.Assert;
 import static org.junit.Assert.assertTrue;
 import org.junit.Assume;
+import org.slf4j.LoggerFactory;
 
 public abstract class BasePublicationTest {
 
@@ -141,6 +142,10 @@ public abstract class BasePublicationTest {
 	}
 	
 	public static void addTestResult(double result) {
+		if (results == null) {
+			LoggerFactory.getLogger("BasePublicationTest").warn("Test env. not initialized. Test results can't be calculated.");
+			return;
+		}
 		results.add(result);
 	}
 	

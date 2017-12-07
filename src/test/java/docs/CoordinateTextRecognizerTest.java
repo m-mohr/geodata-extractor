@@ -1,6 +1,7 @@
 package docs;
 
 import de.lutana.geodataextractor.entity.Figure;
+import de.lutana.geodataextractor.entity.Location;
 import de.lutana.geodataextractor.recognizer.CoordinateTextRecognizer;
 import java.util.Collection;
 
@@ -11,6 +12,8 @@ public class CoordinateTextRecognizerTest extends BaseRecognizerTest {
 
     @org.junit.runners.Parameterized.Parameter(0)
     public Figure figureObj;
+    @org.junit.runners.Parameterized.Parameter(1)
+    public Location expectedLocation;
 
     @org.junit.runners.Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -19,6 +22,7 @@ public class CoordinateTextRecognizerTest extends BaseRecognizerTest {
 
 	@org.junit.Test
     public void testDocuments() {
+		figureObj.setLocation(expectedLocation);
 		assertFigure(figureObj, recognizer);
     }
 	

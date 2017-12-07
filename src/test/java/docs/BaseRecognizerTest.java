@@ -21,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 public class BaseRecognizerTest extends BasePublicationTest {
 	
 	public static double THRESHOLD = 0.5d;
-	
+
 	public static Collection<Object[]> getData(boolean onlyWithCoordinates) {
 		GeodataExtractor extractor = new GeodataExtractor(new NullStrategy());
 		extractor.enableCaching(true);
@@ -41,8 +41,7 @@ public class BaseRecognizerTest extends BasePublicationTest {
 					else if (onlyWithCoordinates && (hasCoords == null || hasCoords == false)) {
 						continue;
 					}
-					figure.setLocation(sr.getLocation());
-					list.add(new Object[]{figure});
+					list.add(new Object[]{figure, sr.getLocation()});
 				} catch(InconsistencyException e) {}
 			}
 		}
