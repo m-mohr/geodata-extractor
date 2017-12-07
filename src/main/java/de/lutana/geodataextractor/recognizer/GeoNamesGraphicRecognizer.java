@@ -8,6 +8,7 @@ import de.lutana.geodataextractor.recognizer.cv.TesseractOCR;
 import de.lutana.geodataextractor.recognizer.gazetteer.GeoName;
 import de.lutana.geodataextractor.recognizer.gazetteer.LuceneIndex;
 import de.lutana.geodataextractor.entity.locationresolver.LocationResolver;
+import de.lutana.geodataextractor.recognizer.nlp.Dict;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -20,14 +21,12 @@ import org.slf4j.LoggerFactory;
 
 public class GeoNamesGraphicRecognizer implements GraphicRecognizer {
 
-	private MapResolver locationResolver;
 	private LuceneIndex index;
 	private boolean fuzzyIfNoResultsMode;
 
 	public GeoNamesGraphicRecognizer(LuceneIndex index) {
 		this.index = index;
 		this.fuzzyIfNoResultsMode = false;
-		this.locationResolver = new MapResolver();
 	}
 
 	@Override
@@ -69,21 +68,26 @@ public class GeoNamesGraphicRecognizer implements GraphicRecognizer {
 		LocationCollection candidates = new LocationCollection();
 		for(Word w : words) {
 			String text = w.getText().trim();
+			int len = text.length();
 			// We find much garbage that leads to unuseful results from the Gazetteer
 			// and need ideas to filter some garbage, e.g. ... (see following comments)
 			// - Ignore all words too short
-			if (text.length() < 3) {
+			if (len < 4) {
 				continue;
 			}
 			// - ignore all entries that don't start with an uppercase letter
 			else if (!Character.isUpperCase(text.charAt(0))) {
 				continue;
 			}
+			// - ignore all entries that end with a non-letter
+			else if (!Character.isAlphabetic(text.charAt(len - 1))) {
+				continue;
+			}
 			// - Remove all entries containing more than one digit
 			int numDigits = 0;
 			// - Remove all entries containing more than one non letter per space or hyphen divided word
 			int numNonWhiteLetter = 0;
-			for(int i = 0; (i < text.length() && numDigits < 2 && numNonWhiteLetter < 2); i++) {
+			for(int i = 0; (i < len && numDigits < 2 && numNonWhiteLetter < 2); i++) {
 				char c = text.charAt(i);
 				if (Character.isDigit(c)) {
 					numDigits++;
@@ -98,6 +102,9 @@ public class GeoNamesGraphicRecognizer implements GraphicRecognizer {
 			if (numDigits >= 2 || numNonWhiteLetter >= 2) {
 				continue;
 			}
+			else if (Dict.contains(text)) {
+				continue;
+			}
 			
 			List<GeoName> results = index.find(text, fuzzyIfNoResultsMode, 3);
 			int i = 1;
@@ -106,10 +113,11 @@ public class GeoNamesGraphicRecognizer implements GraphicRecognizer {
 				if (l != null) {
 					// 0.0 base probability,
 					// added by a max. of 0.25 depending on the text recognition confidence, 
-					// added by a max. of 0.25 depending on the amount of search results, 
-					// added by a max. of 0.25 depending on the list position of the search result
+					// added by a max. of 0.1 depending on the amount of search results, 
+					// added by a max. of 0.4 depending on the list position of the search result
 					// added by a max. of 0.25 depending on the importance (from the database)
-					l.setProbability(w.getConfidence() / 400 + 0.25 / results.size() + 0.25 / i + geoname.getImportance() / 4);
+					l.setProbability(w.getConfidence() / 400 + 0.1 / results.size() + 0.4 / i + geoname.getImportance() / 4);
+					l.setWeight(1);
 					logger.debug("Parsed location from '" + text + "' as '" + geoname.getDisplayName()+ "' at " + l + " using GeoNamesGraphicRecognizer.");
 					candidates.add(l);
 				}
@@ -117,7 +125,7 @@ public class GeoNamesGraphicRecognizer implements GraphicRecognizer {
 			}
 		}
 		
-		Location chosenCandidate = candidates.resolveLocation(this.getLocationResolver());
+		Location chosenCandidate = candidates.resolveLocation(new MapResolver(locations));
 		if (chosenCandidate != null) {
 			chosenCandidate.setWeight(weight);
 			logger.debug("Merged to final location " + chosenCandidate + " in GeoNamesGraphicRecognizer.");
@@ -125,20 +133,6 @@ public class GeoNamesGraphicRecognizer implements GraphicRecognizer {
 			return true;
 		}
 		return false;
-	}
-
-	/**
-	 * @return the locationResolver
-	 */
-	public MapResolver getLocationResolver() {
-		return locationResolver;
-	}
-
-	/**
-	 * @param locationResolver the locationResolver to set
-	 */
-	public void setLocationResolver(MapResolver locationResolver) {
-		this.locationResolver = locationResolver;
 	}
 
 	/**
@@ -171,14 +165,20 @@ public class GeoNamesGraphicRecognizer implements GraphicRecognizer {
 	
 	public static class MapResolver implements LocationResolver {
 	
+		private LocationCollection otherLocations;
+		
+		public MapResolver(LocationCollection otherLocations) {
+			this.otherLocations = otherLocations;
+		}
+		
 		@Override
 		public Location resolve(LocationCollection locations) {
 			// Remove outliers - this one is a bit tricky.
 			// At the moment we remove all entries that are outside the union of previous results.
 			// ToDo: Improve this
-			if (locations.size() > 0) {
+			if (otherLocations.size() > 0) {
 				LocationCollection filteredCandidates = new LocationCollection();
-				Location restrictingArea = locations.getUnifiedLocation();
+				Location restrictingArea = otherLocations.getUnifiedLocation();
 				for(Location l : locations) {
 					if (l.intersects(restrictingArea)) {
 						filteredCandidates.add(l);
@@ -190,8 +190,8 @@ public class GeoNamesGraphicRecognizer implements GraphicRecognizer {
 			// Merge remaining candidates
 			Location union = locations.getUnifiedLocation();
 			if (union != null) {
-				// Give this probability a bump if it was created using many locations.
-				union.setProbability(0.1 * Math.min(locations.size(), 5) + union.getProbability() / 2);
+				// Gives locations a probability bump if it was created using multiple locations.
+				union.setProbability(0.2 * Math.min(locations.size(), 3) + 0.4 * union.getProbability());
 				return union;
 			}
 			return null;
