@@ -92,6 +92,13 @@ public class Location extends Envelope implements Clusterable {
 		return score;
 	}
 	
+	public void makeValid() {
+		if (!this.isValid()) {
+			this.setX(Math.max(-180, this.getMinX()), Math.min(180, this.getMaxX()));
+			this.setY(Math.max(-90, this.getMinY()), Math.min(90, this.getMaxY()));
+		}
+	}
+	
 	public boolean isValid() {
 		return (this.getMinX() >= -180 && this.getMaxX() <= 180 && this.getMinY() >= -90 && this.getMaxY() <= 90);
 	}

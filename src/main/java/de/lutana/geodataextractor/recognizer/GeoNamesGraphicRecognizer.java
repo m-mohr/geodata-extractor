@@ -7,8 +7,9 @@ import de.lutana.geodataextractor.util.GeoTools;
 import de.lutana.geodataextractor.recognizer.cv.TesseractOCR;
 import de.lutana.geodataextractor.recognizer.gazetteer.GeoName;
 import de.lutana.geodataextractor.recognizer.gazetteer.LuceneIndex;
-import de.lutana.geodataextractor.entity.locationresolver.LocationResolver;
 import de.lutana.geodataextractor.recognizer.nlp.Dict;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -66,6 +67,7 @@ public class GeoNamesGraphicRecognizer implements GraphicRecognizer {
 		}
 
 		LocationCollection candidates = new LocationCollection();
+		Rectangle candidateBounds = null;
 		for(Word w : words) {
 			String text = w.getText().trim();
 			int len = text.length();
@@ -106,11 +108,23 @@ public class GeoNamesGraphicRecognizer implements GraphicRecognizer {
 				continue;
 			}
 			
+			Location restrictingArea = null;
+			if (locations.size() > 0) {
+				restrictingArea = locations.getUnifiedLocation();
+			}
+			
 			List<GeoName> results = index.find(text, fuzzyIfNoResultsMode, 3);
 			int i = 1;
 			for (GeoName geoname : results) {
 				Location l = geoname.getLocation();
 				if (l != null) {
+					// Remove outliers - this one is a bit tricky.
+					// At the moment we remove all entries that are outside the union of previous results.
+					// ToDo: Improve this
+					if (restrictingArea != null && !l.intersects(restrictingArea)) {
+						continue;
+					}
+					
 					// 0.0 base probability,
 					// added by a max. of 0.25 depending on the text recognition confidence, 
 					// added by a max. of 0.1 depending on the amount of search results, 
@@ -120,16 +134,48 @@ public class GeoNamesGraphicRecognizer implements GraphicRecognizer {
 					l.setWeight(1);
 					logger.debug("Parsed location from '" + text + "' as '" + geoname.getDisplayName()+ "' at " + l + " using GeoNamesGraphicRecognizer.");
 					candidates.add(l);
+					
+					Rectangle wordBounds = w.getBoundingBox();
+					int size = (int) Math.round(Math.min(wordBounds.getWidth(), wordBounds.getHeight()));
+					Point centroid = new Point((int) Math.round(wordBounds.getCenterX()), (int) Math.round(wordBounds.getCenterY()));
+					Rectangle wordRect = new Rectangle(centroid, new Dimension(size, size));
+					if (candidateBounds == null) {
+						candidateBounds = wordRect;
+					}
+					else {
+						candidateBounds.add(wordRect);
+					}
 				}
 				i++;
 			}
 		}
 		
-		Location chosenCandidate = candidates.resolveLocation(new MapResolver(locations));
-		if (chosenCandidate != null) {
-			chosenCandidate.setWeight(weight);
-			logger.debug("Merged to final location " + chosenCandidate + " in GeoNamesGraphicRecognizer.");
-			locations.add(chosenCandidate);
+		double scaleTop = 0.5, scaleBottom = 0.5, scaleLeft = 0.5, scaleRight = 0.5;
+		if (candidateBounds != null && candidateBounds.getHeight() > 0 && candidateBounds.getWidth() > 0) {
+			// Calculate how much space the words take in the image to enlarge the bbox later
+			double imgW = graphic.getWidth();
+			double imgH = graphic.getHeight();
+			double scaleX = 0.4 * (imgW / candidateBounds.getWidth());
+			double scaleY = 0.4 * (imgH / candidateBounds.getHeight());
+			scaleTop = candidateBounds.getMinY() / imgH * scaleY;
+			scaleBottom = (imgH - candidateBounds.getMaxY()) / imgH * scaleY;
+			scaleLeft = candidateBounds.getMinX() / imgW * scaleX;
+			scaleRight = (imgW - candidateBounds.getMaxX()) / imgW * scaleX;
+		}
+		
+		Location union = candidates.getUnifiedLocation();
+		if (union != null) {
+			// Enlarge the bounding box based on the label relations in the image
+			double uW = union.getWidth();
+			double uH = union.getHeight();
+			union.setX(union.getMinX() - scaleLeft * uW, union.getMaxX() + scaleRight * uW);
+			union.setY(union.getMinY() - scaleBottom * uH, union.getMaxY() + scaleTop * uH);
+			union.makeValid();
+			// Gives locations a probability bump if it was created using multiple locations.
+			union.setProbability(0.2 * Math.min(locations.size(), 3) + 0.4 * union.getProbability());
+			union.setWeight(weight);
+			logger.debug("Merged to final location " + union + " in GeoNamesGraphicRecognizer.");
+			locations.add(union);
 			return true;
 		}
 		return false;
@@ -161,41 +207,6 @@ public class GeoNamesGraphicRecognizer implements GraphicRecognizer {
 	 */
 	public void setFuzzyIfNoResultsMode(boolean fuzzyIfNoResultsMode) {
 		this.fuzzyIfNoResultsMode = fuzzyIfNoResultsMode;
-	}
-	
-	public static class MapResolver implements LocationResolver {
-	
-		private LocationCollection otherLocations;
-		
-		public MapResolver(LocationCollection otherLocations) {
-			this.otherLocations = otherLocations;
-		}
-		
-		@Override
-		public Location resolve(LocationCollection locations) {
-			// Remove outliers - this one is a bit tricky.
-			// At the moment we remove all entries that are outside the union of previous results.
-			// ToDo: Improve this
-			if (otherLocations.size() > 0) {
-				LocationCollection filteredCandidates = new LocationCollection();
-				Location restrictingArea = otherLocations.getUnifiedLocation();
-				for(Location l : locations) {
-					if (l.intersects(restrictingArea)) {
-						filteredCandidates.add(l);
-					}
-				}
-				locations = filteredCandidates;
-			}
-
-			// Merge remaining candidates
-			Location union = locations.getUnifiedLocation();
-			if (union != null) {
-				// Gives locations a probability bump if it was created using multiple locations.
-				union.setProbability(0.2 * Math.min(locations.size(), 3) + 0.4 * union.getProbability());
-				return union;
-			}
-			return null;
-		}
 	}
 
 }
