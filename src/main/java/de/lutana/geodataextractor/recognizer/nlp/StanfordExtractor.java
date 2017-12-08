@@ -32,6 +32,7 @@ package de.lutana.geodataextractor.recognizer.nlp;
 
 import edu.stanford.nlp.ie.AbstractSequenceClassifier;
 import edu.stanford.nlp.ie.crf.CRFClassifier;
+import edu.stanford.nlp.pipeline.DefaultPaths;
 import edu.stanford.nlp.util.CoreMap;
 import edu.stanford.nlp.util.Triple;
 
@@ -59,7 +60,7 @@ public class StanfordExtractor implements LocationExtractor {
      * @throws ClassNotFoundException		Error by contract
      */
     public StanfordExtractor() throws ClassCastException, IOException, ClassNotFoundException {
-        this("/clavin/english.all.3class.distsim.crf.ser.gz", "clavin/english.all.3class.distsim.prop" );
+        this("edu/stanford/nlp/models/ner/english.all.3class.distsim.crf.ser.gz", "edu/stanford/nlp/models/ner/english.all.3class.distsim.prop");
     }
     
     /**
@@ -73,14 +74,12 @@ public class StanfordExtractor implements LocationExtractor {
      * @throws ClassNotFoundException 		Error by contract
      * @throws ClassCastException 			Error by contract
      */
-    //@SuppressWarnings("unchecked")
     public StanfordExtractor(String NERmodel, String NERprop) throws IOException, ClassCastException, ClassNotFoundException {
-    	
     	InputStream mpis = this.getClass().getClassLoader().getResourceAsStream(NERprop);
     	Properties mp = new Properties();
     	mp.load(mpis);
        	
-    	namedEntityRecognizer = CRFClassifier.getJarClassifier(NERmodel, mp);
+    	namedEntityRecognizer = CRFClassifier.getClassifier(NERmodel, mp);
     }
 
     /**

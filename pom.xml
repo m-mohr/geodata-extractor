@@ -98,7 +98,7 @@
 		<dependency>
 			<groupId>net.sourceforge.tess4j</groupId>
 			<artifactId>tess4j</artifactId>
-			<version>3.4.0</version>
+			<version>3.4.2</version>
 		</dependency>
 		<!-- Mathematical tools for rounding, statistics etc. [Apache 2.0] -->
 		<dependency>
@@ -155,7 +155,13 @@
 		<dependency>
 			<groupId>edu.stanford.nlp</groupId>
 			<artifactId>stanford-corenlp</artifactId>
-			<version>3.4.1</version>
+			<version>3.8.0</version>
+		</dependency>
+		<dependency>
+			<groupId>edu.stanford.nlp</groupId>
+			<artifactId>stanford-corenlp</artifactId>
+			<version>3.8.0</version>
+			<classifier>models</classifier>
 		</dependency>
 		<!-- CLAVIN (partly integrated into, license: Apache 2.0) -->
 		<!-- CLAVIN NERD (partly integrated into sources, license: GNU GPL) -->

@@ -22,7 +22,8 @@ public class TesseractOCR extends Tesseract {
 			"eng.user-words", "eng.user-patterns",
 			// Training data for the slower Cube OCR mode
 			"eng.cube.bigrams", "eng.cube.fold", "eng.cube.lm", "eng.cube.nn",
-			"eng.cube.params", "eng.cube.size", "eng.cube.size", "eng.cube.word-freq"
+			"eng.cube.params", "eng.cube.size", "eng.cube.size", "eng.cube.word-freq",
+			"eng.tesseract_cube.nn"
 		};
 	
 	public static File dataFolder = null;
@@ -60,6 +61,7 @@ public class TesseractOCR extends Tesseract {
 	}
 
 	private static void extractCustomTessResources(File tessDataFolder) {
+		LoggerFactory.getLogger("TesseractOCR").info("Tesseract data folder: " + tessDataFolder);
 		for (String name : resourceFiles) {
 			if (Config.isOcrFastModeEnabled() && name.contains(".cube")) {
 				continue;
