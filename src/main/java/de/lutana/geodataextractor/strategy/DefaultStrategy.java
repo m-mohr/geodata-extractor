@@ -84,7 +84,7 @@ public class DefaultStrategy extends AbstractStrategy {
 			this.coordinateGraphicDetector.recognize(graphic, figureLocations, 1);
 			if (this.geonamesGraphicDetector != null) {
 				// should be executed last as it uses previous results for outlier detection
-				this.geonamesGraphicDetector.recognize(graphic, figureLocations, 1);
+				this.geonamesGraphicDetector.recognize(graphic, figureLocations, 0.25);
 			}
 		}
 		return figureLocations;

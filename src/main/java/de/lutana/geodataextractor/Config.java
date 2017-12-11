@@ -17,7 +17,7 @@ import java.net.URLEncoder;
  */
 public class Config {
 	
-	private static boolean fastOcrModeEnabled = false;
+	private static boolean fastOcrModeEnabled = true;
 	
 	public static boolean isOcrFastModeEnabled() {
 		return fastOcrModeEnabled;

@@ -74,7 +74,7 @@ public class GeoNamesGraphicRecognizer implements GraphicRecognizer {
 			// We find much garbage that leads to unuseful results from the Gazetteer
 			// and need ideas to filter some garbage, e.g. ... (see following comments)
 			// - Ignore all words too short
-			if (len < 4) {
+			if (len < 3) {
 				continue;
 			}
 			// - ignore all entries that don't start with an uppercase letter
