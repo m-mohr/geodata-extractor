@@ -1,7 +1,29 @@
 # geodata-extractor
-Machine-based extraction of location information from digital publications
 
-## Generate tensorflow training data for (world) map detection
+Source code for the thesis "Machine-based extraction of location information from digital publications".
+
+## Running the program
+
+Due to the enormous size of the application (1 GB) we currently can't upload it here. Please build it yourself, see the Development section below.
+
+### System requirements
+
+* ~10 GB of storage space
+* 4 GB memory
+* Java JRE 8 or higher (or the corresponding JDK)
+* On Windows: [Microsoft Visual C++ Redistributable für Visual Studio 2015](https://www.microsoft.com/de-de/download/details.aspx?id=48145)
+
+## Development
+
+You would like to build the program yourself? Please follow the following instructions:
+1. Install [Java JDK 8](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) (or newer)
+2. Install [Netbeans IDE](https://netbeans.org/features/index.html) (or any other Java IDE supporting Maven development)
+3. On Windows: Install [Microsoft Visual C++ Redistributable für Visual Studio 2015](https://www.microsoft.com/de-de/download/details.aspx?id=48145) in order to run [Tesseract OCR 3](https://github.com/tesseract-ocr/tesseract/wiki/Downloads)
+4. Load the Maven/Netbeans project into the IDE.
+
+Note: The build process will may take several hours, depending on your internet connection. This is due to the fact that during the build process the OSMNames database will be downloaded (~1,4 GB) and a Lucene Index will be created using it (~8 GB storage required). Also the tests might take londer, depending on the amount of publications stored in the "test-docs" directory.
+
+### Generate tensorflow training data for (world) map detection
 
 1. Install Docker
 2. Get docker image by running `docker run -it gcr.io/tensorflow/tensorflow:latest-devel` and stop docker afterwards
