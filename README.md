@@ -6,6 +6,16 @@ Source code for the thesis "Machine-based extraction of location information fro
 
 Due to the enormous size of the application (1 GB) we currently can't upload it here. Please build it yourself, see the Development section below.
 
+Once you built the JAR files run the program as follows:
+`java -jar geodata-extractor.jar -strategy=Default ./test-docs/`
+This will run the DefaultStrategy using all files in the test-docs folder.
+
+`java -jar geodata-extractor.jar -strategy=com.company.package.YourCustomStrategy sample.pdf`
+This will run the strategy located at com.company.package.YourCustomStrategy on the sample.pdf file.
+
+You can get more information about additional parameters:
+`java -jar geodata-extractor.jar -help`
+
 ### System requirements
 
 * ~10 GB of storage space
