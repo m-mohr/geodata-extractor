@@ -6,7 +6,7 @@ Source code for the thesis "Machine-based extraction of location information fro
 
 Due to the enormous size of the application (1 GB) we currently can't upload it here. Please build it yourself, see the Development section below.
 
-(Currently not working due to a [bug in JCommander](https://github.com/cbeust/jcommander/issues/375)!)
+Note: Currently not fully working due to a [bug in JCommander](https://github.com/cbeust/jcommander/issues/375)!
 
 Once you built the JAR files run the program using the command line interface. You can get information about the parameters:
 ```
