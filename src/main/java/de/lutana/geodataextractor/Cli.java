@@ -36,22 +36,29 @@ public class Cli {
 	@Parameter(names = "--figures", description = "Include bounding boxes for figures")
 	public boolean figures = false;
 
-    @Parameter(names = "--help", help = true)
+    @Parameter(names = "--help", help = true, description = "Prints this help")
     private boolean help = false;
 
 	public static void main(String[] args) {
 		Cli cli = new Cli();
 		JCommander jcommander = JCommander.newBuilder().addObject(cli).build();
 		jcommander.parse(args);
-		
-		File file = cli.getFile();
-		Strategy strategy = cli.getStrategy();
-
-        if (cli.help || file == null || strategy == null) {
+        if (cli.help) {
             jcommander.usage();
             return;
         }
 		
+		File file = cli.getFile();
+		if (!file.exists()) {
+			System.out.println("Path does not exist.");
+			return;
+		}
+		Strategy strategy = cli.getStrategy();
+		if (strategy == null) {
+			System.out.println("Strategy not found.");
+			return;
+		}
+
 		GeodataExtractor gde = new GeodataExtractor();
 		gde.enableFastOcrMode(!cli.improvedOcr);
 		gde.enableCaching(cli.save);
@@ -82,11 +89,7 @@ public class Cli {
 		if (this.file == null || this.file.isEmpty()) {
 			return new File("./test-docs/");
 		}
-		File file = new File(this.file);
-		if (file.exists()) {
-			return file;
-		}
-		return null;
+		return new File(this.file);
 	}
 
 	public Strategy getStrategy() {
@@ -100,6 +103,7 @@ public class Cli {
 			try {
 				myClass = Class.forName("de.lutana.geodataextractor.strategy." + this.strategy + "Strategy");
 			} catch (ClassNotFoundException e2) {
+				e2.printStackTrace();
 				return null;
 			}
 		}
@@ -109,6 +113,7 @@ public class Cli {
 			Object[] parameters = {};
 			return (Strategy) constructor.newInstance(parameters);
 		} catch (IllegalAccessException | IllegalArgumentException | InstantiationException | NoSuchMethodException | SecurityException | InvocationTargetException ex) {
+			ex.printStackTrace();
 			return null;
 		}
 	}

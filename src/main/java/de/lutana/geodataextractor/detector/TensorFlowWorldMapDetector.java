@@ -1,7 +1,7 @@
 package de.lutana.geodataextractor.detector;
 
+import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.net.URL;
 
 public class TensorFlowWorldMapDetector extends TensorFlowDualDetector {
 
@@ -12,14 +12,14 @@ public class TensorFlowWorldMapDetector extends TensorFlowDualDetector {
 
 	public static TensorFlowWorldMapDetector getInstance() throws URISyntaxException {
 		if (instance == null) {
-			URL graphFile = TensorFlowWorldMapDetector.class.getClassLoader().getResource("tensorflow/" + GRAPH_FILE);
-			URL labelFile = TensorFlowWorldMapDetector.class.getClassLoader().getResource("tensorflow/" + LABEL_FILE);
+			InputStream graphFile = TensorFlowWorldMapDetector.class.getClassLoader().getResourceAsStream("tensorflow/" + GRAPH_FILE);
+			InputStream labelFile = TensorFlowWorldMapDetector.class.getClassLoader().getResourceAsStream("tensorflow/" + LABEL_FILE);
 			instance = new TensorFlowWorldMapDetector(graphFile, labelFile, TensorFlowDualDetector.END_NODE, MAP_CLASS);
 		}
 		return instance;
 	}
 	
-	protected TensorFlowWorldMapDetector(URL graphFile, URL labelFile, String endNode, String className) throws URISyntaxException {
+	protected TensorFlowWorldMapDetector(InputStream graphFile, InputStream labelFile, String endNode, String className) throws URISyntaxException {
 		super(graphFile, labelFile, endNode, className);
 	}
 }

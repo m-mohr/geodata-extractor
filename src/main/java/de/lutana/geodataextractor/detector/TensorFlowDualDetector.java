@@ -3,14 +3,14 @@ package de.lutana.geodataextractor.detector;
 import de.lutana.geodataextractor.entity.Figure;
 import de.lutana.geodataextractor.entity.Graphic;
 import de.lutana.geodataextractor.recognizer.cv.CvGraphic;
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.Charset;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.imageio.ImageIO;
@@ -27,8 +27,8 @@ import org.tensorflow.Tensor;
 public abstract class TensorFlowDualDetector implements GraphicDetector {
 	public static final String END_NODE = "final_result";
 
-	protected Path graphFile;
-	protected Path labelFile;
+	protected InputStream graphFile;
+	protected InputStream labelFile;
 	protected String endNode;
 	protected String className;
 
@@ -36,7 +36,7 @@ public abstract class TensorFlowDualDetector implements GraphicDetector {
 	protected byte[] graph;
 	
 	
-	protected TensorFlowDualDetector(Path graphFile, Path labelFile, String endNode, String className) {
+	protected TensorFlowDualDetector(InputStream graphFile, InputStream labelFile, String endNode, String className) {
 		this.graphFile = graphFile;
 		this.labelFile = labelFile;
 		this.endNode = endNode;
@@ -44,20 +44,53 @@ public abstract class TensorFlowDualDetector implements GraphicDetector {
 		this.labels = null;
 		this.graph = null;
 	}
-	
-	protected TensorFlowDualDetector(File graphFile, File labelFile, String endNode, String className) {
-		this(graphFile.toPath(), labelFile.toPath(), endNode, className);
-	}
-	
-	protected TensorFlowDualDetector(URL graphFile, URL labelFile, String endNode, String className) throws URISyntaxException {
-		this(new File(graphFile.toURI()), new File(labelFile.toURI()), endNode, className);
-	}
 
 	public void preload() throws IOException {
 		if (labels == null || graph == null) {
-			labels = Files.readAllLines(labelFile, Charset.forName("UTF-8"));
-			graph = Files.readAllBytes(graphFile);
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(this.labelFile))) {
+				labels = new ArrayList<>();
+				for (;;) {
+					String line = reader.readLine();
+					if (line == null) {
+						break;
+					}
+					labels.add(line);
+				}
+			}
+
+			graph = readFully(graphFile, -1, true);
 		}
+	}
+	
+	// Taken from: sun.misc.IOUtils
+	public static byte[] readFully(InputStream is, int length, boolean readAll) throws IOException {
+		byte[] output = {};
+		if (length == -1) length = Integer.MAX_VALUE;
+		int pos = 0;
+		while (pos < length) {
+			int bytesToRead;
+			if (pos >= output.length) { // Only expand when there's no room
+				bytesToRead = Math.min(length - pos, output.length + 1024);
+				if (output.length < pos + bytesToRead) {
+					output = Arrays.copyOf(output, pos + bytesToRead);
+				}
+			} else {
+				bytesToRead = output.length - pos;
+			}
+			int cc = is.read(output, pos, bytesToRead);
+			if (cc < 0) {
+				if (readAll && length != Integer.MAX_VALUE) {
+					throw new IOException("Detect premature EOF");
+				} else {
+					if (output.length != pos) {
+						output = Arrays.copyOf(output, pos);
+					}
+					break;
+				}
+			}
+			pos += cc;
+		}
+		return output;
 	}
 
 	@Override
@@ -112,20 +145,6 @@ public abstract class TensorFlowDualDetector implements GraphicDetector {
 				return result.copyTo(new float[1][nlabels])[0];
 			}
 		}
-	}
-
-	/**
-	 * @return the graphFile
-	 */
-	public Path getGraphFile() {
-		return graphFile;
-	}
-
-	/**
-	 * @return the labelFile
-	 */
-	public Path getLabelFile() {
-		return labelFile;
 	}
 
 	/**
