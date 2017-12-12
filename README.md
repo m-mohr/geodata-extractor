@@ -21,7 +21,7 @@ You would like to build the program yourself? Please follow the following instru
 3. On Windows: Install [Microsoft Visual C++ Redistributable für Visual Studio 2015](https://www.microsoft.com/de-de/download/details.aspx?id=48145) in order to run [Tesseract OCR 3](https://github.com/tesseract-ocr/tesseract/wiki/Downloads)
 4. Load the Maven/Netbeans project into the IDE.
 
-Note: The build process will may take several hours, depending on your internet connection. This is due to the fact that during the build process the OSMNames database will be downloaded (~1,4 GB) and a Lucene Index will be created using it (~8 GB storage required). Also the tests might take londer, depending on the amount of publications stored in the "test-docs" directory.
+Note: The (first) build process will may take several hours, depending on your internet connection. This is due to the fact that during the build process the OSMNames database (~1,4 GB) and all required dependencies will be downloaded. During first execution a Lucene Index will be created using the OSMNames data set (~8 GB storage required). Also the tests might take londer, depending on the amount of publications stored in the "test-docs" directory.
 
 ### Generate tensorflow training data for (world) map detection
 
