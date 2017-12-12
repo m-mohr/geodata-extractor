@@ -8,17 +8,17 @@ Due to the enormous size of the application (1 GB) we currently can't upload it 
 
 Once you built the JAR files run the program using the command line interface. You can get information about the parameters:
 ```
-java -jar geodata-extractor.jar -help
+java -jar geodata-extractor.jar --help
 ```
 
 This will run the DefaultStrategy using all files in the test-docs folder:
 ```
-java -jar geodata-extractor.jar -strategy=Default ./test-docs/
+java -jar geodata-extractor.jar --strategy=Default ./test-docs/
 ```
 
 This will run the strategy located at com.company.package.YourCustomStrategy on the sample.pdf file:
 ```
-java -jar geodata-extractor.jar -strategy=com.company.package.YourCustomStrategy sample.pdf
+java -jar geodata-extractor.jar --strategy=com.company.package.YourCustomStrategy sample.pdf
 ```
 
 ### System requirements
