@@ -8,8 +8,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
 	</properties>
 	<name>Geodata Extractor</name>
 	<description>Machine-based extraction of location information from digital publications</description>
@@ -26,7 +26,13 @@
 			<id>Allenai repository</id>
 			<url>https://allenai.bintray.com/maven/</url>
 		</repository>
-		<!-- Repo for Apache Commons Math and Cermine -->
+		<!-- Repo for most of the dependencies -->
+		<repository>
+			<id>mvn</id>
+			<name>MVNrepository</name>
+			<url>http://central.maven.org/maven2/</url>
+		</repository>
+		<!-- Repo for Cermine -->
 		<repository>
 			<id>icm</id>
 			<name>ICM repository</name>
