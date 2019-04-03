@@ -31,8 +31,8 @@ java -jar geodata-extractor.jar --strategy=com.company.package.YourCustomStrateg
 ## Development
 
 You would like to build the program yourself? Please follow the following instructions:
-1. Install [Java JDK 8](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) (or newer)
-2. Install [Netbeans IDE](https://netbeans.org/features/index.html) (or any other Java IDE supporting Maven development)
+1. Install [Java JDK 8 (64bit)](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) or newer
+2. Install [Netbeans IDE](https://netbeans.org/features/index.html) or any other Java IDE supporting Maven development
 3. On Windows: Install [Microsoft Visual C++ Redistributable für Visual Studio 2015](https://www.microsoft.com/de-de/download/details.aspx?id=48145) in order to run [Tesseract OCR 3](https://github.com/tesseract-ocr/tesseract/wiki/Downloads)
 4. Load the Maven/Netbeans project into the IDE.
 

@@ -82,7 +82,7 @@ public class Document implements Located {
 	 * @return the title
 	 */
 	public String getTitle() {
-		return this.texts.get("title");
+		return this.texts.getOrDefault("title", "");
 	}
 
 	/**
