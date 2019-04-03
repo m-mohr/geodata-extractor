@@ -353,7 +353,9 @@ public abstract class BasePublicationTest {
 		public List<StudyItem> study;
 		public Boolean coordinates;
 
-		public StudyResults() {}
+		public StudyResults() {
+			this.study = new ArrayList<>();
+		}
 		
 		public Integer getFigureId() {
 			return this.fid;
