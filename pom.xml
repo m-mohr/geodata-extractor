@@ -124,7 +124,7 @@
 			<artifactId>tensorflow</artifactId>
 			<version>1.3.0</version>
 		</dependency>
-		<!-- Strokw-Width Transform for Text detection [3-clause BSD] -->
+		<!-- Stroke-Width Transform for Text detection [3-clause BSD] -->
 		<dependency>
 			<groupId>org.openimaj</groupId>
 			<artifactId>image-processing</artifactId>
@@ -139,17 +139,17 @@
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-core</artifactId>
-			<version>6.6.0</version>
+			<version>7.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-analyzers-common</artifactId>
-			<version>6.6.0</version>
+			<version>7.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-queries</artifactId>
-			<version>6.6.0</version>
+			<version>7.1.0</version>
 		</dependency>
 		<!-- NLP for location extraction from texts [GPL 2.0] -->
 		<dependency>
